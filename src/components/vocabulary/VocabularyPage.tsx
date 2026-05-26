@@ -6,10 +6,22 @@ import { VOCABULARY_ROUND_SIZES } from "@/lib/constants";
 import { ProgressHeader } from "./ProgressHeader";
 import { WordCard } from "./WordCard";
 import type { WordResult } from "@/types/vocabulary";
+import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
 
 export function VocabularyPage() {
   const phase = useVocabularySessionStore((s) => s.phase);
+
+  // 打词练习阶段隐藏侧边栏，提供沉浸式体验
+  useEffect(() => {
+    if (phase === "active") {
+      useUIStore.getState().setSidebarForceHidden(true);
+      return () => {
+        useUIStore.getState().setSidebarForceHidden(false);
+      };
+    }
+    useUIStore.getState().setSidebarForceHidden(false);
+  }, [phase]);
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
   const mode = useVocabularySessionStore((s) => s.mode);
   const dictation = useVocabularySessionStore((s) => s.dictation);
