@@ -1,8 +1,8 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { IAudioService } from "@/services/audio/types";
-import { WebSpeechAudioService } from "@/services/audio/web-speech";
+import { YoudaoAudioService } from "@/services/audio/youdao";
 
-const audioService = new WebSpeechAudioService();
+const audioService = new YoudaoAudioService();
 const AudioContext = createContext<IAudioService>(audioService);
 
 export function useAudio() {
