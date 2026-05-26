@@ -1,6 +1,5 @@
 import React from "react";
 import type { LetterState } from "@/types/vocabulary";
-import { cn } from "@/lib/utils";
 
 interface LetterBoxProps {
   letter: string;
@@ -8,16 +7,18 @@ interface LetterBoxProps {
   visible: boolean;
 }
 
-const colorMap: Record<LetterState, string> = {
-  normal: "text-foreground",
-  correct: "text-success",
-  wrong: "text-destructive",
+const EXPLICIT_SPACE = "␣";
+
+const visibleColorMap: Record<LetterState, string> = {
+  normal: "text-letter-normal",
+  correct: "text-letter-correct",
+  wrong: "text-letter-wrong",
 };
 
-const boxMap: Record<LetterState, string> = {
-  normal: "",
-  correct: "scale-110",
-  wrong: "animate-shake",
+const hiddenColorMap: Record<LetterState, string> = {
+  normal: "text-letter-hidden",
+  correct: "text-letter-correct-hidden",
+  wrong: "text-letter-wrong-hidden",
 };
 
 const LetterBox = React.memo(function LetterBox({
@@ -25,17 +26,16 @@ const LetterBox = React.memo(function LetterBox({
   state,
   visible,
 }: LetterBoxProps) {
+  const displayChar =
+    letter === " " ? EXPLICIT_SPACE : letter === "..." ? ".." : letter;
+  const colorClass = visible ? visibleColorMap[state] : hiddenColorMap[state];
+
   return (
     <span
-      className={cn(
-        "inline-flex h-14 w-9 items-center justify-center font-mono text-4xl font-medium select-none rounded-md transition-all duration-100",
-        visible
-          ? cn(colorMap[state], boxMap[state])
-          : "text-muted-foreground/40"
-      )}
+      className={`m-0 p-0 pr-[0.2rem] font-mono text-5xl font-normal select-none ${colorClass}`}
       aria-label={visible ? letter : "隐藏字母"}
     >
-      {visible ? letter : "_"}
+      {visible ? displayChar : "_"}
     </span>
   );
 });

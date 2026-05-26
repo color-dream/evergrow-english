@@ -18,6 +18,7 @@ interface VocabularySessionState {
   phase: SessionPhase;
   words: Word[];
   currentIndex: number;
+  isTyping: boolean;
 
   // ── 计时 ──
   startTime: number | null;
@@ -40,6 +41,7 @@ interface VocabularySessionState {
   setElapsedSeconds: (seconds: number) => void;
   tickTimer: () => void;
   finishSession: () => void;
+  setIsTyping: (val: boolean) => void;
   resetSession: () => void;
 }
 
@@ -52,6 +54,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     phase: "idle",
     words: [],
     currentIndex: 0,
+    isTyping: false,
 
     startTime: null,
     endTime: null,
@@ -75,6 +78,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         phase: "active",
         words,
         currentIndex: 0,
+        isTyping: true,
         startTime: Date.now(),
         endTime: null,
         elapsedSeconds: 0,
@@ -108,6 +112,8 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
           ? s.totalCorrectKeystrokes + 1
           : s.totalCorrectKeystrokes,
       })),
+
+    setIsTyping: (val) => set({ isTyping: val }),
 
     setElapsedSeconds: (seconds: number) => set({ elapsedSeconds: seconds }),
     tickTimer: () =>

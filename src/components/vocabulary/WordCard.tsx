@@ -7,12 +7,16 @@ import type {
 } from "@/types/vocabulary";
 import { useWordTyping } from "@/hooks/useWordTyping";
 import { useKeyboardCapture } from "@/hooks/useKeyboardCapture";
+import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useAudio } from "@/app/providers/AudioProvider";
 import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
+import { SkipForward } from "lucide-react";
 
 interface WordCardProps {
   word: Word;
+  prevWord?: Word | null;
+  nextWord?: Word | null;
   mode: TypingMode;
   dictation: DictationConfig;
   onComplete: (result: WordResult) => void;
@@ -21,6 +25,8 @@ interface WordCardProps {
 
 export function WordCard({
   word,
+  prevWord,
+  nextWord,
   mode,
   dictation,
   onComplete,
@@ -37,6 +43,8 @@ export function WordCard({
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
   const completedRef = useRef(false);
+  const isTyping = useVocabularySessionStore((s) => s.isTyping);
+  const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
   useEffect(() => {
     setMode(mode);
@@ -52,12 +60,16 @@ export function WordCard({
 
   const onChar = useCallback(
     (char: string) => {
+      if (!isTyping) {
+        setIsTyping(true);
+        return;
+      }
       const result = handleChar(char, mode);
       if (result.accepted) {
         onKeystroke(result.correct);
       }
     },
-    [handleChar, mode, onKeystroke]
+    [handleChar, mode, onKeystroke, isTyping, setIsTyping]
   );
 
   const onBackspace = useCallback(() => {
@@ -66,7 +78,12 @@ export function WordCard({
     }
   }, [mode, handleBackspace]);
 
-  useKeyboardCapture(onChar, onBackspace, !state.isFinished);
+  const onEnter = useCallback(() => {
+    setIsTyping(!isTyping);
+  }, [isTyping, setIsTyping]);
+
+  // 全局键盘监听：isTyping 为 false 时也启用，用于捕获"开始"按键
+  useKeyboardCapture(onChar, onBackspace, !state.isFinished, onEnter);
 
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
@@ -86,53 +103,67 @@ export function WordCard({
   const showSkip = state.wrongCount >= 4;
 
   return (
-    <div className="flex flex-col items-center gap-10 py-16 animate-fade-in">
-      {/* 释义 + 音标 */}
-      <div className="text-center select-none">
-        <p className="text-xl font-medium text-foreground">{word.definition}</p>
-        {word.phonetic && (
-          <p className="mt-1.5 font-mono text-sm text-muted-foreground/60">
-            {word.phonetic}
-          </p>
-        )}
+    <div className="flex flex-grow flex-col items-center justify-center">
+      {/* prev / next 词提示 */}
+      <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
+        {prevWord && <PrevNextHint type="prev" word={prevWord} />}
+        {nextWord && <PrevNextHint type="next" word={nextWord} />}
       </div>
 
-      {/* 字母行 */}
-      <div
-        className={cn(
-          "flex items-center justify-center gap-1 rounded-xl bg-card border border-border px-8 py-8 shadow-xs transition-colors",
-          state.hasWrong && "animate-shake border-destructive/30"
-        )}
-      >
-        {state.displayWord.split("").map((letter, index) => (
-          <LetterBox
-            key={`${index}-${letter}`}
-            letter={letter}
-            state={state.letterStates[index]}
-            visible={getLetterVisible(
-              index,
-              dictation,
-              state.letterStates[index]
+      {/* 词条区域 */}
+      <div className="container flex flex-grow flex-col items-center justify-center">
+        <div className="relative flex w-full justify-center">
+          {/* 暂停遮罩 */}
+          {!isTyping && (
+            <div className="absolute z-10 flex h-full w-full items-center justify-center">
+              <div className="flex w-full items-center backdrop-blur-sm">
+                <p className="w-full select-none text-center text-xl text-gray-600 dark:text-gray-50">
+                  按任意键{state.inputWord.length > 0 ? "继续" : "开始"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="relative flex flex-col items-center gap-10">
+            {/* 字母行 */}
+            <div
+              className={cn(
+                "flex items-center justify-center",
+                state.hasWrong && "animate-shake"
+              )}
+            >
+              {state.displayWord.split("").map((letter, index) => (
+                <LetterBox
+                  key={`${index}-${letter}`}
+                  letter={letter}
+                  state={state.letterStates[index]}
+                  visible={getLetterVisible(
+                    index,
+                    dictation,
+                    state.letterStates[index]
+                  )}
+                />
+              ))}
+            </div>
+
+            {/* 音标 */}
+            {word.phonetic && (
+              <p className="-mt-8 font-mono text-sm font-normal text-muted-foreground/60">
+                {word.phonetic}
+              </p>
             )}
-          />
-        ))}
+
+            {/* 释义 */}
+            <p className="-mt-4 select-none text-lg text-muted-foreground">
+              {word.definition}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* 宽松模式：显示用户已输入内容 */}
-      {mode === "loose" &&
-        state.inputWord.length > 0 &&
-        !state.hasWrong &&
-        !state.isFinished && (
-          <div className="-mt-6 flex items-center justify-center gap-1 font-mono text-xl text-muted-foreground/25">
-            {state.inputWord.split("").map((c, i) => (
-              <span key={i}>{c}</span>
-            ))}
-          </div>
-        )}
-
-      {/* 底部操作区 */}
-      <div className="flex flex-col items-center gap-4">
-        {showSkip && (
+      {/* 跳过按钮 */}
+      {showSkip && (
+        <div className="mb-6 flex justify-center">
           <button
             onClick={() => {
               completedRef.current = true;
@@ -146,24 +177,35 @@ export function WordCard({
                 letterMistakes,
               });
             }}
-            className="rounded-lg border border-border px-4 py-1.5 text-sm text-muted-foreground transition-all hover:border-destructive/40 hover:text-destructive"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-400 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
           >
+            <SkipForward className="h-4 w-4" />
             跳过此词
           </button>
-        )}
-
-        {/* 模式提示 */}
-        <div className="flex gap-2">
-          <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-            {mode === "strict" ? "严格模式" : "宽松模式"}
-          </span>
-          {dictation.enabled && (
-            <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-              听写模式
-            </span>
-          )}
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
+
+/** 前一个 / 后一个 词提示 */
+function PrevNextHint({
+  type,
+  word,
+}: {
+  type: "prev" | "next";
+  word: Word;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 text-sm text-muted-foreground/50",
+        type === "next" && "flex-row-reverse"
+      )}
+    >
+      <span className="text-xs">{type === "prev" ? "←" : "→"}</span>
+      <span className="font-mono text-base">{word.text}</span>
+      <span className="max-w-[200px] truncate text-xs">{word.definition}</span>
     </div>
   );
 }

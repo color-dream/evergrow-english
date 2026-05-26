@@ -5,14 +5,17 @@ import { isLegal, isChineseSymbol } from "@/lib/keyboard-utils";
 export function useKeyboardCapture(
   onChar: (char: string) => void,
   onBackspace: () => void,
-  enabled: boolean
+  enabled: boolean,
+  onEnter?: () => void
 ): void {
   const onCharRef = useRef(onChar);
   const onBackspaceRef = useRef(onBackspace);
+  const onEnterRef = useRef(onEnter);
 
   useEffect(() => {
     onCharRef.current = onChar;
     onBackspaceRef.current = onBackspace;
+    onEnterRef.current = onEnter;
   });
 
   useEffect(() => {
@@ -21,6 +24,12 @@ export function useKeyboardCapture(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onEnterRef.current?.();
+        return;
+      }
 
       if (e.key === "Backspace") {
         e.preventDefault();

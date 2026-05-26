@@ -52,7 +52,32 @@
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-breathe: breathe 2s ease-in-out infinite;
   --animate-pop-in: pop-in 0.2s ease-out;
-  --animate-shake: shake 0.4s ease-in-out;
+  --animate-shake: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+
+  /* ═══ 词汇学习：Qwerty 风格 Letter 颜色 ═══ */
+  --color-letter-normal: oklch(0.65 0.01 260);
+  --color-letter-correct: oklch(0.75 0.14 150);
+  --color-letter-wrong: oklch(0.62 0.17 20);
+  --color-letter-hidden: oklch(0.55 0.01 260);
+  --color-letter-correct-hidden: oklch(0.65 0.13 150);
+  --color-letter-wrong-hidden: oklch(0.55 0.16 20);
+
+  /* ═══ Qwerty 风格 Indigo 色调 ═══ */
+  --color-indigo-50: oklch(0.96 0.02 270);
+  --color-indigo-100: oklch(0.91 0.04 270);
+  --color-indigo-200: oklch(0.83 0.06 270);
+  --color-indigo-300: oklch(0.75 0.08 270);
+  --color-indigo-400: oklch(0.67 0.12 270);
+  --color-indigo-500: oklch(0.59 0.14 270);
+
+  /* ═══ Qwerty 风格 my-card 阴影 ═══ */
+  --shadow-my-card:
+    0px 100px 80px oklch(0.3 0.04 270 / 0.07),
+    0px 41.7776px 33.4221px oklch(0.3 0.04 270 / 0.0503198),
+    0px 22.3363px 17.869px oklch(0.3 0.04 270 / 0.0417275),
+    0px 12.5216px 10.0172px oklch(0.3 0.04 270 / 0.035),
+    0px 6.6501px 5.32008px oklch(0.3 0.04 270 / 0.0282725),
+    0px 2.76726px 2.21381px oklch(0.3 0.04 270 / 0.0196802);
 }
 
 /* ═══════════════════════════════════════════
@@ -114,21 +139,22 @@
 }
 
 @keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
+  10%,
+  90% {
+    transform: translate3d(-1px, 0, 0);
   }
-  20% {
-    transform: translateX(-4px);
-  }
-  40% {
-    transform: translateX(4px);
-  }
-  60% {
-    transform: translateX(-3px);
-  }
+  20%,
   80% {
-    transform: translateX(3px);
+    transform: translate3d(2px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
   }
 }
 
@@ -144,6 +170,13 @@
   --color-success: oklch(0.62 0.14 145);
   --color-warning: oklch(0.75 0.13 80);
   --color-destructive: oklch(0.58 0.15 15);
+
+  --color-letter-normal: oklch(0.65 0.01 260);
+  --color-letter-correct: oklch(0.55 0.12 145);
+  --color-letter-wrong: oklch(0.52 0.15 20);
+  --color-letter-hidden: oklch(0.94 0 0);
+  --color-letter-correct-hidden: oklch(0.75 0.13 150);
+  --color-letter-wrong-hidden: oklch(0.68 0.15 20);
 
   --color-background: oklch(0.14 0.008 260);
   --color-foreground: oklch(0.94 0 0);

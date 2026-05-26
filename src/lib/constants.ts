@@ -41,6 +41,9 @@ export const WRONG_RESET_DELAY_MS = 300;
 /** 宽松模式：输完对比有错后重置延迟 (ms) */
 export const LOOSE_WRONG_RESET_DELAY_MS = 1500;
 
+/** 跳过按钮出现的错误次数阈值 */
+export const SKIP_WRONG_THRESHOLD = 4;
+
 // ── 路由 ──
 
 export const ROUTES = {
