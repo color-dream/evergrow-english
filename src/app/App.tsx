@@ -4,6 +4,7 @@ import { ThemeProvider } from "./providers/ThemeProvider";
 import { AudioProvider } from "./providers/AudioProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { ROUTES } from "@/lib/constants";
+import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 
 // 懒加载占位，Phase 1 逐步替换为真实页面
 const Placeholder = ({ title }: { title: string }) => (
@@ -18,7 +19,6 @@ const Placeholder = ({ title }: { title: string }) => (
 const HomePage = () => <Placeholder title="Evergrow English" />;
 const DashboardPage = () => <Placeholder title="学习仪表盘" />;
 const ReviewPage = () => <Placeholder title="复习" />;
-const VocabularyPage = () => <Placeholder title="词汇学习" />;
 const ReadingPage = () => <Placeholder title="阅读理解" />;
 const ListeningPage = () => <Placeholder title="听力练习" />;
 const SpeakingPage = () => <Placeholder title="口语练习" />;
@@ -40,7 +40,10 @@ export function App() {
                 <Route path={ROUTES.LISTENING} element={<ListeningPage />} />
                 <Route path={ROUTES.SPEAKING} element={<SpeakingPage />} />
                 <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
-                <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+                <Route
+                  path="*"
+                  element={<Navigate to={ROUTES.HOME} replace />}
+                />
               </Route>
             </Routes>
           </BrowserRouter>
