@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import type { Word } from "@/types/domain";
 import type {
   TypingMode,
@@ -11,7 +11,7 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useAudio } from "@/app/providers/AudioProvider";
 import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
-import { SkipForward } from "lucide-react";
+import { SkipForward, Volume2 } from "lucide-react";
 
 interface WordCardProps {
   word: Word;
@@ -42,6 +42,7 @@ export function WordCard({
     getLetterMistakes,
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
+  const [isPlaying, setIsPlaying] = useState(false);
   const completedRef = useRef(false);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
@@ -146,11 +147,39 @@ export function WordCard({
               ))}
             </div>
 
-            {/* 音标 */}
-            {word.phonetic && (
-              <p className="-mt-8 font-mono text-sm font-normal text-muted-foreground/60">
-                {word.phonetic}
-              </p>
+            {/* 音标 & 播放按钮 */}
+            {(word.phonetic || audio.supported) && (
+              <div className="-mt-8 flex items-center gap-2">
+                {word.phonetic && (
+                  <span className="font-mono text-sm font-normal text-muted-foreground/60">
+                    {word.phonetic}
+                  </span>
+                )}
+                {audio.supported && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPlaying(true);
+                      audio
+                        .speak(word.text, { rate: 0.8 })
+                        .catch(() => {})
+                        .finally(() => setIsPlaying(false));
+                    }}
+                    aria-label={isPlaying ? "正在播放" : "播放发音"}
+                    title="播放发音"
+                    className="inline-flex"
+                  >
+                    <Volume2
+                      className={cn(
+                        "h-5 w-5 transition-colors",
+                        isPlaying
+                          ? "text-indigo-400 animate-breathe"
+                          : "text-muted-foreground/40 hover:text-indigo-400 cursor-pointer"
+                      )}
+                    />
+                  </button>
+                )}
+              </div>
             )}
 
             {/* 释义 */}
@@ -189,13 +218,7 @@ export function WordCard({
 }
 
 /** 前一个 / 后一个 词提示 */
-function PrevNextHint({
-  type,
-  word,
-}: {
-  type: "prev" | "next";
-  word: Word;
-}) {
+function PrevNextHint({ type, word }: { type: "prev" | "next"; word: Word }) {
   return (
     <div
       className={cn(
