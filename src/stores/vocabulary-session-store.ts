@@ -5,13 +5,12 @@ import type {
   DictationConfig,
   SessionPhase,
   WordResult,
+  WordBookId,
 } from "@/types/vocabulary";
-import { DEFAULT_WORDS_PER_ROUND } from "@/lib/constants";
-import { shuffleArray } from "@/lib/vocabulary-utils";
 
 interface VocabularySessionState {
   // ── 配置 ──
-  wordsPerRound: number;
+  selectedWordBook: WordBookId | null;
   mode: TypingMode;
   dictation: DictationConfig;
 
@@ -31,10 +30,10 @@ interface VocabularySessionState {
   totalCorrectKeystrokes: number;
 
   // ── Actions ──
+  setSelectedWordBook: (id: WordBookId) => void;
   setMode: (mode: TypingMode) => void;
   setDictation: (config: Partial<DictationConfig>) => void;
-  setWordsPerRound: (n: number) => void;
-  startSession: (availableWords: Word[]) => void;
+  startSession: (words: Word[]) => void;
   advanceWord: () => void;
   addWordResult: (result: WordResult) => void;
   addKeystrokes: (correct: boolean) => void;
@@ -46,25 +45,23 @@ interface VocabularySessionState {
 
 export const useVocabularySessionStore = create<VocabularySessionState>()(
   (set) => ({
-    // 默认配置
-    wordsPerRound: DEFAULT_WORDS_PER_ROUND,
+    selectedWordBook: null,
     mode: "strict",
     dictation: { enabled: false, type: "hideAll" },
 
-    // 会话状态
     phase: "idle",
     words: [],
     currentIndex: 0,
 
-    // 计时
     startTime: null,
     endTime: null,
     elapsedSeconds: 0,
 
-    // 统计
     wordResults: [],
     totalKeystrokes: 0,
     totalCorrectKeystrokes: 0,
+
+    setSelectedWordBook: (id) => set({ selectedWordBook: id }),
 
     setMode: (mode) => set({ mode }),
 
@@ -73,13 +70,10 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         dictation: { ...s.dictation, ...config },
       })),
 
-    setWordsPerRound: (n) => set({ wordsPerRound: n }),
-
-    startSession: (availableWords) => {
-      const shuffled = shuffleArray(availableWords);
-      set((s) => ({
+    startSession: (words) =>
+      set({
         phase: "active",
-        words: shuffled.slice(0, s.wordsPerRound),
+        words,
         currentIndex: 0,
         startTime: Date.now(),
         endTime: null,
@@ -87,8 +81,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         wordResults: [],
         totalKeystrokes: 0,
         totalCorrectKeystrokes: 0,
-      }));
-    },
+      }),
 
     advanceWord: () =>
       set((s) => {

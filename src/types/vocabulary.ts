@@ -1,3 +1,6 @@
+/** 词库标识 */
+export type WordBookId = "cet4" | "cet6";
+
 /** 打字模式：严格 = 即时比对打错重置；宽松 = 退格修正，输完比对 */
 export type TypingMode = "strict" | "loose";
 

@@ -1,0 +1,27 @@
+import type { Word, DifficultyLevel } from "@/types/domain";
+
+interface QwertyLearnerEntry {
+  name: string;
+  trans: string[];
+  usphone: string;
+  ukphone: string;
+}
+
+const BOOK_DIFFICULTY: Record<string, DifficultyLevel> = {
+  cet4: "B1",
+  cet6: "B2",
+};
+
+export function convertToWord(entry: QwertyLearnerEntry, bookId: string): Word {
+  return {
+    id: `${bookId}_${entry.name}`,
+    text: entry.name,
+    lemma: entry.name,
+    definition: entry.trans.join("；"),
+    partOfSpeech: "other",
+    phonetic: entry.usphone || entry.ukphone || undefined,
+    difficulty: BOOK_DIFFICULTY[bookId] ?? "B1",
+    tags: [],
+    createdAt: Date.now(),
+  };
+}
