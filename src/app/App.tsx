@@ -5,9 +5,10 @@ import { AudioProvider } from "./providers/AudioProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 import { DashboardPage } from "@/components/pages/DashboardPage";
+import { ReviewPage } from "@/components/pages/ReviewPage";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
 import { ROUTES } from "@/lib/constants";
-import { Repeat, BookOpen, Headphones, Mic, Settings } from "lucide-react";
+import { BookOpen, Headphones, Mic, Settings } from "lucide-react";
 
 const HomePage = () => (
   <div className="flex h-full items-center justify-center px-4 py-16">
@@ -36,16 +37,7 @@ export function App() {
               <Route element={<AppShell />}>
                 <Route path={ROUTES.HOME} element={<HomePage />} />
                 <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-                <Route
-                  path={ROUTES.REVIEW}
-                  element={
-                    <PagePlaceholder
-                      title="今日复习"
-                      description="基于 FSRS 遗忘曲线的智能调度复习"
-                      icon={<Repeat className="h-7 w-7" />}
-                    />
-                  }
-                />
+                <Route path={ROUTES.REVIEW} element={<ReviewPage />} />
                 <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
                 <Route
                   path={ROUTES.READING}

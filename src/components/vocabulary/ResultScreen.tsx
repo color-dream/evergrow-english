@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
-import { cn } from "@/lib/utils";
+
 import { X, Heart, ThumbsUp, AlertTriangle } from "lucide-react";
 
 interface ResultScreenProps {
@@ -24,9 +24,7 @@ export function ResultScreen({
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
   const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 0;
-  const wpm =
-    elapsed > 0 ? Math.round((wordResults.length / elapsed) * 60) : 0;
-  const wordsCorrect = wordResults.filter((r) => r.isCorrect).length;
+  const wpm = elapsed > 0 ? Math.round((wordResults.length / elapsed) * 60) : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
@@ -84,9 +82,11 @@ export function ResultScreen({
                 unit="%"
                 showRing
                 color={
-                  accuracy >= 85 ? "text-green-500"
-                  : accuracy >= 70 ? "text-yellow-500"
-                  : "text-red-500"
+                  accuracy >= 85
+                    ? "text-green-500"
+                    : accuracy >= 70
+                      ? "text-yellow-500"
+                      : "text-red-500"
                 }
               />
               <RemarkRing
@@ -106,7 +106,11 @@ export function ResultScreen({
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {wrongWords.map((r) => (
-                      <WordChip key={r.wordId} word={r.wordText} wrongCount={r.wrongCount} />
+                      <WordChip
+                        key={r.wordId}
+                        word={r.wordText}
+                        wrongCount={r.wrongCount}
+                      />
                     ))}
                   </div>
                 )}
@@ -114,29 +118,37 @@ export function ResultScreen({
 
               {/* 结语 */}
               <div className="mt-auto flex items-center gap-2 rounded-xl bg-indigo-200 px-4 py-3 text-sm font-medium text-indigo-800 dark:bg-indigo-400 dark:text-indigo-100">
-                <ConclusionIcon accuracy={accuracy} wrongCount={wrongWords.length} />
-                <ConclusionMessage accuracy={accuracy} wrongCount={wrongWords.length} />
+                <ConclusionIcon
+                  accuracy={accuracy}
+                  wrongCount={wrongWords.length}
+                />
+                <ConclusionMessage
+                  accuracy={accuracy}
+                  wrongCount={wrongWords.length}
+                />
               </div>
             </div>
           </div>
 
           {/* 底部操作按钮 */}
           <div className="mt-10 flex justify-center gap-4">
-            <OutlineButton onClick={() => {
-              setDictation({ enabled: true });
-              onDictationRepeat();
-            }}>
+            <OutlineButton
+              onClick={() => {
+                setDictation({ enabled: true });
+                onDictationRepeat();
+              }}
+            >
               默写本章节
             </OutlineButton>
-            <PrimaryButton onClick={() => {
-              setIsTyping(true);
-              onRepeat();
-            }}>
+            <PrimaryButton
+              onClick={() => {
+                setIsTyping(true);
+                onRepeat();
+              }}
+            >
               重复本章节
             </PrimaryButton>
-            <PrimaryButton onClick={onChangeBook}>
-              更换词库
-            </PrimaryButton>
+            <PrimaryButton onClick={onChangeBook}>更换词库</PrimaryButton>
           </div>
         </div>
       </div>
@@ -161,7 +173,9 @@ function RemarkRing({
   const displayColor = color ?? "text-foreground";
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className={`rounded-full ${showRing ? "border-8 border-indigo-200" : ""} flex h-28 w-28 items-center justify-center`}>
+      <div
+        className={`rounded-full ${showRing ? "border-8 border-indigo-200" : ""} flex h-28 w-28 items-center justify-center`}
+      >
         <div className="text-center">
           <span className={`text-xl font-bold tabular-nums ${displayColor}`}>
             {value}
@@ -206,10 +220,8 @@ function ConclusionMessage({
   wrongCount: number;
 }) {
   if (wrongCount === 0) return <span>全对了，完美！</span>;
-  if (accuracy >= 85)
-    return <span>表现不错！只错了 {wrongCount} 个单词</span>;
-  if (accuracy >= 70)
-    return <span>有些小问题哦，下一次可以做得更好！</span>;
+  if (accuracy >= 85) return <span>表现不错！只错了 {wrongCount} 个单词</span>;
+  if (accuracy >= 70) return <span>有些小问题哦，下一次可以做得更好！</span>;
   return <span>错误太多，再来一次如何？</span>;
 }
 

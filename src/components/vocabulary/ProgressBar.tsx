@@ -1,17 +1,33 @@
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { cn } from "@/lib/utils";
 
-export function ProgressBar() {
-  const currentIndex = useVocabularySessionStore((s) => s.currentIndex);
-  const total = useVocabularySessionStore((s) => s.words.length);
+interface ProgressBarProps {
+  /** 覆盖当前进度（用于非 vocabulary 页面） */
+  current?: number;
+  /** 覆盖总数（用于非 vocabulary 页面） */
+  total?: number;
+}
+
+export function ProgressBar({
+  current,
+  total: totalOverride,
+}: ProgressBarProps) {
+  const storeCurrent = useVocabularySessionStore((s) => s.currentIndex);
+  const storeTotal = useVocabularySessionStore((s) => s.words.length);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
 
-  const progress = total > 0 ? Math.floor(((currentIndex + 1) / total) * 100) : 0;
+  const currentIndex = current ?? storeCurrent;
+  const total = totalOverride ?? storeTotal;
+
+  const progress =
+    total > 0 ? Math.floor(((currentIndex + 1) / total) * 100) : 0;
 
   const phase =
-    progress < 33 ? "bg-indigo-200 dark:bg-indigo-300"
-    : progress < 67 ? "bg-indigo-300 dark:bg-indigo-400"
-    : "bg-indigo-400 dark:bg-indigo-500";
+    progress < 33
+      ? "bg-indigo-200 dark:bg-indigo-300"
+      : progress < 67
+        ? "bg-indigo-300 dark:bg-indigo-400"
+        : "bg-indigo-400 dark:bg-indigo-500";
 
   return (
     <div

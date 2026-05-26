@@ -2,6 +2,8 @@ import { useCallback, useEffect } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useTimer } from "@/hooks/useTimer";
 import { useWordBook } from "@/hooks/useWordBook";
+import { useFSRSSync } from "@/hooks/useFSRSSync";
+import { addStudySession } from "@/lib/db";
 import { VocabularyHeader } from "./VocabularyHeader";
 import { WordCard } from "./WordCard";
 import { ProgressBar } from "./ProgressBar";
@@ -24,7 +26,9 @@ export function VocabularyPage() {
   const addWordResult = useVocabularySessionStore((s) => s.addWordResult);
   const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
-  const setElapsedSeconds = useVocabularySessionStore((s) => s.setElapsedSeconds);
+  const setElapsedSeconds = useVocabularySessionStore(
+    (s) => s.setElapsedSeconds
+  );
 
   // 进入学习时隐藏侧边栏，获得沉浸式体验
   useEffect(() => {
@@ -39,6 +43,22 @@ export function VocabularyPage() {
 
   const elapsed = useTimer(phase === "active" ? startTime : null);
 
+  // 会话结束时记录 StudySession
+  useEffect(() => {
+    if (phase === "finished" && startTime) {
+      const wordResults = useVocabularySessionStore.getState().wordResults;
+      const wordsCorrect = wordResults.filter((r) => r.isCorrect).length;
+      addStudySession({
+        sessionType: "learn-new",
+        startTime,
+        endTime: Date.now(),
+        cardsReviewed: wordResults.length,
+        cardsCorrect: wordsCorrect,
+        totalTimeSpentMs: Date.now() - startTime,
+      }).catch(() => {});
+    }
+  }, [phase, startTime]);
+
   useEffect(() => {
     if (phase === "active") {
       setElapsedSeconds(elapsed);
@@ -46,15 +66,18 @@ export function VocabularyPage() {
   }, [elapsed, phase, setElapsedSeconds]);
 
   const { isLoading, selectBook, startRound } = useWordBook();
+  const { saveWordResult } = useFSRSSync();
 
   const onComplete = useCallback(
     (result: WordResult) => {
       addWordResult(result);
+      // fire-and-forget: 将结果写入 FSRS 卡片
+      saveWordResult(result, selectedBook ?? "");
       setTimeout(() => {
         advanceWord();
       }, 400);
     },
-    [addWordResult, advanceWord]
+    [addWordResult, advanceWord, saveWordResult, selectedBook]
   );
 
   const onKeystroke = useCallback(

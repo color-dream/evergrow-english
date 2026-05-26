@@ -1,22 +1,9 @@
 import { useState } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
-import {
-  WORD_BOOK_OPTIONS,
-  WORD_BOOK_META,
-} from "@/lib/word-book-registry";
+import { WORD_BOOK_OPTIONS, WORD_BOOK_META } from "@/lib/word-book-registry";
 import type { TypingMode, DictationType, WordBookId } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
-import {
-  BookMarked,
-  SkipForward,
-  Eye,
-  EyeOff,
-  Settings,
-  Play,
-  Pause,
-  RotateCw,
-  X,
-} from "lucide-react";
+import { Eye, EyeOff, Settings, Play, Pause, RotateCw, X } from "lucide-react";
 
 const DICTATION_OPTIONS: { key: DictationType; label: string }[] = [
   { key: "hideAll", label: "全部隐藏" },
@@ -149,11 +136,9 @@ export function VocabularyHeader({
 
                 {/* 听写 */}
                 <ToolIconButton
-                  onClick={() =>
-                    setDictation({ enabled: !dictation.enabled })
-                  }
+                  onClick={() => setDictation({ enabled: !dictation.enabled })}
                   active={dictation.enabled}
-                  title={`听写模式 (${DICTATION_OPTIONS.find((d) => d.type === dictation.type)?.label})`}
+                  title={`听写模式 (${DICTATION_OPTIONS.find((d) => d.key === dictation.type)?.label})`}
                 >
                   {dictation.enabled ? (
                     <EyeOff className="h-4 w-4" />

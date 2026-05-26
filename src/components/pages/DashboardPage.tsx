@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookMarked,
@@ -10,6 +11,8 @@ import {
   Target,
 } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
+import { getAllCards } from "@/lib/db";
+import { getDueCards, getMasteredCount } from "@/lib/fsrs";
 
 const quickActions = [
   {
@@ -56,6 +59,24 @@ const quickActions = [
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ mastered: 0, due: 0, streak: 0 });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const all = await getAllCards();
+        if (all.length === 0) return;
+        const now = Date.now();
+        setStats({
+          mastered: getMasteredCount(all),
+          due: getDueCards(all, now).length,
+          streak: 0, // 连续天数暂未实现，需额外活动追踪表
+        });
+      } catch {
+        // 静默处理
+      }
+    })();
+  }, []);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 animate-fade-in">
@@ -76,21 +97,27 @@ export function DashboardPage() {
             <Flame className="h-4 w-4 text-warning" />
             <span className="text-xs text-muted-foreground">连续天数</span>
           </div>
-          <p className="font-mono text-2xl font-bold tabular-nums">0</p>
+          <p className="font-mono text-2xl font-bold tabular-nums">
+            {stats.streak}
+          </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
           <div className="mb-2 flex items-center gap-1.5">
             <TrendingUp className="h-4 w-4 text-success" />
             <span className="text-xs text-muted-foreground">已掌握</span>
           </div>
-          <p className="font-mono text-2xl font-bold tabular-nums">0</p>
+          <p className="font-mono text-2xl font-bold tabular-nums">
+            {stats.mastered}
+          </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-xs">
           <div className="mb-2 flex items-center gap-1.5">
             <Target className="h-4 w-4 text-primary" />
             <span className="text-xs text-muted-foreground">今日待复习</span>
           </div>
-          <p className="font-mono text-2xl font-bold tabular-nums">0</p>
+          <p className="font-mono text-2xl font-bold tabular-nums">
+            {stats.due}
+          </p>
         </div>
       </div>
 
