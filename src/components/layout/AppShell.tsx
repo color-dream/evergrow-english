@@ -10,8 +10,8 @@ export function AppShell() {
     <div className="flex h-screen overflow-hidden bg-background">
       {!sidebarForceHidden && <Sidebar />}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        {!sidebarForceHidden && <Header />}
+        <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>

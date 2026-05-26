@@ -1,43 +1,68 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: oklch(0.55 0.2 260);
+  /* ═══ 品牌色 ═══ */
+  --color-primary: oklch(0.55 0.16 245);
   --color-primary-foreground: oklch(0.98 0 0);
-  --color-secondary: oklch(0.95 0.01 260);
-  --color-secondary-foreground: oklch(0.2 0.02 260);
-  --color-muted: oklch(0.95 0.01 260);
-  --color-muted-foreground: oklch(0.5 0.02 260);
-  --color-accent: oklch(0.65 0.18 180);
+
+  /* ═══ 强调色 — 暖青绿，用于完成/CTA ═══ */
+  --color-accent: oklch(0.58 0.15 160);
   --color-accent-foreground: oklch(0.98 0 0);
-  --color-destructive: oklch(0.55 0.2 20);
-  --color-success: oklch(0.55 0.18 140);
-  --color-warning: oklch(0.7 0.15 85);
+
+  /* ═══ 语义色 ═══ */
+  --color-success: oklch(0.55 0.15 145);
+  --color-warning: oklch(0.72 0.14 80);
+  --color-destructive: oklch(0.5 0.16 15);
+
+  /* ═══ 表面色（亮色） ═══ */
+  --color-background: oklch(0.985 0.002 260);
+  --color-foreground: oklch(0.15 0.02 260);
   --color-card: oklch(1 0 0);
   --color-card-foreground: oklch(0.15 0.02 260);
-  --color-border: oklch(0.85 0.01 260);
-  --color-input: oklch(0.85 0.01 260);
-  --color-ring: oklch(0.55 0.2 260);
-  --color-background: oklch(0.98 0 0);
-  --color-foreground: oklch(0.15 0.02 260);
+  --color-muted: oklch(0.955 0.005 260);
+  --color-muted-foreground: oklch(0.48 0.02 260);
+  --color-secondary: oklch(0.95 0.008 260);
+  --color-secondary-foreground: oklch(0.18 0.02 260);
 
+  /* ═══ 边框与输入 ═══ */
+  --color-border: oklch(0.88 0.01 260);
+  --color-input: oklch(0.88 0.01 260);
+  --color-ring: oklch(0.55 0.16 245);
+
+  /* ═══ 圆角 ═══ */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
 
+  /* ═══ 字体 ═══ */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --animate-slide-up: slide-up 0.3s ease-out;
+  /* ═══ 阴影 ═══ */
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.04);
+  --shadow-md:
+    0 4px 6px -1px oklch(0 0 0 / 0.06), 0 2px 4px -2px oklch(0 0 0 / 0.04);
+
+  /* ═══ 动画 ═══ */
+  --animate-slide-up: slide-up 0.35s ease-out;
   --animate-slide-down: slide-down 0.3s ease-out;
   --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-breathe: breathe 2s ease-in-out infinite;
+  --animate-pop-in: pop-in 0.2s ease-out;
+  --animate-shake: shake 0.4s ease-in-out;
 }
+
+/* ═══════════════════════════════════════════
+   关键帧
+   ═══════════════════════════════════════════ */
 
 @keyframes slide-up {
   from {
     opacity: 0;
-    transform: translateY(1rem);
+    transform: translateY(0.75rem);
   }
   to {
     opacity: 1;
@@ -48,7 +73,7 @@
 @keyframes slide-down {
   from {
     opacity: 0;
-    transform: translateY(-1rem);
+    transform: translateY(-0.75rem);
   }
   to {
     opacity: 1;
@@ -57,28 +82,105 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.dark {
-  --color-primary: oklch(0.7 0.18 260);
-  --color-card: oklch(0.2 0.01 260);
-  --color-card-foreground: oklch(0.95 0 0);
-  --color-border: oklch(0.3 0.01 260);
-  --color-input: oklch(0.3 0.01 260);
-  --color-background: oklch(0.13 0.01 260);
-  --color-foreground: oklch(0.95 0 0);
-  --color-muted: oklch(0.25 0.01 260);
-  --color-muted-foreground: oklch(0.6 0.02 260);
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.85;
+  }
 }
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   暗色模式
+   ═══════════════════════════════════════════ */
+
+.dark {
+  --color-primary: oklch(0.68 0.16 245);
+  --color-primary-foreground: oklch(0.13 0.01 260);
+  --color-accent: oklch(0.65 0.14 160);
+
+  --color-success: oklch(0.62 0.14 145);
+  --color-warning: oklch(0.75 0.13 80);
+  --color-destructive: oklch(0.58 0.15 15);
+
+  --color-background: oklch(0.14 0.008 260);
+  --color-foreground: oklch(0.94 0 0);
+  --color-card: oklch(0.19 0.01 260);
+  --color-card-foreground: oklch(0.94 0 0);
+  --color-muted: oklch(0.23 0.01 260);
+  --color-muted-foreground: oklch(0.58 0.02 260);
+  --color-secondary: oklch(0.22 0.01 260);
+  --color-secondary-foreground: oklch(0.92 0 0);
+
+  --color-border: oklch(0.26 0.01 260);
+  --color-input: oklch(0.26 0.01 260);
+  --color-ring: oklch(0.68 0.16 245);
+
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.15);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.12);
+  --shadow-md:
+    0 4px 6px -1px oklch(0 0 0 / 0.2), 0 2px 4px -2px oklch(0 0 0 / 0.12);
+}
+
+/* ═══════════════════════════════════════════
+   全局基础
+   ═══════════════════════════════════════════ */
 
 html {
   font-family: var(--font-sans);
   color: var(--color-foreground);
   background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   min-height: 100dvh;
+}
+
+/* 去掉 Tailwind 默认的边框重置，保留我们自己的 border-color */
+* {
+  border-color: var(--color-border);
 }

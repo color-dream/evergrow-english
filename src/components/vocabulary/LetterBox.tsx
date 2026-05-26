@@ -14,6 +14,12 @@ const colorMap: Record<LetterState, string> = {
   wrong: "text-destructive",
 };
 
+const boxMap: Record<LetterState, string> = {
+  normal: "",
+  correct: "scale-110",
+  wrong: "animate-shake",
+};
+
 const LetterBox = React.memo(function LetterBox({
   letter,
   state,
@@ -22,9 +28,12 @@ const LetterBox = React.memo(function LetterBox({
   return (
     <span
       className={cn(
-        "font-mono text-3xl select-none transition-colors duration-75",
-        visible ? colorMap[state] : "text-muted-foreground"
+        "inline-flex h-14 w-9 items-center justify-center font-mono text-4xl font-medium select-none rounded-md transition-all duration-100",
+        visible
+          ? cn(colorMap[state], boxMap[state])
+          : "text-muted-foreground/40"
       )}
+      aria-label={visible ? letter : "隐藏字母"}
     >
       {visible ? letter : "_"}
     </span>

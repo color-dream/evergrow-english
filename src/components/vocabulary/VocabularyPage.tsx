@@ -6,13 +6,20 @@ import { VOCABULARY_ROUND_SIZES } from "@/lib/constants";
 import { ProgressHeader } from "./ProgressHeader";
 import { WordCard } from "./WordCard";
 import type { WordResult } from "@/types/vocabulary";
+import type { DictationType } from "@/types/vocabulary";
 import { useUIStore } from "@/stores/ui-store";
 import { cn } from "@/lib/utils";
+
+const DICTATION_OPTIONS: { key: DictationType; label: string }[] = [
+  { key: "hideAll", label: "全部隐藏" },
+  { key: "hideVowel", label: "隐藏元音" },
+  { key: "hideConsonant", label: "隐藏辅音" },
+  { key: "randomHide", label: "随机隐藏" },
+];
 
 export function VocabularyPage() {
   const phase = useVocabularySessionStore((s) => s.phase);
 
-  // 打词练习阶段隐藏侧边栏，提供沉浸式体验
   useEffect(() => {
     if (phase === "active") {
       useUIStore.getState().setSidebarForceHidden(true);
@@ -22,6 +29,7 @@ export function VocabularyPage() {
     }
     useUIStore.getState().setSidebarForceHidden(false);
   }, [phase]);
+
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
   const mode = useVocabularySessionStore((s) => s.mode);
   const dictation = useVocabularySessionStore((s) => s.dictation);
@@ -44,13 +52,11 @@ export function VocabularyPage() {
   const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
 
-  // 计时器
   const setElapsedSeconds = useVocabularySessionStore(
     (s) => s.setElapsedSeconds
   );
   const elapsed = useTimer(phase === "active" ? startTime : null);
 
-  // 同步 useTimer 到 store
   useEffect(() => {
     if (phase === "active") {
       setElapsedSeconds(elapsed);
@@ -60,7 +66,6 @@ export function VocabularyPage() {
   const onComplete = useCallback(
     (result: WordResult) => {
       addWordResult(result);
-      // 使用 setTimeout 给用户短暂看到结果
       setTimeout(() => {
         advanceWord();
       }, 400);
@@ -80,109 +85,99 @@ export function VocabularyPage() {
   // ── 闲置阶段：配置面板 ──
   if (phase === "idle") {
     return (
-      <div className="mx-auto max-w-xl px-4 py-12 animate-fade-in">
-        <h1 className="mb-2 text-center text-2xl font-bold">词汇打字</h1>
-        <p className="mb-10 text-center text-sm text-muted-foreground">
-          通过逐字母输入来强化单词记忆
-        </p>
-
-        {/* 每轮词数 */}
-        <div className="mb-8">
-          <label className="mb-2 block text-sm font-medium">每轮词数</label>
-          <div className="flex gap-2">
-            {VOCABULARY_ROUND_SIZES.map((n) => (
-              <button
-                key={n}
-                onClick={() => setWordsPerRound(n)}
-                className={cn(
-                  "flex-1 rounded-md border py-2 text-sm font-medium transition-colors",
-                  wordsPerRound === n
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-muted-foreground"
-                )}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* 打字模式 */}
-        <div className="mb-8">
-          <label className="mb-2 block text-sm font-medium">打字模式</label>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMode("strict")}
-              className={cn(
-                "flex-1 rounded-md border py-2 text-sm font-medium transition-colors",
-                mode === "strict"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-muted-foreground"
-              )}
-            >
-              严格模式
-            </button>
-            <button
-              onClick={() => setMode("loose")}
-              className={cn(
-                "flex-1 rounded-md border py-2 text-sm font-medium transition-colors",
-                mode === "loose"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border hover:border-muted-foreground"
-              )}
-            >
-              宽松模式
-            </button>
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {mode === "strict"
-              ? "打错即重置当前词，防止形成错误肌肉记忆"
-              : "允许退格修正，输完后再对比"}
+      <div className="mx-auto max-w-lg px-4 py-16 animate-fade-in">
+        <div className="mb-10 text-center">
+          <h1 className="text-2xl font-bold text-foreground">词汇打字</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            逐字母输入，强化单词记忆
           </p>
         </div>
 
-        {/* 听写模式 */}
-        <div className="mb-10">
-          <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={dictation.enabled}
-              onChange={(e) => setDictation({ enabled: e.target.checked })}
-              className="rounded"
-            />
-            听写模式
-          </label>
-          {dictation.enabled && (
-            <div className="ml-6 flex flex-wrap gap-2">
-              {(
-                [
-                  { key: "hideAll", label: "全部隐藏" },
-                  { key: "hideVowel", label: "隐藏元音" },
-                  { key: "hideConsonant", label: "隐藏辅音" },
-                  { key: "randomHide", label: "随机隐藏" },
-                ] as const
-              ).map(({ key, label }) => (
+        {/* 配置卡片 */}
+        <div className="space-y-8 rounded-xl border border-border bg-card p-6 shadow-xs">
+          {/* 每轮词数 */}
+          <fieldset>
+            <legend className="mb-3 text-sm font-medium">每轮词数</legend>
+            <div className="flex gap-2">
+              {VOCABULARY_ROUND_SIZES.map((n) => (
                 <button
-                  key={key}
-                  onClick={() => setDictation({ type: key })}
+                  key={n}
+                  onClick={() => setWordsPerRound(n)}
                   className={cn(
-                    "rounded-md border px-3 py-1 text-xs font-medium transition-colors",
-                    dictation.type === key
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border hover:border-muted-foreground"
+                    "flex-1 rounded-lg border py-2.5 text-sm font-medium transition-all",
+                    wordsPerRound === n
+                      ? "border-primary/40 bg-primary/8 text-primary shadow-xs"
+                      : "border-border bg-transparent text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
                   )}
                 >
-                  {label}
+                  {n}
                 </button>
               ))}
             </div>
-          )}
+          </fieldset>
+
+          {/* 打字模式 */}
+          <fieldset>
+            <legend className="mb-3 text-sm font-medium">打字模式</legend>
+            <div className="flex gap-2">
+              {(["strict", "loose"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={cn(
+                    "flex-1 rounded-lg border py-2.5 text-sm font-medium transition-all",
+                    mode === m
+                      ? "border-primary/40 bg-primary/8 text-primary shadow-xs"
+                      : "border-border bg-transparent text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
+                  )}
+                >
+                  {m === "strict" ? "严格模式" : "宽松模式"}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {mode === "strict"
+                ? "打错即重置当前词，防止形成错误肌肉记忆"
+                : "允许退格修正，输完后再整体比对"}
+            </p>
+          </fieldset>
+
+          {/* 听写模式 */}
+          <fieldset>
+            <legend className="mb-3 flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                checked={dictation.enabled}
+                onChange={(e) => setDictation({ enabled: e.target.checked })}
+                className="h-4 w-4 rounded accent-primary"
+              />
+              听写模式
+            </legend>
+            {dictation.enabled && (
+              <div className="ml-7 flex flex-wrap gap-2">
+                {DICTATION_OPTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setDictation({ type: key })}
+                    className={cn(
+                      "rounded-lg border px-3.5 py-1.5 text-xs font-medium transition-all",
+                      dictation.type === key
+                        ? "border-primary/40 bg-primary/8 text-primary shadow-xs"
+                        : "border-border bg-transparent text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </fieldset>
         </div>
 
         {/* 开始按钮 */}
         <button
           onClick={() => startSession(seedWords)}
-          className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          className="mt-6 w-full rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-xs transition-all hover:opacity-90 active:scale-[0.98]"
         >
           开始学习
         </button>
@@ -193,7 +188,7 @@ export function VocabularyPage() {
   // ── 进行中 ──
   if (phase === "active" && currentWord) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8 animate-fade-in">
+      <div className="mx-auto max-w-2xl px-4 py-6 animate-fade-in">
         <ProgressHeader />
         <WordCard
           key={currentWord.id}
@@ -222,33 +217,60 @@ export function VocabularyPage() {
     const seconds = elapsedSeconds % 60;
 
     return (
-      <div className="mx-auto max-w-xl px-4 py-12 animate-slide-up">
-        <h1 className="mb-8 text-center text-2xl font-bold">本轮完成</h1>
+      <div className="mx-auto max-w-lg px-4 py-16 animate-slide-up">
+        <div className="mb-10 text-center">
+          <h1 className="text-2xl font-bold text-foreground">本轮完成</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {wordsCorrect === wordResults.length
+              ? "全部正确，太棒了！"
+              : `完成 ${wordResults.length} 个单词`}
+          </p>
+        </div>
 
-        {/* 统计卡片 */}
-        <div className="mb-8 grid grid-cols-2 gap-4">
-          <div className="rounded-lg border border-border p-4 text-center">
-            <p className="text-3xl font-bold font-mono tabular-nums">
+        {/* 统计卡片网格 */}
+        <div className="mb-8 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-border bg-card p-4 text-center shadow-xs">
+            <p className="font-mono text-3xl font-bold tabular-nums text-foreground">
               {String(minutes).padStart(2, "0")}:
               {String(seconds).padStart(2, "0")}
             </p>
-            <p className="text-xs text-muted-foreground">用时</p>
+            <p className="mt-1 text-xs text-muted-foreground">用时</p>
           </div>
-          <div className="rounded-lg border border-border p-4 text-center">
-            <p className="text-3xl font-bold text-success font-mono tabular-nums">
+          <div className="rounded-xl border border-border bg-card p-4 text-center shadow-xs">
+            <p
+              className={cn(
+                "font-mono text-3xl font-bold tabular-nums",
+                accuracy >= 90
+                  ? "text-success"
+                  : accuracy >= 70
+                    ? "text-warning"
+                    : "text-destructive"
+              )}
+            >
               {accuracy}%
             </p>
-            <p className="text-xs text-muted-foreground">准确率</p>
+            <p className="mt-1 text-xs text-muted-foreground">准确率</p>
           </div>
-          <div className="rounded-lg border border-border p-4 text-center">
-            <p className="text-3xl font-bold font-mono tabular-nums">{wpm}</p>
-            <p className="text-xs text-muted-foreground">WPM</p>
+          <div className="rounded-xl border border-border bg-card p-4 text-center shadow-xs">
+            <p className="font-mono text-3xl font-bold tabular-nums text-foreground">
+              {wpm}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">WPM</p>
           </div>
-          <div className="rounded-lg border border-border p-4 text-center">
-            <p className="text-3xl font-bold font-mono tabular-nums">
+          <div className="rounded-xl border border-border bg-card p-4 text-center shadow-xs">
+            <p
+              className={cn(
+                "font-mono text-3xl font-bold tabular-nums",
+                wordsCorrect === wordResults.length
+                  ? "text-success"
+                  : wordsCorrect === 0
+                    ? "text-destructive"
+                    : "text-foreground"
+              )}
+            >
               {wordsCorrect}/{wordResults.length}
             </p>
-            <p className="text-xs text-muted-foreground">完全正确</p>
+            <p className="mt-1 text-xs text-muted-foreground">完全正确</p>
           </div>
         </div>
 
@@ -256,19 +278,22 @@ export function VocabularyPage() {
         {wordResults.some((r) => !r.isCorrect) && (
           <div className="mb-8">
             <h2 className="mb-3 text-sm font-semibold">出错词汇</h2>
-            <div className="rounded-lg border border-border">
+            <div className="overflow-hidden rounded-xl border border-border shadow-xs">
               {wordResults
                 .filter((r) => !r.isCorrect)
-                .map((r) => (
+                .map((r, i) => (
                   <div
                     key={r.wordId}
-                    className="flex items-center justify-between border-b border-border px-4 py-2 last:border-0"
+                    className={cn(
+                      "flex items-center justify-between bg-card px-4 py-3",
+                      i !== 0 && "border-t border-border"
+                    )}
                   >
                     <span className="font-mono font-medium">{r.wordText}</span>
                     <span className="text-xs text-muted-foreground">
                       {r.definition}
                     </span>
-                    <span className="text-xs text-destructive">
+                    <span className="text-xs font-medium text-destructive">
                       错误 {r.wrongCount} 次
                     </span>
                   </div>
@@ -281,13 +306,13 @@ export function VocabularyPage() {
         <div className="flex gap-3">
           <button
             onClick={() => startSession(seedWords)}
-            className="flex-1 rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            className="flex-1 rounded-xl bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-xs transition-all hover:opacity-90 active:scale-[0.98]"
           >
             再来一轮
           </button>
           <button
             onClick={resetSession}
-            className="rounded-lg border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
+            className="rounded-xl border border-border px-6 py-3.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
           >
             返回配置
           </button>
