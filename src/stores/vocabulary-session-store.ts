@@ -8,11 +8,15 @@ import type {
   WordBookId,
 } from "@/types/vocabulary";
 
+/** 学习模式 */
+export type LearnMode = "new" | "review" | "mixed";
+
 interface VocabularySessionState {
   // ── 配置 ──
   selectedWordBook: WordBookId | null;
   mode: TypingMode;
   dictation: DictationConfig;
+  learnMode: LearnMode;
 
   // ── 会话生命周期 ──
   phase: SessionPhase;
@@ -34,6 +38,7 @@ interface VocabularySessionState {
   setSelectedWordBook: (id: WordBookId) => void;
   setMode: (mode: TypingMode) => void;
   setDictation: (config: Partial<DictationConfig>) => void;
+  setLearnMode: (mode: LearnMode) => void;
   startSession: (words: Word[]) => void;
   advanceWord: () => void;
   addWordResult: (result: WordResult) => void;
@@ -50,6 +55,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     selectedWordBook: null,
     mode: "strict",
     dictation: { enabled: false, type: "hideAll" },
+    learnMode: "new",
 
     phase: "idle",
     words: [],
@@ -72,6 +78,8 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
       set((s) => ({
         dictation: { ...s.dictation, ...config },
       })),
+
+    setLearnMode: (mode) => set({ learnMode: mode }),
 
     startSession: (words) =>
       set({

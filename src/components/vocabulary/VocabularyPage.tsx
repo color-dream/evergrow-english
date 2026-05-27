@@ -3,15 +3,18 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useTimer } from "@/hooks/useTimer";
 import { useWordBook } from "@/hooks/useWordBook";
 import { useFSRSSync } from "@/hooks/useFSRSSync";
-import { addStudySession } from "@/lib/db";
+import { addStudySession, getCardsByBookId } from "@/lib/db";
+import { getDueCards } from "@/lib/fsrs";
+import { shuffleArray } from "@/lib/vocabulary-utils";
+import { FIXED_WORDS_PER_ROUND } from "@/lib/constants";
 import { VocabularyHeader } from "./VocabularyHeader";
 import { WordCard } from "./WordCard";
 import { ProgressBar } from "./ProgressBar";
 import { SpeedBar } from "./SpeedBar";
 import { ResultScreen } from "./ResultScreen";
-import type { WordResult } from "@/types/vocabulary";
+import type { WordResult, WordBookId } from "@/types/vocabulary";
 import { useUIStore } from "@/stores/ui-store";
-import { BookMarked } from "lucide-react";
+import { WordBookList } from "./WordBookList";
 
 export function VocabularyPage() {
   const phase = useVocabularySessionStore((s) => s.phase);
@@ -26,6 +29,7 @@ export function VocabularyPage() {
   const addWordResult = useVocabularySessionStore((s) => s.addWordResult);
   const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
+  const setLearnMode = useVocabularySessionStore((s) => s.setLearnMode);
   const setElapsedSeconds = useVocabularySessionStore(
     (s) => s.setElapsedSeconds
   );
@@ -65,8 +69,43 @@ export function VocabularyPage() {
     }
   }, [elapsed, phase, setElapsedSeconds]);
 
-  const { isLoading, selectBook, startRound } = useWordBook();
+  const { selectBook } = useWordBook();
+  const startSession = useVocabularySessionStore((s) => s.startSession);
   const { saveWordResult } = useFSRSSync();
+
+  const handleSelectBook = useCallback(
+    async (id: WordBookId) => {
+      const loadedWords = await selectBook(id);
+      const cards = await getCardsByBookId(id);
+      const dueCards = getDueCards(cards, Date.now());
+      const mode = dueCards.length > 0 ? "mixed" : "new";
+      setLearnMode(mode);
+
+      // 直接构建本轮单词并启动，避免闭包问题
+      let roundWords;
+      if (mode === "mixed") {
+        const dueWords = dueCards.slice(0, FIXED_WORDS_PER_ROUND).map((card) => ({
+          id: card.id,
+          text: card.wordText,
+          lemma: card.wordText,
+          definition: card.definition,
+          partOfSpeech: "other" as const,
+          difficulty: "B1" as const,
+          tags: [],
+          createdAt: card.createdAt,
+        }));
+        const dueCount = Math.min(dueWords.length, Math.floor(FIXED_WORDS_PER_ROUND / 2));
+        const newCount = FIXED_WORDS_PER_ROUND - dueCount;
+        const newPart = shuffleArray(loadedWords).slice(0, newCount);
+        roundWords = [...dueWords.slice(0, dueCount), ...newPart];
+      } else {
+        roundWords = shuffleArray(loadedWords).slice(0, FIXED_WORDS_PER_ROUND);
+      }
+
+      startSession(roundWords);
+    },
+    [selectBook, setLearnMode, startSession]
+  );
 
   const onComplete = useCallback(
     (result: WordResult) => {
@@ -95,27 +134,11 @@ export function VocabularyPage() {
   return (
     <div className="flex h-full flex-col">
       {/* Header 工具栏 */}
-      <VocabularyHeader
-        onStart={startRound}
-        onSelectBook={selectBook}
-        isLoading={isLoading}
-      />
+      <VocabularyHeader />
 
-      {/* 空闲：词库选择占位 */}
+      {/* 空闲：单词本列表 */}
       {phase === "idle" && (
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center animate-fade-in">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-              <BookMarked className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground">词汇打字</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {selectedBook
-                ? "词库已就绪，点击上方开始按钮"
-                : "请从上方选择词库开始学习"}
-            </p>
-          </div>
-        </div>
+        <WordBookList onSelectBook={handleSelectBook} />
       )}
 
       {/* 学习中 */}
@@ -146,13 +169,13 @@ export function VocabularyPage() {
           </div>
           <ResultScreen
             onRepeat={() => {
-              startRound();
+              if (selectedBook) handleSelectBook(selectedBook);
             }}
             onChangeBook={() => {
               resetSession();
             }}
             onDictationRepeat={() => {
-              startRound();
+              if (selectedBook) handleSelectBook(selectedBook);
             }}
           />
         </>

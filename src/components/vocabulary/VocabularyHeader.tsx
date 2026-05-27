@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
-import { WORD_BOOK_OPTIONS, WORD_BOOK_META } from "@/lib/word-book-registry";
-import type { TypingMode, DictationType, WordBookId } from "@/types/vocabulary";
+import { WORD_BOOK_META } from "@/lib/word-book-registry";
+import type { TypingMode, DictationType } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
 import { Eye, EyeOff, Settings, Play, Pause, RotateCw, X } from "lucide-react";
 
@@ -12,17 +12,7 @@ const DICTATION_OPTIONS: { key: DictationType; label: string }[] = [
   { key: "randomHide", label: "随机隐藏" },
 ];
 
-interface VocabularyHeaderProps {
-  onStart: () => void;
-  onSelectBook: (id: WordBookId) => void;
-  isLoading: boolean;
-}
-
-export function VocabularyHeader({
-  onStart,
-  onSelectBook,
-  isLoading,
-}: VocabularyHeaderProps) {
+export function VocabularyHeader() {
   const phase = useVocabularySessionStore((s) => s.phase);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
   const mode = useVocabularySessionStore((s) => s.mode);
@@ -35,8 +25,6 @@ export function VocabularyHeader({
 
   const [showSettings, setShowSettings] = useState(false);
   const bookMeta = selectedBook ? WORD_BOOK_META[selectedBook] : null;
-
-  const canStart = selectedBook !== null && !isLoading;
 
   return (
     <>
@@ -56,40 +44,6 @@ export function VocabularyHeader({
 
           {/* 右侧：工具栏 */}
           <nav className="my-card flex w-auto items-center gap-2 rounded-xl bg-card px-4 py-2 shadow-my-card">
-            {phase === "idle" && (
-              <>
-                {/* 词库选择器 */}
-                <select
-                  value={selectedBook ?? ""}
-                  onChange={(e) => onSelectBook(e.target.value as WordBookId)}
-                  className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-indigo-400"
-                >
-                  <option value="" disabled>
-                    选择词库
-                  </option>
-                  {WORD_BOOK_OPTIONS.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.label} ({b.wordCount.toLocaleString()}词)
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={onStart}
-                  disabled={!canStart}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-all",
-                    canStart
-                      ? "bg-indigo-400 text-white hover:opacity-90 active:scale-[0.98]"
-                      : "cursor-not-allowed bg-muted text-muted-foreground"
-                  )}
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  {isLoading ? "加载中..." : "开始 (20词)"}
-                </button>
-              </>
-            )}
-
             {phase === "active" && (
               <>
                 {/* 暂停/继续 */}
