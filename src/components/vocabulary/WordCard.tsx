@@ -2,9 +2,10 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import type { Word } from "@/types/domain";
 import type {
   TypingMode,
-  DictationConfig,
-  WordResult,
+  WordLearnMode,
+  WordModeResult,
 } from "@/types/vocabulary";
+import type { ReviewWordMeta } from "@/stores/vocabulary-session-store";
 import { useWordTyping } from "@/hooks/useWordTyping";
 import { useKeyboardCapture } from "@/hooks/useKeyboardCapture";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
@@ -12,25 +13,40 @@ import { useAudio } from "@/app/providers/AudioProvider";
 import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
 import { SkipForward, Volume2 } from "lucide-react";
+import { FSRS_RATING_LABELS } from "@/lib/constants";
 
 interface WordCardProps {
   word: Word;
   prevWord?: Word | null;
   nextWord?: Word | null;
-  mode: TypingMode;
-  dictation: DictationConfig;
-  onComplete: (result: WordResult) => void;
+  learnMode: WordLearnMode;
+  typingMode: TypingMode;
+  onComplete: (result: WordModeResult) => void;
   onKeystroke: (correct: boolean) => void;
+  isReview?: boolean;
+  reviewMeta?: ReviewWordMeta;
+}
+
+/** 根据 learnMode 决定各元素是否可见 */
+function getVisibility(learnMode: WordLearnMode) {
+  return {
+    showWord: learnMode === "typeWithWord",
+    showTranslation:
+      learnMode === "typeWithWord" || learnMode === "typeWithoutWord",
+    showPhonetic: learnMode !== "typeWithoutWordAndTranslationAndPhonetic",
+  };
 }
 
 export function WordCard({
   word,
   prevWord,
   nextWord,
-  mode,
-  dictation,
+  learnMode,
+  typingMode,
   onComplete,
   onKeystroke,
+  isReview,
+  reviewMeta,
 }: WordCardProps) {
   const isIgnoreCase = true;
   const {
@@ -38,7 +54,6 @@ export function WordCard({
     handleChar,
     handleBackspace,
     setMode,
-    getLetterVisible,
     getLetterMistakes,
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
@@ -47,9 +62,12 @@ export function WordCard({
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
+  const { showWord, showTranslation, showPhonetic } =
+    getVisibility(learnMode);
+
   useEffect(() => {
-    setMode(mode);
-  }, [mode, setMode]);
+    setMode(typingMode);
+  }, [typingMode, setMode]);
 
   useEffect(() => {
     audio.speak(word.text, { rate: 0.8 }).catch(() => {});
@@ -57,7 +75,7 @@ export function WordCard({
 
   useEffect(() => {
     completedRef.current = false;
-  }, [word.id]);
+  }, [word.id, learnMode]);
 
   const onChar = useCallback(
     (char: string) => {
@@ -65,25 +83,24 @@ export function WordCard({
         setIsTyping(true);
         return;
       }
-      const result = handleChar(char, mode);
+      const result = handleChar(char, typingMode);
       if (result.accepted) {
         onKeystroke(result.correct);
       }
     },
-    [handleChar, mode, onKeystroke, isTyping, setIsTyping]
+    [handleChar, typingMode, onKeystroke, isTyping, setIsTyping]
   );
 
   const onBackspace = useCallback(() => {
-    if (mode === "loose") {
+    if (typingMode === "loose") {
       handleBackspace();
     }
-  }, [mode, handleBackspace]);
+  }, [typingMode, handleBackspace]);
 
   const onEnter = useCallback(() => {
     setIsTyping(!isTyping);
   }, [isTyping, setIsTyping]);
 
-  // 全局键盘监听：isTyping 为 false 时也启用，用于捕获"开始"按键
   useKeyboardCapture(onChar, onBackspace, !state.isFinished, onEnter);
 
   useEffect(() => {
@@ -91,20 +108,37 @@ export function WordCard({
       completedRef.current = true;
       const letterMistakes = getLetterMistakes();
       onComplete({
-        wordId: word.id,
-        wordText: word.text,
-        definition: word.definition,
+        mode: learnMode,
         wrongCount: state.wrongCount,
         isCorrect: state.wrongCount === 0,
         letterMistakes,
       });
     }
-  }, [state.isFinished, state.wrongCount, word, onComplete, getLetterMistakes]);
+  }, [state.isFinished, state.wrongCount, learnMode, onComplete, getLetterMistakes]);
 
   const showSkip = state.wrongCount >= 4;
 
+  // 暂停遮罩提示文字
+  const pauseHint = !showWord
+    ? "按任意键凭记忆输入"
+    : state.inputWord.length > 0
+    ? "按任意键继续"
+    : "按任意键开始";
+
   return (
     <div className="flex flex-grow flex-col items-center justify-center">
+      {/* 复习标记 */}
+      {isReview && reviewMeta && (
+        <div className="mb-4 flex items-center gap-2">
+          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+            复习
+          </span>
+          <span className="text-xs text-muted-foreground">
+            上次评分: {FSRS_RATING_LABELS[reviewMeta.previousRating] ?? "未知"}
+          </span>
+        </div>
+      )}
+
       {/* prev / next 词提示 */}
       <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
         {prevWord && <PrevNextHint type="prev" word={prevWord} />}
@@ -119,7 +153,7 @@ export function WordCard({
             <div className="absolute z-10 flex h-full w-full items-center justify-center">
               <div className="flex w-full items-center backdrop-blur-sm">
                 <p className="w-full select-none text-center text-xl text-gray-600 dark:text-gray-50">
-                  按任意键{state.inputWord.length > 0 ? "继续" : "开始"}
+                  {pauseHint}
                 </p>
               </div>
             </div>
@@ -133,22 +167,30 @@ export function WordCard({
                 state.hasWrong && "animate-shake"
               )}
             >
-              {state.displayWord.split("").map((letter, index) => (
-                <LetterBox
-                  key={`${index}-${letter}`}
-                  letter={letter}
-                  state={state.letterStates[index]}
-                  visible={getLetterVisible(
-                    index,
-                    dictation,
-                    state.letterStates[index]
-                  )}
-                />
-              ))}
+              {showWord ? (
+                state.displayWord.split("").map((letter, index) => (
+                  <LetterBox
+                    key={`${index}-${letter}`}
+                    letter={letter}
+                    state={state.letterStates[index]}
+                    visible={true}
+                  />
+                ))
+              ) : (
+                <div className="flex h-16 items-center justify-center">
+                  <span className="font-mono text-2xl text-muted-foreground/40">
+                    {state.displayWord.split("").map((_, i) => (
+                      <span key={i} className="pr-[0.2rem]">
+                        _
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* 音标 & 播放按钮 */}
-            {(word.phonetic || audio.supported) && (
+            {showPhonetic && (word.phonetic || audio.supported) && (
               <div className="-mt-8 flex items-center gap-2">
                 {word.phonetic && (
                   <span className="font-mono text-sm font-normal text-muted-foreground/60">
@@ -183,9 +225,11 @@ export function WordCard({
             )}
 
             {/* 释义 */}
-            <p className="-mt-4 select-none text-lg text-muted-foreground">
-              {word.definition}
-            </p>
+            {showTranslation && (
+              <p className="-mt-4 select-none text-lg text-muted-foreground">
+                {word.definition}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -198,9 +242,7 @@ export function WordCard({
               completedRef.current = true;
               const letterMistakes = getLetterMistakes();
               onComplete({
-                wordId: word.id,
-                wordText: word.text,
-                definition: word.definition,
+                mode: learnMode,
                 wrongCount: state.wrongCount,
                 isCorrect: false,
                 letterMistakes,

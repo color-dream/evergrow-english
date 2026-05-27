@@ -4,24 +4,34 @@ export type WordBookId = "cet4" | "cet6";
 /** 打字模式：严格 = 即时比对打错重置；宽松 = 退格修正，输完比对 */
 export type TypingMode = "strict" | "loose";
 
-/** 听写模式：隐藏字母类型 */
-export type DictationType =
-  | "hideVowel"
-  | "hideConsonant"
-  | "hideAll"
-  | "randomHide";
-
 /** 字母显示状态 */
 export type LetterState = "normal" | "correct" | "wrong";
 
 /** 学习阶段 */
-export type SessionPhase = "idle" | "active" | "finished";
+export type SessionPhase = "idle" | "new-words" | "review" | "finished";
 
-/** 听写配置 */
-export interface DictationConfig {
-  enabled: boolean;
-  type: DictationType;
-}
+/** 每个单词的4种学习模式（渐进式隐藏） */
+export type WordLearnMode =
+  | "typeWithWord"
+  | "typeWithoutWord"
+  | "typeWithoutWordAndTranslation"
+  | "typeWithoutWordAndTranslationAndPhonetic";
+
+/** 4种模式的固定顺序 */
+export const WORD_LEARN_MODE_SEQUENCE: WordLearnMode[] = [
+  "typeWithWord",
+  "typeWithoutWord",
+  "typeWithoutWordAndTranslation",
+  "typeWithoutWordAndTranslationAndPhonetic",
+];
+
+/** 4种模式的中文名称 */
+export const WORD_LEARN_MODE_LABELS: Record<WordLearnMode, string> = {
+  typeWithWord: "照单词输入",
+  typeWithoutWord: "不显示单词",
+  typeWithoutWordAndTranslation: "不显示单词和翻译",
+  typeWithoutWordAndTranslationAndPhonetic: "不显示单词和翻译和音标",
+};
 
 /** 单个词的学习结果 */
 export interface WordResult {
@@ -31,6 +41,22 @@ export interface WordResult {
   wrongCount: number;
   isCorrect: boolean;
   letterMistakes: Record<number, string[]>;
+}
+
+/** 单模式结果 */
+export interface WordModeResult {
+  mode: WordLearnMode;
+  wrongCount: number;
+  isCorrect: boolean;
+  letterMistakes: Record<number, string[]>;
+}
+
+/** 单词完成追踪（4种模式） */
+export interface WordCompletion {
+  wordId: string;
+  modeResults: WordModeResult[];
+  currentModeIndex: number;
+  isFullyCompleted: boolean;
 }
 
 /** 一轮结束后的统计数据 */

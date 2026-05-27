@@ -1,8 +1,13 @@
 import { useCallback, useEffect } from "react";
-import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
+import {
+  useVocabularySessionStore,
+  getCurrentWord,
+  getCurrentLearnMode,
+} from "@/stores/vocabulary-session-store";
+import type { ReviewWordMeta } from "@/stores/vocabulary-session-store";
 import { useTimer } from "@/hooks/useTimer";
 import { useWordBook } from "@/hooks/useWordBook";
-import { useFSRSSync } from "@/hooks/useFSRSSync";
+import { useWordCompletion } from "@/hooks/useWordCompletion";
 import { addStudySession, getCardsByBookId } from "@/lib/db";
 import { getDueCards } from "@/lib/fsrs";
 import { shuffleArray } from "@/lib/vocabulary-utils";
@@ -12,31 +17,53 @@ import { WordCard } from "./WordCard";
 import { ProgressBar } from "./ProgressBar";
 import { SpeedBar } from "./SpeedBar";
 import { ResultScreen } from "./ResultScreen";
-import type { WordResult, WordBookId } from "@/types/vocabulary";
+import type { WordBookId } from "@/types/vocabulary";
+import type { FSRSState } from "@/types/domain";
 import { useUIStore } from "@/stores/ui-store";
 import { WordBookList } from "./WordBookList";
 
+/** 从 FSRS 状态推导上次评分（用于展示） */
+function deriveFSRSRatingFromState(fsrs: FSRSState): number {
+  if (fsrs.state === "relearning" || fsrs.lapses > 2) return 1;
+  if (fsrs.stability < 1) return 2;
+  if (fsrs.stability < 5) return 3;
+  return 4;
+}
+
 export function VocabularyPage() {
   const phase = useVocabularySessionStore((s) => s.phase);
-  const mode = useVocabularySessionStore((s) => s.mode);
-  const dictation = useVocabularySessionStore((s) => s.dictation);
-  const words = useVocabularySessionStore((s) => s.words);
-  const currentIndex = useVocabularySessionStore((s) => s.currentIndex);
+  const typingMode = useVocabularySessionStore((s) => s.typingMode);
+  const currentWordIndex = useVocabularySessionStore(
+    (s) => s.currentWordIndex
+  );
   const startTime = useVocabularySessionStore((s) => s.startTime);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
+  const newWords = useVocabularySessionStore((s) => s.newWords);
+  const newWordCompletions = useVocabularySessionStore(
+    (s) => s.newWordCompletions
+  );
+  const reviewWords = useVocabularySessionStore((s) => s.reviewWords);
+  const reviewMeta = useVocabularySessionStore((s) => s.reviewMeta);
 
-  const advanceWord = useVocabularySessionStore((s) => s.advanceWord);
-  const addWordResult = useVocabularySessionStore((s) => s.addWordResult);
-  const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
-  const setLearnMode = useVocabularySessionStore((s) => s.setLearnMode);
+  const finishSession = useVocabularySessionStore((s) => s.finishSession);
+  const startNewWordsPhase = useVocabularySessionStore(
+    (s) => s.startNewWordsPhase
+  );
+  const startReviewPhase = useVocabularySessionStore(
+    (s) => s.startReviewPhase
+  );
+  const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const setElapsedSeconds = useVocabularySessionStore(
     (s) => s.setElapsedSeconds
   );
 
-  // 进入学习时隐藏侧边栏，获得沉浸式体验
+  const { selectBook } = useWordBook();
+  const { recordModeComplete } = useWordCompletion();
+
+  // 进入学习时隐藏侧边栏
   useEffect(() => {
-    if (phase === "active") {
+    if (phase === "new-words" || phase === "review") {
       useUIStore.getState().setSidebarForceHidden(true);
       return () => {
         useUIStore.getState().setSidebarForceHidden(false);
@@ -45,7 +72,9 @@ export function VocabularyPage() {
     useUIStore.getState().setSidebarForceHidden(false);
   }, [phase]);
 
-  const elapsed = useTimer(phase === "active" ? startTime : null);
+  const elapsed = useTimer(
+    phase === "new-words" || phase === "review" ? startTime : null
+  );
 
   // 会话结束时记录 StudySession
   useEffect(() => {
@@ -64,27 +93,42 @@ export function VocabularyPage() {
   }, [phase, startTime]);
 
   useEffect(() => {
-    if (phase === "active") {
+    if (phase === "new-words" || phase === "review") {
       setElapsedSeconds(elapsed);
     }
   }, [elapsed, phase, setElapsedSeconds]);
 
-  const { selectBook } = useWordBook();
-  const startSession = useVocabularySessionStore((s) => s.startSession);
-  const { saveWordResult } = useFSRSSync();
+  // 新词全部完成 → 加载复习阶段
+  useEffect(() => {
+    if (phase !== "new-words") return;
 
-  const handleSelectBook = useCallback(
-    async (id: WordBookId) => {
-      const loadedWords = await selectBook(id);
-      const cards = await getCardsByBookId(id);
+    const allDone =
+      newWords.length > 0 &&
+      Object.values(newWordCompletions).every((c) => c.isFullyCompleted);
+
+    if (allDone) {
+      loadReviewPhase();
+    }
+  }, [phase, newWords, newWordCompletions]);
+
+  const loadReviewPhase = useCallback(async () => {
+    if (!selectedBook) {
+      finishSession();
+      return;
+    }
+
+    try {
+      const cards = await getCardsByBookId(selectedBook);
       const dueCards = getDueCards(cards, Date.now());
-      const mode = dueCards.length > 0 ? "mixed" : "new";
-      setLearnMode(mode);
 
-      // 直接构建本轮单词并启动，避免闭包问题
-      let roundWords;
-      if (mode === "mixed") {
-        const dueWords = dueCards.slice(0, FIXED_WORDS_PER_ROUND).map((card) => ({
+      if (dueCards.length === 0) {
+        finishSession();
+        return;
+      }
+
+      const reviewWordsList = dueCards
+        .slice(0, FIXED_WORDS_PER_ROUND)
+        .map((card) => ({
           id: card.id,
           text: card.wordText,
           lemma: card.wordText,
@@ -94,29 +138,32 @@ export function VocabularyPage() {
           tags: [],
           createdAt: card.createdAt,
         }));
-        const dueCount = Math.min(dueWords.length, Math.floor(FIXED_WORDS_PER_ROUND / 2));
-        const newCount = FIXED_WORDS_PER_ROUND - dueCount;
-        const newPart = shuffleArray(loadedWords).slice(0, newCount);
-        roundWords = [...dueWords.slice(0, dueCount), ...newPart];
-      } else {
-        roundWords = shuffleArray(loadedWords).slice(0, FIXED_WORDS_PER_ROUND);
+
+      const meta: Record<string, ReviewWordMeta> = {};
+      for (const card of dueCards.slice(0, FIXED_WORDS_PER_ROUND)) {
+        meta[card.id] = {
+          previousRating: deriveFSRSRatingFromState(card.fsrs),
+          lastReviewTime: card.fsrs.lastReview,
+          stability: card.fsrs.stability,
+        };
       }
 
-      startSession(roundWords);
-    },
-    [selectBook, setLearnMode, startSession]
-  );
+      startReviewPhase(reviewWordsList, meta);
+    } catch {
+      finishSession();
+    }
+  }, [selectedBook, startReviewPhase, finishSession]);
 
-  const onComplete = useCallback(
-    (result: WordResult) => {
-      addWordResult(result);
-      // fire-and-forget: 将结果写入 FSRS 卡片
-      saveWordResult(result, selectedBook ?? "");
-      setTimeout(() => {
-        advanceWord();
-      }, 400);
+  const handleSelectBook = useCallback(
+    async (id: WordBookId) => {
+      const loadedWords = await selectBook(id);
+      const newRoundWords = shuffleArray(loadedWords).slice(
+        0,
+        FIXED_WORDS_PER_ROUND
+      );
+      startNewWordsPhase(newRoundWords);
     },
-    [addWordResult, advanceWord, saveWordResult, selectedBook]
+    [selectBook, startNewWordsPhase]
   );
 
   const onKeystroke = useCallback(
@@ -126,10 +173,25 @@ export function VocabularyPage() {
     [addKeystrokes]
   );
 
-  const currentWord = words[currentIndex] ?? null;
-  const prevWord = currentIndex > 0 ? words[currentIndex - 1] : null;
+  // 获取当前单词信息
+  const state = useVocabularySessionStore.getState();
+  const currentWordInfo = getCurrentWord(state);
+  const isReviewPhase = phase === "review";
+
+  const currentWord = currentWordInfo?.word ?? null;
+  const currentLearnMode = currentWordInfo
+    ? getCurrentLearnMode(currentWordInfo.completion)
+    : "typeWithWord";
+  const currentModeIndex = currentWordInfo?.completion.currentModeIndex ?? 0;
+
+  // 前后词
+  const currentWords = isReviewPhase ? reviewWords : newWords;
+  const prevWord =
+    currentWordIndex > 0 ? currentWords[currentWordIndex - 1] : null;
   const nextWord =
-    currentIndex < words.length - 1 ? words[currentIndex + 1] : null;
+    currentWordIndex < currentWords.length - 1
+      ? currentWords[currentWordIndex + 1]
+      : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -141,25 +203,34 @@ export function VocabularyPage() {
         <WordBookList onSelectBook={handleSelectBook} />
       )}
 
-      {/* 学习中 */}
-      {phase === "active" && currentWord && (
+      {/* 学习中（新词或复习） */}
+      {(phase === "new-words" || phase === "review") && currentWord && (
         <div className="flex flex-1 flex-col items-center">
           <WordCard
-            key={`${currentWord.id}-${mode}-${dictation.type}`}
+            key={`${currentWord.id}-${currentLearnMode}`}
             word={currentWord}
             prevWord={prevWord}
             nextWord={nextWord}
-            mode={mode}
-            dictation={dictation}
-            onComplete={onComplete}
+            learnMode={currentLearnMode}
+            typingMode={typingMode}
+            onComplete={recordModeComplete}
             onKeystroke={onKeystroke}
+            isReview={isReviewPhase}
+            reviewMeta={
+              isReviewPhase ? reviewMeta[currentWord.id] : undefined
+            }
           />
-          <ProgressBar />
+          <ProgressBar
+            currentWordIndex={currentWordIndex}
+            totalWords={currentWords.length}
+            currentModeIndex={currentModeIndex}
+            isReview={isReviewPhase}
+          />
           <SpeedBar />
         </div>
       )}
 
-      {/* 结束阶段（背景 + 全屏遮罩） */}
+      {/* 结束阶段 */}
       {phase === "finished" && (
         <>
           <div className="flex flex-1 items-center justify-center">

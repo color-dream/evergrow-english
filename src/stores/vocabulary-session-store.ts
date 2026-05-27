@@ -2,26 +2,43 @@ import { create } from "zustand";
 import type { Word } from "@/types/domain";
 import type {
   TypingMode,
-  DictationConfig,
   SessionPhase,
   WordResult,
   WordBookId,
+  WordLearnMode,
+  WordModeResult,
+  WordCompletion,
 } from "@/types/vocabulary";
+import { WORD_LEARN_MODE_SEQUENCE } from "@/types/vocabulary";
 
-/** 学习模式 */
-export type LearnMode = "new" | "review" | "mixed";
+/** 复习卡片的FSRS元数据 */
+export interface ReviewWordMeta {
+  previousRating: number;
+  lastReviewTime: number;
+  stability: number;
+}
 
 interface VocabularySessionState {
   // ── 配置 ──
   selectedWordBook: WordBookId | null;
-  mode: TypingMode;
-  dictation: DictationConfig;
-  learnMode: LearnMode;
+  typingMode: TypingMode;
 
-  // ── 会话生命周期 ──
+  // ── 阶段管理 ──
   phase: SessionPhase;
-  words: Word[];
-  currentIndex: number;
+
+  // ── 新词阶段 ──
+  newWords: Word[];
+  newWordCompletions: Record<string, WordCompletion>;
+
+  // ── 复习阶段 ──
+  reviewWords: Word[];
+  reviewWordCompletions: Record<string, WordCompletion>;
+  reviewMeta: Record<string, ReviewWordMeta>;
+
+  // ── 当前位置 ──
+  currentWordIndex: number;
+
+  // ── 打字状态 ──
   isTyping: boolean;
 
   // ── 计时 ──
@@ -29,37 +46,61 @@ interface VocabularySessionState {
   endTime: number | null;
   elapsedSeconds: number;
 
-  // ── 统计（跨单词累积） ──
+  // ── 统计 ──
   wordResults: WordResult[];
   totalKeystrokes: number;
   totalCorrectKeystrokes: number;
 
   // ── Actions ──
   setSelectedWordBook: (id: WordBookId) => void;
-  setMode: (mode: TypingMode) => void;
-  setDictation: (config: Partial<DictationConfig>) => void;
-  setLearnMode: (mode: LearnMode) => void;
-  startSession: (words: Word[]) => void;
-  advanceWord: () => void;
+  setTypingMode: (mode: TypingMode) => void;
+  setIsTyping: (val: boolean) => void;
+
+  startNewWordsPhase: (words: Word[]) => void;
+  startReviewPhase: (
+    words: Word[],
+    meta: Record<string, ReviewWordMeta>
+  ) => void;
+
+  recordModeResult: (wordId: string, result: WordModeResult) => void;
+  advanceToNextMode: () => void;
+  resetToFirstMode: () => void;
+  advanceToNextWord: () => void;
+
   addWordResult: (result: WordResult) => void;
   addKeystrokes: (correct: boolean) => void;
   setElapsedSeconds: (seconds: number) => void;
   tickTimer: () => void;
   finishSession: () => void;
-  setIsTyping: (val: boolean) => void;
   resetSession: () => void;
+}
+
+/** 创建空的 WordCompletion */
+function createCompletion(wordId: string): WordCompletion {
+  return {
+    wordId,
+    modeResults: [],
+    currentModeIndex: 0,
+    isFullyCompleted: false,
+  };
 }
 
 export const useVocabularySessionStore = create<VocabularySessionState>()(
   (set) => ({
     selectedWordBook: null,
-    mode: "strict",
-    dictation: { enabled: false, type: "hideAll" },
-    learnMode: "new",
+    typingMode: "strict",
 
     phase: "idle",
-    words: [],
-    currentIndex: 0,
+
+    newWords: [],
+    newWordCompletions: {},
+
+    reviewWords: [],
+    reviewWordCompletions: {},
+    reviewMeta: {},
+
+    currentWordIndex: 0,
+
     isTyping: false,
 
     startTime: null,
@@ -71,21 +112,19 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     totalCorrectKeystrokes: 0,
 
     setSelectedWordBook: (id) => set({ selectedWordBook: id }),
+    setTypingMode: (mode) => set({ typingMode: mode }),
+    setIsTyping: (val) => set({ isTyping: val }),
 
-    setMode: (mode) => set({ mode }),
-
-    setDictation: (config) =>
-      set((s) => ({
-        dictation: { ...s.dictation, ...config },
-      })),
-
-    setLearnMode: (mode) => set({ learnMode: mode }),
-
-    startSession: (words) =>
+    startNewWordsPhase: (words) => {
+      const completions: Record<string, WordCompletion> = {};
+      for (const word of words) {
+        completions[word.id] = createCompletion(word.id);
+      }
       set({
-        phase: "active",
-        words,
-        currentIndex: 0,
+        phase: "new-words",
+        newWords: words,
+        newWordCompletions: completions,
+        currentWordIndex: 0,
         isTyping: true,
         startTime: Date.now(),
         endTime: null,
@@ -93,19 +132,110 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         wordResults: [],
         totalKeystrokes: 0,
         totalCorrectKeystrokes: 0,
+      });
+    },
+
+    startReviewPhase: (words, meta) => {
+      const completions: Record<string, WordCompletion> = {};
+      for (const word of words) {
+        completions[word.id] = createCompletion(word.id);
+      }
+      set({
+        phase: "review",
+        reviewWords: words,
+        reviewWordCompletions: completions,
+        reviewMeta: meta,
+        currentWordIndex: 0,
+        isTyping: true,
+      });
+    },
+
+    recordModeResult: (wordId, result) =>
+      set((s) => {
+        const isNewWords = s.phase === "new-words";
+        const completionsKey = isNewWords
+          ? "newWordCompletions"
+          : "reviewWordCompletions";
+        const completions = { ...s[completionsKey] };
+        const completion = completions[wordId];
+        if (!completion) return {};
+
+        completions[wordId] = {
+          ...completion,
+          modeResults: [...completion.modeResults, result],
+        };
+
+        return { [completionsKey]: completions };
       }),
 
-    advanceWord: () =>
+    advanceToNextMode: () =>
       set((s) => {
-        const nextIndex = s.currentIndex + 1;
-        if (nextIndex >= s.words.length) {
+        const isNewWords = s.phase === "new-words";
+        const wordsKey = isNewWords ? "newWords" : "reviewWords";
+        const completionsKey = isNewWords
+          ? "newWordCompletions"
+          : "reviewWordCompletions";
+        const words = s[wordsKey];
+        const completions = { ...s[completionsKey] };
+        const currentWord = words[s.currentWordIndex];
+        if (!currentWord) return {};
+
+        const completion = completions[currentWord.id];
+        if (!completion) return {};
+
+        const nextModeIndex = completion.currentModeIndex + 1;
+        completions[currentWord.id] = {
+          ...completion,
+          currentModeIndex: nextModeIndex,
+          isFullyCompleted: nextModeIndex >= 4,
+        };
+
+        return { [completionsKey]: completions };
+      }),
+
+    resetToFirstMode: () =>
+      set((s) => {
+        const isNewWords = s.phase === "new-words";
+        const wordsKey = isNewWords ? "newWords" : "reviewWords";
+        const completionsKey = isNewWords
+          ? "newWordCompletions"
+          : "reviewWordCompletions";
+        const words = s[wordsKey];
+        const completions = { ...s[completionsKey] };
+        const currentWord = words[s.currentWordIndex];
+        if (!currentWord) return {};
+
+        completions[currentWord.id] = {
+          ...completions[currentWord.id],
+          currentModeIndex: 0,
+          modeResults: [],
+          isFullyCompleted: false,
+        };
+
+        return { [completionsKey]: completions };
+      }),
+
+    advanceToNextWord: () =>
+      set((s) => {
+        const isNewWords = s.phase === "new-words";
+        const wordsKey = isNewWords ? "newWords" : "reviewWords";
+        const words = s[wordsKey];
+        const nextIndex = s.currentWordIndex + 1;
+
+        if (nextIndex >= words.length) {
+          if (isNewWords) {
+            return {
+              currentWordIndex: nextIndex,
+            };
+          }
           return {
-            currentIndex: nextIndex,
+            currentWordIndex: nextIndex,
             phase: "finished",
             endTime: Date.now(),
           };
         }
-        return { currentIndex: nextIndex };
+
+        return { currentWordIndex: nextIndex };
       }),
 
     addWordResult: (result) =>
@@ -120,8 +250,6 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
           ? s.totalCorrectKeystrokes + 1
           : s.totalCorrectKeystrokes,
       })),
-
-    setIsTyping: (val) => set({ isTyping: val }),
 
     setElapsedSeconds: (seconds: number) => set({ elapsedSeconds: seconds }),
     tickTimer: () =>
@@ -138,8 +266,12 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     resetSession: () =>
       set({
         phase: "idle",
-        words: [],
-        currentIndex: 0,
+        newWords: [],
+        newWordCompletions: {},
+        reviewWords: [],
+        reviewWordCompletions: {},
+        reviewMeta: {},
+        currentWordIndex: 0,
         startTime: null,
         endTime: null,
         elapsedSeconds: 0,
@@ -149,3 +281,30 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
       }),
   })
 );
+
+/** 获取当前活跃的单词和完成状态 */
+export function getCurrentWord(state: VocabularySessionState): {
+  word: Word;
+  completion: WordCompletion;
+} | null {
+  const isNewWords = state.phase === "new-words";
+  const words = isNewWords ? state.newWords : state.reviewWords;
+  const completions = isNewWords
+    ? state.newWordCompletions
+    : state.reviewWordCompletions;
+
+  const word = words[state.currentWordIndex];
+  if (!word) return null;
+
+  const completion = completions[word.id];
+  if (!completion) return null;
+
+  return { word, completion };
+}
+
+/** 获取当前单词的学习模式 */
+export function getCurrentLearnMode(
+  completion: WordCompletion
+): WordLearnMode {
+  return WORD_LEARN_MODE_SEQUENCE[completion.currentModeIndex] ?? "typeWithWord";
+}

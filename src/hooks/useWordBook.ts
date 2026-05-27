@@ -1,13 +1,11 @@
 import { useState, useCallback } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { loadWordBook } from "@/lib/word-book-registry";
-import { shuffleArray } from "@/lib/vocabulary-utils";
 import { FIXED_WORDS_PER_ROUND } from "@/lib/constants";
 import { getCardsByBookId } from "@/lib/db";
 import { getDueCards } from "@/lib/fsrs";
 import type { WordBookId } from "@/types/vocabulary";
 import type { Word } from "@/types/domain";
-import type { LearnMode } from "@/stores/vocabulary-session-store";
 
 export function useWordBook() {
   const [loadedWords, setLoadedWords] = useState<Word[]>([]);
@@ -19,7 +17,6 @@ export function useWordBook() {
   const setSelectedBook = useVocabularySessionStore(
     (s) => s.setSelectedWordBook
   );
-  const startSession = useVocabularySessionStore((s) => s.startSession);
 
   const selectBook = useCallback(
     async (id: WordBookId): Promise<Word[]> => {
@@ -46,13 +43,6 @@ export function useWordBook() {
     [setSelectedBook]
   );
 
-  const startRound = useCallback(() => {
-    if (loadedWords.length === 0) return;
-    const shuffled = shuffleArray(loadedWords);
-    const round = shuffled.slice(0, FIXED_WORDS_PER_ROUND);
-    startSession(round);
-  }, [loadedWords, startSession]);
-
   const getDueReviewWords = useCallback(
     async (bookId: WordBookId): Promise<Word[]> => {
       const cards = await getCardsByBookId(bookId);
@@ -73,54 +63,6 @@ export function useWordBook() {
     []
   );
 
-  const startRoundByMode = useCallback(
-    async (mode: LearnMode) => {
-      if (!selectedBook) return;
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        let roundWords: Word[] = [];
-
-        if (mode === "new") {
-          // 新词学习：从词典中随机选取
-          if (loadedWords.length === 0) return;
-          const shuffled = shuffleArray(loadedWords);
-          roundWords = shuffled.slice(0, FIXED_WORDS_PER_ROUND);
-        } else if (mode === "review") {
-          // 错词复习：从 FSRS 到期卡片中选取
-          roundWords = await getDueReviewWords(selectedBook);
-          if (roundWords.length === 0) {
-            setError("没有到期的复习卡片");
-            return;
-          }
-        } else if (mode === "mixed") {
-          // 混合模式：50% 到期卡片 + 50% 新词
-          const dueWords = await getDueReviewWords(selectedBook);
-          const dueCount = Math.min(dueWords.length, Math.floor(FIXED_WORDS_PER_ROUND / 2));
-          const newCount = FIXED_WORDS_PER_ROUND - dueCount;
-
-          const duePart = dueWords.slice(0, dueCount);
-          const newPart = shuffleArray(loadedWords).slice(0, newCount);
-          roundWords = [...duePart, ...newPart];
-
-          if (roundWords.length === 0) {
-            setError("没有可学习的单词");
-            return;
-          }
-        }
-
-        startSession(roundWords);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "加载失败");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [selectedBook, loadedWords, startSession, getDueReviewWords]
-  );
-
   return {
     loadedWords,
     isLoading,
@@ -128,7 +70,6 @@ export function useWordBook() {
     dueCount,
     selectedBook,
     selectBook,
-    startRound,
-    startRoundByMode,
+    getDueReviewWords,
   };
 }

@@ -3,11 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { getAllCards, upsertCard, addStudySession } from "@/lib/db";
 import { getDueCards, applyFSRS } from "@/lib/fsrs";
 import { WordCard } from "@/components/vocabulary/WordCard";
-import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { ROUTES, FSRS_RATING_LABELS } from "@/lib/constants";
 import type { LearningCard } from "@/lib/fsrs/types";
 import type { Word } from "@/types/domain";
-import type { WordResult } from "@/types/vocabulary";
+import type { WordModeResult } from "@/types/vocabulary";
 import type { FSRSRating } from "@/types/domain";
 import { Repeat, CheckCircle, ArrowRight } from "lucide-react";
 
@@ -18,7 +17,7 @@ export function ReviewPage() {
   const [phase, setPhase] = useState<ReviewPhase>("loading");
   const [dueCards, setDueCards] = useState<LearningCard[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [results, setResults] = useState<WordResult[]>([]);
+  const [results, setResults] = useState<WordModeResult[]>([]);
   const [startTime, setStartTime] = useState<number>(0);
 
   // 加载到期卡片
@@ -63,7 +62,7 @@ export function ReviewPage() {
   }, [currentCard]);
 
   // 打字完成后 → 进入评分阶段
-  const onComplete = useCallback((result: WordResult) => {
+  const onComplete = useCallback((result: WordModeResult) => {
     setResults((prev) => [...prev, result]);
     setPhase("rating");
   }, []);
@@ -162,14 +161,13 @@ export function ReviewPage() {
 
   // 评分阶段 — 在卡片上叠加评分按钮
   if (phase === "rating" && currentWord) {
-    const lastResult = results[results.length - 1];
     return (
       <div className="relative flex h-full flex-col">
         <WordCard
           key={`${currentWord.id}-rating`}
           word={currentWord}
-          mode="strict"
-          dictation={{ enabled: false, type: "hideAll" }}
+          learnMode="typeWithWord"
+          typingMode="strict"
           onComplete={() => {}}
           onKeystroke={() => {}}
         />
@@ -177,7 +175,7 @@ export function ReviewPage() {
         <div className="absolute inset-0 z-20 flex items-end justify-center pb-20">
           <div className="flex flex-col items-center gap-4 rounded-2xl bg-card/95 px-8 py-6 shadow-lg backdrop-blur-sm">
             <p className="text-sm text-muted-foreground">
-              {lastResult?.wordText ?? ""} — 你的掌握程度？
+              {currentWord.text} — 你的掌握程度？
             </p>
             <div className="flex gap-3">
               {([1, 2, 3, 4] as FSRSRating[]).map((r) => (
@@ -222,12 +220,11 @@ export function ReviewPage() {
           <WordCard
             key={`${currentWord.id}-${currentIdx}`}
             word={currentWord}
-            mode="strict"
-            dictation={{ enabled: false, type: "hideAll" }}
+            learnMode="typeWithWord"
+            typingMode="strict"
             onComplete={onComplete}
             onKeystroke={() => {}}
           />
-          <ProgressBar current={currentIdx} total={dueCards.length} />
         </div>
       </div>
     );

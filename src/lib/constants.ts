@@ -44,6 +44,12 @@ export const LOOSE_WRONG_RESET_DELAY_MS = 1500;
 /** 跳过按钮出现的错误次数阈值 */
 export const SKIP_WRONG_THRESHOLD = 4;
 
+/** 模式切换延迟 (ms) */
+export const MODE_TRANSITION_DELAY_MS = 600;
+
+/** 单词切换延迟 (ms) */
+export const WORD_TRANSITION_DELAY_MS = 400;
+
 // ── 路由 ──
 
 export const ROUTES = {

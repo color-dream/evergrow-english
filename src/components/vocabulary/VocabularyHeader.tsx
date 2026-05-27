@@ -1,30 +1,36 @@
 import { useState } from "react";
-import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
+import {
+  useVocabularySessionStore,
+  getCurrentWord,
+  getCurrentLearnMode,
+} from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
-import type { TypingMode, DictationType } from "@/types/vocabulary";
+import type { TypingMode } from "@/types/vocabulary";
+import { WORD_LEARN_MODE_LABELS } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
-import { Eye, EyeOff, Settings, Play, Pause, RotateCw, X } from "lucide-react";
-
-const DICTATION_OPTIONS: { key: DictationType; label: string }[] = [
-  { key: "hideAll", label: "全部隐藏" },
-  { key: "hideVowel", label: "隐藏元音" },
-  { key: "hideConsonant", label: "隐藏辅音" },
-  { key: "randomHide", label: "随机隐藏" },
-];
+import { Settings, Play, Pause, RotateCw, X } from "lucide-react";
 
 export function VocabularyHeader() {
   const phase = useVocabularySessionStore((s) => s.phase);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
-  const mode = useVocabularySessionStore((s) => s.mode);
-  const dictation = useVocabularySessionStore((s) => s.dictation);
+  const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
-  const setMode = useVocabularySessionStore((s) => s.setMode);
-  const setDictation = useVocabularySessionStore((s) => s.setDictation);
+  const setTypingMode = useVocabularySessionStore((s) => s.setTypingMode);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
 
   const [showSettings, setShowSettings] = useState(false);
   const bookMeta = selectedBook ? WORD_BOOK_META[selectedBook] : null;
+
+  // 获取当前模式信息
+  const state = useVocabularySessionStore.getState();
+  const currentWordInfo = getCurrentWord(state);
+  const currentLearnMode = currentWordInfo
+    ? getCurrentLearnMode(currentWordInfo.completion)
+    : null;
+
+  const isActive = phase === "new-words" || phase === "review";
+  const isReview = phase === "review";
 
   return (
     <>
@@ -40,12 +46,33 @@ export function VocabularyHeader() {
                 {bookMeta.label}
               </span>
             )}
+            {isActive && (
+              <span
+                className={cn(
+                  "rounded-full px-3 py-0.5 text-xs font-medium",
+                  isReview
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                    : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                )}
+              >
+                {isReview ? "复习阶段" : "新词学习"}
+              </span>
+            )}
           </div>
 
           {/* 右侧：工具栏 */}
           <nav className="my-card flex w-auto items-center gap-2 rounded-xl bg-card px-4 py-2 shadow-my-card">
-            {phase === "active" && (
+            {isActive && (
               <>
+                {/* 当前模式名称 */}
+                {currentLearnMode && (
+                  <span className="text-xs text-muted-foreground">
+                    {WORD_LEARN_MODE_LABELS[currentLearnMode]}
+                  </span>
+                )}
+
+                <div className="mx-1 h-5 w-px bg-border" />
+
                 {/* 暂停/继续 */}
                 <ToolIconButton
                   onClick={() => setIsTyping(!isTyping)}
@@ -75,10 +102,10 @@ export function VocabularyHeader() {
                   {(["strict", "loose"] as const).map((m) => (
                     <button
                       key={m}
-                      onClick={() => setMode(m)}
+                      onClick={() => setTypingMode(m)}
                       className={cn(
                         "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
-                        mode === m
+                        typingMode === m
                           ? "bg-indigo-400 text-white"
                           : "text-muted-foreground hover:text-foreground"
                       )}
@@ -87,19 +114,6 @@ export function VocabularyHeader() {
                     </button>
                   ))}
                 </div>
-
-                {/* 听写 */}
-                <ToolIconButton
-                  onClick={() => setDictation({ enabled: !dictation.enabled })}
-                  active={dictation.enabled}
-                  title={`听写模式 (${DICTATION_OPTIONS.find((d) => d.key === dictation.type)?.label})`}
-                >
-                  {dictation.enabled ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </ToolIconButton>
 
                 {/* 设置 */}
                 <div className="mx-1 h-5 w-px bg-border" />
@@ -126,10 +140,8 @@ export function VocabularyHeader() {
       <SettingsDialog
         open={showSettings}
         onClose={() => setShowSettings(false)}
-        mode={mode}
-        dictation={dictation}
-        onModeChange={setMode}
-        onDictationChange={setDictation}
+        mode={typingMode}
+        onModeChange={setTypingMode}
       />
     </>
   );
@@ -166,19 +178,12 @@ function SettingsDialog({
   open,
   onClose,
   mode,
-  dictation,
   onModeChange,
-  onDictationChange,
 }: {
   open: boolean;
   onClose: () => void;
   mode: TypingMode;
-  dictation: { enabled: boolean; type: DictationType };
   onModeChange: (mode: TypingMode) => void;
-  onDictationChange: (config: {
-    enabled?: boolean;
-    type?: DictationType;
-  }) => void;
 }) {
   if (!open) return null;
 
@@ -225,39 +230,6 @@ function SettingsDialog({
                 ? "打错即重置当前词，从头开始"
                 : "允许退格修正，输完整体比对"}
             </p>
-          </div>
-
-          {/* 听写模式 */}
-          <div>
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <input
-                type="checkbox"
-                checked={dictation.enabled}
-                onChange={(e) =>
-                  onDictationChange({ enabled: e.target.checked })
-                }
-                className="h-3.5 w-3.5 rounded accent-indigo-400"
-              />
-              听写模式
-            </h3>
-            {dictation.enabled && (
-              <div className="flex flex-wrap gap-1.5">
-                {DICTATION_OPTIONS.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => onDictationChange({ type: key })}
-                    className={cn(
-                      "rounded-lg border px-3 py-1.5 text-xs font-medium transition-all",
-                      dictation.type === key
-                        ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
-                        : "border-border text-muted-foreground hover:border-muted-foreground/40"
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </div>

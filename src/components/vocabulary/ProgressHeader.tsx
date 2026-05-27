@@ -2,14 +2,21 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { cn } from "@/lib/utils";
 
 export function ProgressHeader() {
-  const currentIndex = useVocabularySessionStore((s) => s.currentIndex);
-  const total = useVocabularySessionStore((s) => s.words.length);
+  const currentWordIndex = useVocabularySessionStore(
+    (s) => s.currentWordIndex
+  );
+  const phase = useVocabularySessionStore((s) => s.phase);
+  const newWords = useVocabularySessionStore((s) => s.newWords);
+  const reviewWords = useVocabularySessionStore((s) => s.reviewWords);
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
   const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
 
+  const isReview = phase === "review";
+  const total = isReview ? reviewWords.length : newWords.length;
+
   const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 100;
-  const progress = total > 0 ? ((currentIndex + 1) / total) * 100 : 0;
+  const progress = total > 0 ? ((currentWordIndex + 1) / total) * 100 : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
@@ -25,7 +32,10 @@ export function ProgressHeader() {
       {/* 进度条 */}
       <div className="mb-3 h-1 w-full rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+          className={cn(
+            "h-full rounded-full transition-all duration-500 ease-out",
+            isReview ? "bg-amber-400" : "bg-primary"
+          )}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -33,8 +43,11 @@ export function ProgressHeader() {
       {/* 统计行 */}
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium tabular-nums">
-          <span className="text-foreground">{currentIndex + 1}</span>
+          <span className="text-foreground">{currentWordIndex + 1}</span>
           <span className="text-muted-foreground"> / {total} 词</span>
+          {isReview && (
+            <span className="ml-2 text-xs text-amber-600">复习</span>
+          )}
         </span>
 
         <span className="font-mono tabular-nums text-muted-foreground">

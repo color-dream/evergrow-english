@@ -13,14 +13,12 @@ interface ResultScreenProps {
 export function ResultScreen({
   onRepeat,
   onChangeBook,
-  onDictationRepeat,
 }: ResultScreenProps) {
   const wordResults = useVocabularySessionStore((s) => s.wordResults);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
   const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
-  const setDictation = useVocabularySessionStore((s) => s.setDictation);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
   const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 0;
@@ -35,11 +33,7 @@ export function ResultScreen({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
-      if (e.key === "Enter" && e.shiftKey) {
-        e.preventDefault();
-        setDictation({ enabled: true });
-        onDictationRepeat();
-      } else if (e.key === "Enter") {
+      if (e.key === "Enter") {
         e.preventDefault();
         setIsTyping(true);
         onRepeat();
@@ -51,7 +45,7 @@ export function ResultScreen({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onRepeat, onDictationRepeat, setDictation, setIsTyping]);
+  }, [onRepeat, setIsTyping]);
 
   return (
     <div className="fixed inset-0 z-30 overflow-y-auto">
@@ -132,14 +126,6 @@ export function ResultScreen({
 
           {/* 底部操作按钮 */}
           <div className="mt-10 flex justify-center gap-4">
-            <OutlineButton
-              onClick={() => {
-                setDictation({ enabled: true });
-                onDictationRepeat();
-              }}
-            >
-              默写本章节
-            </OutlineButton>
             <PrimaryButton
               onClick={() => {
                 setIsTyping(true);
@@ -236,23 +222,6 @@ function PrimaryButton({
     <button
       onClick={onClick}
       className="my-btn-primary flex items-center justify-center rounded-lg bg-indigo-400 px-6 py-2 text-base text-white transition-all hover:opacity-90 active:scale-[0.98]"
-    >
-      {children}
-    </button>
-  );
-}
-
-function OutlineButton({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="my-btn-primary flex items-center justify-center rounded-lg border-2 border-solid border-indigo-400 bg-transparent px-6 py-2 text-base text-indigo-600 transition-all hover:bg-indigo-50 active:scale-[0.98] dark:text-indigo-300 dark:hover:bg-indigo-900"
     >
       {children}
     </button>

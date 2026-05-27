@@ -3,10 +3,7 @@ import type {
   WordTypingState,
   WordTypingAction,
   TypingMode,
-  DictationConfig,
-  LetterState,
 } from "@/types/vocabulary";
-import { isConsonant, isVowel } from "@/lib/vocabulary-utils";
 import {
   WRONG_RESET_DELAY_MS,
   LOOSE_WRONG_RESET_DELAY_MS,
@@ -228,29 +225,6 @@ export function useWordTyping(displayWord: string, isIgnoreCase: boolean) {
     dispatch({ type: "DELETE_CHAR" });
   }, []);
 
-  /** 听写模式：字母是否可见 */
-  const getLetterVisible = useCallback(
-    (index: number, dictation: DictationConfig, letterState: LetterState) => {
-      if (letterState === "correct") return true;
-      if (!dictation.enabled) return true;
-
-      const letter = stateRef.current.displayWord[index];
-      switch (dictation.type) {
-        case "hideAll":
-          return false;
-        case "hideVowel":
-          return !isVowel(letter);
-        case "hideConsonant":
-          return !isConsonant(letter);
-        case "randomHide":
-          return stateRef.current.randomLetterVisible[index];
-        default:
-          return true;
-      }
-    },
-    []
-  );
-
   /** 获取累计错误记录 */
   const getLetterMistakes = useCallback((): Record<number, string[]> => {
     return { ...mistakesRef.current };
@@ -262,7 +236,6 @@ export function useWordTyping(displayWord: string, isIgnoreCase: boolean) {
     handleChar,
     handleBackspace,
     setMode,
-    getLetterVisible,
     getLetterMistakes,
   };
 }
