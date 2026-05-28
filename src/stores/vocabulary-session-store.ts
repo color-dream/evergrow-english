@@ -229,7 +229,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         regressionCount: 0,
         lastCompletedWordId: null,
         currentWordIndex: firstTask?.wordIndex ?? 0,
-        isTyping: true,
+        isTyping: false,
         startTime: Date.now(),
         endTime: null,
         elapsedSeconds: 0,
@@ -265,7 +265,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         regressionCount: 0,
         lastCompletedWordId: null,
         currentWordIndex: firstTask?.wordIndex ?? 0,
-        isTyping: true,
+        isTyping: false,
       });
     },
 
@@ -469,7 +469,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     restoreSession: (data) =>
       set({
         ...data,
-        isTyping: data.phase === "new-words" || data.phase === "review",
+        isTyping: false,
         endTime: null,
       }),
   }),

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useVocabularySessionStore,
@@ -46,6 +46,7 @@ export function ImmersiveLearnPage() {
   const [showSettings, setShowSettings] = useState(false);
 
   const phase = useVocabularySessionStore((s) => s.phase);
+  const isInSession = phase === "new-words" || phase === "review";
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const startTime = useVocabularySessionStore((s) => s.startTime);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
@@ -55,6 +56,9 @@ export function ImmersiveLearnPage() {
   const completedModeCount = useVocabularySessionStore((s) => s.completedModeCount);
   const regressionCount = useVocabularySessionStore((s) => s.regressionCount);
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
+  const isTyping = useVocabularySessionStore((s) => s.isTyping);
+  const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
+  const totalKeystrokes = useVocabularySessionStore((s) => s.totalKeystrokes);
 
   const startNewWordsPhase = useVocabularySessionStore((s) => s.startNewWordsPhase);
   const startReviewPhase = useVocabularySessionStore((s) => s.startReviewPhase);
@@ -185,6 +189,46 @@ export function ImmersiveLearnPage() {
     }
   }, [phase, newWords, selectedBook, completedModeCount, loadReviewPhase, finishSession]);
 
+  // 窗口失焦 → 暂停
+  useEffect(() => {
+    const onBlur = () => setIsTyping(false);
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, [setIsTyping]);
+
+  // 面板打开时禁用输入、关闭后进入暂停
+  const prevShowWordList = useRef(showWordList);
+  useEffect(() => {
+    if (prevShowWordList.current && !showWordList) {
+      setIsTyping(false);
+    }
+    prevShowWordList.current = showWordList;
+  }, [showWordList, setIsTyping]);
+
+  const prevShowSettings = useRef(showSettings);
+  useEffect(() => {
+    if (prevShowSettings.current && !showSettings) {
+      setIsTyping(false);
+    }
+    prevShowSettings.current = showSettings;
+  }, [showSettings, setIsTyping]);
+
+  // 暂停蒙层：按任意键恢复
+  useEffect(() => {
+    if (!isInSession || isTyping) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      // 面板打开时不恢复，关闭面板后会自动进入暂停
+      if (showWordList || showSettings) return;
+      e.preventDefault();
+      setIsTyping(true);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isInSession, isTyping, setIsTyping, showWordList, showSettings]);
+
   const onKeystroke = useCallback(
     (correct: boolean) => addKeystrokes(correct),
     [addKeystrokes]
@@ -249,8 +293,6 @@ export function ImmersiveLearnPage() {
       </div>
     );
   }
-
-  const isInSession = phase === "new-words" || phase === "review";
 
   return (
     <div
@@ -322,6 +364,36 @@ export function ImmersiveLearnPage() {
             disabled={showWordList || showSettings}
           />
           <SpeedBar />
+        </div>
+      )}
+
+      {/* ── 暂停蒙层 ── */}
+      {isInSession && !isTyping && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "oklch(0 0 0 / 0.12)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+            }}
+          />
+          <div
+            className="relative rounded-3xl px-8 py-5 animate-spring-scale"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-lg)",
+            }}
+          >
+            <p className="select-none text-lg font-medium text-foreground/80">
+              {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
+            </p>
+          </div>
         </div>
       )}
 

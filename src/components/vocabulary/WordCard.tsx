@@ -74,9 +74,12 @@ export function WordCard({
     setMode(typingMode);
   }, [typingMode, setMode]);
 
+  // 暂停时不播放发音，暂停恢复时播放一次
   useEffect(() => {
-    audio.speak(word.text, { rate: 0.8 }).catch(() => {});
-  }, [word.text, audio]);
+    if (isTyping) {
+      audio.speak(word.text, { rate: 0.8 }).catch(() => {});
+    }
+  }, [isTyping, word.text, audio]);
 
   // 错误回退：检测 hasWrong 上跳沿 → 通知父组件回退模式
   useEffect(() => {
@@ -116,7 +119,7 @@ export function WordCard({
     setIsTyping(!isTyping);
   }, [isTyping, setIsTyping]);
 
-  useKeyboardCapture(onChar, onBackspace, !state.isFinished && !showResult && !disabled, onEnter);
+  useKeyboardCapture(onChar, onBackspace, isTyping && !state.isFinished && !showResult && !disabled, onEnter);
 
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
@@ -136,13 +139,6 @@ export function WordCard({
       return () => clearTimeout(timer);
     }
   }, [state.isFinished, state.wrongCount, learnMode, onComplete, getLetterMistakes, word.text, audio]);
-
-  // 暂停遮罩提示文字
-  const pauseHint = !showWord
-    ? "按任意键凭记忆输入"
-    : state.inputWord.length > 0
-    ? "按任意键继续"
-    : "按任意键开始";
 
   return (
     <div className="flex flex-grow flex-col items-center justify-center">
@@ -169,28 +165,6 @@ export function WordCard({
       {/* 词条区域 */}
       <div className="container flex flex-grow flex-col items-center justify-center">
         <div className="relative flex w-full justify-center">
-          {/* 暂停遮罩 — iOS 26 毛玻璃卡片 */}
-          {!isTyping && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <div
-                className="rounded-3xl px-8 py-4 animate-spring-scale"
-                style={{
-                  background: "var(--glass-card-bg)",
-                  backdropFilter:
-                    "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-                  WebkitBackdropFilter:
-                    "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-                  border: "1px solid var(--glass-card-border)",
-                  boxShadow: "var(--shadow-md)",
-                }}
-              >
-                <p className="select-none text-lg font-medium text-foreground/80">
-                  {pauseHint}
-                </p>
-              </div>
-            </div>
-          )}
-
           <div className="relative flex flex-col items-center gap-10">
             {/* 字母行 */}
             <div
