@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,20 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   );
   const setPreferences = useSettingsStore((s) => s.setPreferences);
 
+  const panelRef = useRef<HTMLDivElement>(null);
   const [showWordAdjuster, setShowWordAdjuster] = useState(false);
+
+  // 展开时点击外部关闭
+  useEffect(() => {
+    if (!open) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onToggle();
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [open, onToggle]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,6 +70,7 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
 
   return (
     <div
+      ref={panelRef}
       className="absolute top-4 right-4 z-40 flex items-center gap-1 rounded-full transition-all duration-[400ms]"
       style={{
         background: "var(--glass-sheet-bg)",
