@@ -71,7 +71,10 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   return (
     <div
       ref={panelRef}
-      className="absolute top-4 right-4 z-40 flex items-center gap-1 rounded-full transition-all duration-[400ms]"
+      className={cn(
+        "absolute top-4 right-4 z-40 flex items-center rounded-full transition-all duration-[400ms]",
+        open && "gap-1"
+      )}
       style={{
         background: "var(--glass-sheet-bg)",
         backdropFilter:
