@@ -157,6 +157,8 @@ export interface UserPreferences {
   punctuationStrict: boolean;
   dailyReminderEnabled: boolean;
   dailyReminderTime: string;
+  /** 进度条位置：贴顶或贴底 */
+  progressBarPosition: "top" | "bottom";
 }
 
 export interface User {

@@ -20,9 +20,11 @@ import { WordCard } from "@/components/vocabulary/WordCard";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
-import { WORD_BOOK_META } from "@/lib/word-book-registry";
 import { WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_MIN } from "@/lib/constants";
-import { ArrowLeft } from "lucide-react";
+import { List, Settings } from "lucide-react";
+import { useSettingsStore } from "@/stores/settings-store";
+import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
+import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
 
 /** 从 FSRS 状态推导上次评分 */
 function deriveRatingFromFSRS(fsrs: FSRSState): number {
@@ -39,7 +41,8 @@ export function ImmersiveLearnPage() {
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
+  const [showWordList, setShowWordList] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const phase = useVocabularySessionStore((s) => s.phase);
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
@@ -58,6 +61,10 @@ export function ImmersiveLearnPage() {
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
   const addKeystrokes = useVocabularySessionStore((s) => s.addKeystrokes);
   const setElapsedSeconds = useVocabularySessionStore((s) => s.setElapsedSeconds);
+
+  const progressBarPosition = useSettingsStore(
+    (s) => s.preferences.progressBarPosition ?? "top"
+  );
 
   const { recordModeComplete } = useWordCompletion();
   const { flushPendingSaves } = useFSRSSync();
@@ -200,7 +207,6 @@ export function ImmersiveLearnPage() {
 
   // 关闭窗口（先等待 FSRS 写入完成）
   const handleClose = useCallback(async () => {
-    setIsClosing(true);
     await flushPendingSaves(3000);
     resetSession();
     window.close();
@@ -243,34 +249,41 @@ export function ImmersiveLearnPage() {
     );
   }
 
-  const bookLabel = selectedBook ? WORD_BOOK_META[selectedBook]?.label : "";
+  const isInSession = phase === "new-words" || phase === "review";
 
   return (
-    <div className="flex h-screen flex-col bg-background">
-      {/* 顶部栏：词库名 + 关闭按钮 */}
-      <header className="flex h-12 items-center justify-between border-b border-border px-4 shrink-0">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleClose}
-            disabled={isClosing}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            title="返回主窗口"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-medium text-muted-foreground">
-            {bookLabel}
-          </span>
-          {isReviewPhase && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-              复习
-            </span>
-          )}
-        </div>
-      </header>
+    <div className="relative flex h-screen flex-col bg-background">
+      {/* ── 顶部贴边进度条 ── */}
+      {progressBarPosition === "top" && isInSession && (
+        <ProgressBar
+          completedModes={completedModeCount}
+          totalModes={totalModes}
+          isReview={isReviewPhase}
+        />
+      )}
 
-      {/* 学习中 */}
-      {(phase === "new-words" || phase === "review") && currentWord && (
+      {/* ── 浮动按钮 ── */}
+      {isInSession && (
+        <>
+          <button
+            onClick={() => setShowWordList((v) => !v)}
+            className="absolute top-3 left-3 z-20 rounded-lg p-1.5 text-muted-foreground opacity-50 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100"
+            title="单词列表"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowSettings((v) => !v)}
+            className="absolute top-3 right-3 z-20 rounded-lg p-1.5 text-muted-foreground opacity-50 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100"
+            title="设置"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+        </>
+      )}
+
+      {/* ── 学习区域 ── */}
+      {isInSession && currentWord && (
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           <WordCard
             key={`${currentWord.id}-${currentLearnMode}`}
@@ -284,17 +297,32 @@ export function ImmersiveLearnPage() {
             reviewMeta={
               isReviewPhase ? reviewMeta[currentWord.id] : undefined
             }
-          />
-          <ProgressBar
-            completedModes={completedModeCount}
-            totalModes={totalModes}
-            isReview={isReviewPhase}
+            disabled={showWordList || showSettings}
           />
           <SpeedBar />
         </div>
       )}
 
-      {/* 结束 */}
+      {/* ── 底部贴边进度条 ── */}
+      {progressBarPosition === "bottom" && isInSession && (
+        <ProgressBar
+          completedModes={completedModeCount}
+          totalModes={totalModes}
+          isReview={isReviewPhase}
+        />
+      )}
+
+      {/* ── 覆盖面板 ── */}
+      <WordListDrawer
+        open={showWordList}
+        onClose={() => setShowWordList(false)}
+      />
+      <ImmersiveSettingsPanel
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+
+      {/* ── 结果页 ── */}
       {phase === "finished" && (
         <ResultScreen
           onRepeat={handleRepeat}

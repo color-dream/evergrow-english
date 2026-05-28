@@ -27,6 +27,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   punctuationStrict: false,
   dailyReminderEnabled: false,
   dailyReminderTime: "09:00",
+  progressBarPosition: "top",
 };
 
 export const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;

@@ -24,6 +24,8 @@ interface WordCardProps {
   onWrongChar?: () => void;
   isReview?: boolean;
   reviewMeta?: ReviewWordMeta;
+  /** 禁用键盘捕获（面板打开时） */
+  disabled?: boolean;
 }
 
 /** 根据 learnMode 决定各元素是否可见 */
@@ -45,6 +47,7 @@ export function WordCard({
   onWrongChar,
   isReview,
   reviewMeta,
+  disabled,
 }: WordCardProps) {
   const isIgnoreCase = true;
   const {
@@ -113,7 +116,7 @@ export function WordCard({
     setIsTyping(!isTyping);
   }, [isTyping, setIsTyping]);
 
-  useKeyboardCapture(onChar, onBackspace, !state.isFinished && !showResult, onEnter);
+  useKeyboardCapture(onChar, onBackspace, !state.isFinished && !showResult && !disabled, onEnter);
 
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
