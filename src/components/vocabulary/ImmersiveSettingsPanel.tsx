@@ -1,10 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import type { TypingMode } from "@/types/vocabulary";
-import { X } from "lucide-react";
+import {
+  X,
+  ALargeSmall,
+  Hash,
+  ArrowUp,
+  ArrowDown,
+  Minus,
+  Plus,
+} from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
@@ -21,6 +28,8 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
   );
   const setPreferences = useSettingsStore((s) => s.setPreferences);
 
+  const [showWordAdjuster, setShowWordAdjuster] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -30,100 +39,113 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  // 关闭浮条时重置子面板状态
+  useEffect(() => {
+    if (!open) setShowWordAdjuster(false);
+  }, [open]);
+
   if (!open) return null;
+
+  const toggleTypingMode = () => {
+    setTypingMode(typingMode === "strict" ? "loose" : "strict");
+  };
+
+  const toggleProgressPosition = () => {
+    setPreferences({
+      progressBarPosition: progressBarPosition === "top" ? "bottom" : "top",
+    });
+  };
+
+  const adjustWords = (delta: number) => {
+    const next = wordsPerRound + delta;
+    if (next >= WORDS_PER_ROUND_MIN && next <= WORDS_PER_ROUND_MAX) {
+      setWordsPerRound(next);
+    }
+  };
 
   return (
     <div className="absolute inset-0 z-30">
       {/* 遮罩 */}
       <div className="absolute inset-0 bg-black/10" onClick={onClose} />
-      {/* 右侧滑入面板 */}
-      <div className="absolute top-0 right-0 h-full w-72 max-w-[80vw] border-l border-border bg-card shadow-lg animate-slide-in-right">
-        {/* 标题栏 */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <h3 className="text-base font-semibold text-foreground">学习设置</h3>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
 
-        <div className="space-y-6 px-4 py-5">
-          {/* 打字模式 */}
-          <section>
-            <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-              打字模式
-            </h4>
-            <div className="flex rounded-lg border border-border p-0.5">
-              {(["strict", "loose"] as TypingMode[]).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setTypingMode(m)}
-                  className={cn(
-                    "flex-1 rounded-md py-1.5 text-sm font-medium transition-all",
-                    typingMode === m
-                      ? "bg-indigo-400 text-white"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {m === "strict" ? "严格" : "宽松"}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              {typingMode === "strict"
-                ? "打错即重置当前词，从头开始"
-                : "允许退格修正，输完整体比对"}
-            </p>
-          </section>
+      {/* 图标浮条 — 设置在右上角按钮左侧 */}
+      <div className="absolute top-3 right-12 z-40 flex items-center gap-0.5 rounded-lg border border-border bg-card px-1 py-1 shadow-sm animate-slide-in-right">
+        {/* 打字模式 */}
+        <button
+          onClick={toggleTypingMode}
+          title={typingMode === "strict" ? "严格模式（点按切换）" : "宽松模式（点按切换）"}
+          className={cn(
+            "rounded-md p-2 transition-colors hover:bg-muted",
+            typingMode === "strict"
+              ? "text-indigo-500"
+              : "text-muted-foreground"
+          )}
+        >
+          <ALargeSmall className="h-4 w-4" />
+        </button>
 
-          {/* 每轮单词数量 */}
-          <section>
-            <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-              每轮单词数量
-            </h4>
-            <input
-              type="range"
-              min={WORDS_PER_ROUND_MIN}
-              max={WORDS_PER_ROUND_MAX}
-              step={WORDS_PER_ROUND_STEP}
-              value={wordsPerRound}
-              onChange={(e) => setWordsPerRound(Number(e.target.value))}
-              className="w-full accent-indigo-500"
-            />
-            <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-              <span>{WORDS_PER_ROUND_MIN}</span>
-              <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+        {/* 词数调整器 */}
+        <div className="relative flex items-center">
+          {showWordAdjuster ? (
+            <div className="flex items-center gap-0.5 animate-fade-in">
+              <button
+                onClick={() => adjustWords(-WORDS_PER_ROUND_STEP)}
+                disabled={wordsPerRound <= WORDS_PER_ROUND_MIN}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                title="减少"
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className="min-w-[2ch] text-center text-xs font-mono font-medium text-foreground tabular-nums">
                 {wordsPerRound}
               </span>
-              <span>{WORDS_PER_ROUND_MAX}</span>
+              <button
+                onClick={() => adjustWords(WORDS_PER_ROUND_STEP)}
+                disabled={wordsPerRound >= WORDS_PER_ROUND_MAX}
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                title="增加"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
             </div>
-          </section>
-
-          {/* 进度条位置 */}
-          <section>
-            <h4 className="mb-3 text-sm font-medium text-muted-foreground">
-              进度条位置
-            </h4>
-            <div className="flex rounded-lg border border-border p-0.5">
-              {(["top", "bottom"] as const).map((pos) => (
-                <button
-                  key={pos}
-                  onClick={() => setPreferences({ progressBarPosition: pos })}
-                  className={cn(
-                    "flex-1 rounded-md py-1.5 text-sm font-medium transition-all",
-                    progressBarPosition === pos
-                      ? "bg-indigo-400 text-white"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {pos === "top" ? "上方" : "下方"}
-                </button>
-              ))}
-            </div>
-          </section>
+          ) : (
+            <button
+              onClick={() => setShowWordAdjuster(true)}
+              title={`每轮 ${wordsPerRound} 词（点按调整）`}
+              className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Hash className="h-4 w-4" />
+            </button>
+          )}
         </div>
+
+        {/* 进度条位置 */}
+        <button
+          onClick={toggleProgressPosition}
+          title={progressBarPosition === "top" ? "进度条在上方（点按切换）" : "进度条在下方（点按切换）"}
+          className={cn(
+            "rounded-md p-2 transition-colors hover:bg-muted",
+            "text-muted-foreground"
+          )}
+        >
+          {progressBarPosition === "top" ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )}
+        </button>
+
+        {/* 分隔 */}
+        <div className="mx-0.5 h-5 w-px bg-border" />
+
+        {/* 关闭 */}
+        <button
+          onClick={onClose}
+          title="关闭设置"
+          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
