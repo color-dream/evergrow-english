@@ -21,12 +21,11 @@ export function VocabularyPage() {
     (id: WordBookId) => {
       const win = window.open(
         `${ROUTES.LEARN}?bookId=${id}`,
-        "_blank",
-        "width=1024,height=768"
+        "_blank"
       );
 
       if (!win) {
-        alert("弹窗被浏览器拦截，请允许弹窗后重试。");
+        alert("页面被浏览器拦截，请允许弹窗后重试。");
       }
     },
     []
@@ -45,12 +44,11 @@ export function VocabularyPage() {
 
       const win = window.open(
         `${ROUTES.LEARN}?bookId=${bookId}&wordsPerRound=${wordsPerRoundValue}`,
-        "_blank",
-        "width=1024,height=768"
+        "_blank"
       );
 
       if (!win) {
-        alert("弹窗被浏览器拦截，请允许弹窗后重试。");
+        alert("页面被浏览器拦截，请允许弹窗后重试。");
       }
     },
     [preSettingsBookId]
