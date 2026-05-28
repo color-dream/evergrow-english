@@ -15,21 +15,19 @@ export function useWordCompletion() {
 
   const recordModeComplete = useCallback(
     (result: WordModeResult) => {
-      setTimeout(() => {
-        // 1. 委托 store 处理所有调度逻辑（记录结果 + 选择下一个任务）
-        scheduleNextTask(result);
+      // 1. 委托 store 处理所有调度逻辑（记录结果 + 选择下一个任务）
+      scheduleNextTask(result);
 
-        // 2. 检查是否有词刚完成全部 4 种模式，触发 FSRS 异步写入
-        const state = useVocabularySessionStore.getState();
-        if (state.lastCompletedWordId && state.selectedWordBook) {
-          const wordResult = state.wordResults.find(
-            (r) => r.wordId === state.lastCompletedWordId
-          );
-          if (wordResult) {
-            saveWordResult(wordResult, state.selectedWordBook);
-          }
+      // 2. 检查是否有词刚完成全部 4 种模式，触发 FSRS 异步写入
+      const state = useVocabularySessionStore.getState();
+      if (state.lastCompletedWordId && state.selectedWordBook) {
+        const wordResult = state.wordResults.find(
+          (r) => r.wordId === state.lastCompletedWordId
+        );
+        if (wordResult) {
+          saveWordResult(wordResult, state.selectedWordBook);
         }
-      }, 400);
+      }
     },
     [scheduleNextTask, saveWordResult]
   );

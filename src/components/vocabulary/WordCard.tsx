@@ -21,6 +21,7 @@ interface WordCardProps {
   typingMode: TypingMode;
   onComplete: (result: WordModeResult) => void;
   onKeystroke: (correct: boolean) => void;
+  onWrongChar?: () => void;
   isReview?: boolean;
   reviewMeta?: ReviewWordMeta;
 }
@@ -41,6 +42,7 @@ export function WordCard({
   typingMode,
   onComplete,
   onKeystroke,
+  onWrongChar,
   isReview,
   reviewMeta,
 }: WordCardProps) {
@@ -54,12 +56,16 @@ export function WordCard({
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showResult, setShowResult] = useState(false);
   const completedRef = useRef(false);
+  const prevHasWrong = useRef(false);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
-  const { showWord, showTranslation, showPhonetic } =
-    getVisibility(learnMode);
+  const vis = getVisibility(learnMode);
+  const showWord = showResult ? true : vis.showWord;
+  const showTranslation = showResult ? true : vis.showTranslation;
+  const showPhonetic = showResult ? true : vis.showPhonetic;
 
   useEffect(() => {
     setMode(typingMode);
@@ -69,8 +75,18 @@ export function WordCard({
     audio.speak(word.text, { rate: 0.8 }).catch(() => {});
   }, [word.text, audio]);
 
+  // 错误回退：检测 hasWrong 上跳沿 → 通知父组件回退模式
+  useEffect(() => {
+    if (state.hasWrong && !prevHasWrong.current) {
+      onWrongChar?.();
+    }
+    prevHasWrong.current = state.hasWrong;
+  }, [state.hasWrong, onWrongChar]);
+
   useEffect(() => {
     completedRef.current = false;
+    setShowResult(false);
+    prevHasWrong.current = false;
   }, [word.id, learnMode]);
 
   const onChar = useCallback(
@@ -97,20 +113,26 @@ export function WordCard({
     setIsTyping(!isTyping);
   }, [isTyping, setIsTyping]);
 
-  useKeyboardCapture(onChar, onBackspace, !state.isFinished, onEnter);
+  useKeyboardCapture(onChar, onBackspace, !state.isFinished && !showResult, onEnter);
 
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
       completedRef.current = true;
+      // 展示完整单词信息 1 秒
+      setShowResult(true);
       const letterMistakes = getLetterMistakes();
-      onComplete({
+      const result: WordModeResult = {
         mode: learnMode,
         wrongCount: state.wrongCount,
         isCorrect: state.wrongCount === 0,
         letterMistakes,
-      });
+      };
+      const timer = setTimeout(() => {
+        onComplete(result);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [state.isFinished, state.wrongCount, learnMode, onComplete, getLetterMistakes]);
+  }, [state.isFinished, state.wrongCount, learnMode, onComplete, getLetterMistakes, word.text, audio]);
 
   // 暂停遮罩提示文字
   const pauseHint = !showWord

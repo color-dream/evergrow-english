@@ -11,10 +11,11 @@ export function ProgressHeader() {
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
   const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
+  const regressionCount = useVocabularySessionStore((s) => s.regressionCount);
 
   const isReview = phase === "review";
   const total = isReview ? reviewWords.length : newWords.length;
-  const totalModes = total * 4;
+  const totalModes = total * 4 + regressionCount;
 
   const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 100;
   const progress = totalModes > 0 ? (completedModeCount / totalModes) * 100 : 0;

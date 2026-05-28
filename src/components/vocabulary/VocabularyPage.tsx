@@ -46,6 +46,9 @@ export function VocabularyPage() {
   const completedModeCount = useVocabularySessionStore(
     (s) => s.completedModeCount
   );
+  const regressionCount = useVocabularySessionStore(
+    (s) => s.regressionCount
+  );
 
   const [preSettingsBookId, setPreSettingsBookId] =
     useState<WordBookId | null>(null);
@@ -206,6 +209,10 @@ export function VocabularyPage() {
     [addKeystrokes]
   );
 
+  const handleWrongChar = useCallback(() => {
+    useVocabularySessionStore.getState().regressMode();
+  }, []);
+
   // 获取当前单词信息
   const state = useVocabularySessionStore.getState();
   const currentWordInfo = getCurrentWord(state);
@@ -216,7 +223,7 @@ export function VocabularyPage() {
     ? getCurrentLearnMode(currentWordInfo.completion)
     : "typeWithWord";
   const currentWords = isReviewPhase ? reviewWords : newWords;
-  const totalModes = currentWords.length * 4;
+  const totalModes = currentWords.length * 4 + regressionCount;
 
   return (
     <div className="flex h-full flex-col">
@@ -249,6 +256,7 @@ export function VocabularyPage() {
             typingMode={typingMode}
             onComplete={recordModeComplete}
             onKeystroke={onKeystroke}
+            onWrongChar={handleWrongChar}
             isReview={isReviewPhase}
             reviewMeta={
               isReviewPhase ? reviewMeta[currentWord.id] : undefined

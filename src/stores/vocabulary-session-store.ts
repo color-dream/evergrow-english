@@ -49,6 +49,7 @@ interface VocabularySessionState {
   // ── 任务队列（交错调度）──
   taskQueue: LearningTask[];
   completedModeCount: number;
+  regressionCount: number;
   lastCompletedWordId: string | null;
 
   // ── 当前位置 ──
@@ -80,6 +81,7 @@ interface VocabularySessionState {
   ) => void;
 
   scheduleNextTask: (result: WordModeResult) => void;
+  regressMode: () => void;
 
   addKeystrokes: (correct: boolean) => void;
   setElapsedSeconds: (seconds: number) => void;
@@ -143,6 +145,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
 
     taskQueue: [],
     completedModeCount: 0,
+    regressionCount: 0,
     lastCompletedWordId: null,
 
     currentWordIndex: 0,
@@ -174,6 +177,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
           reviewMeta: {},
           taskQueue: [],
           completedModeCount: 0,
+          regressionCount: 0,
           lastCompletedWordId: null,
           currentWordIndex: 0,
           startTime: null,
@@ -201,6 +205,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         newWordCompletions: completions,
         taskQueue: queue.slice(1), // [0] 已取出作为当前任务
         completedModeCount: 0,
+        regressionCount: 0,
         lastCompletedWordId: null,
         currentWordIndex: firstTask?.wordIndex ?? 0,
         isTyping: true,
@@ -236,6 +241,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         reviewMeta: meta,
         taskQueue: queue.slice(1),
         completedModeCount: 0,
+        regressionCount: 0,
         lastCompletedWordId: null,
         currentWordIndex: firstTask?.wordIndex ?? 0,
         isTyping: true,
@@ -368,6 +374,36 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         };
       }),
 
+    regressMode: () =>
+      set((s) => {
+        const isNewWords = s.phase === "new-words";
+        const words = isNewWords ? s.newWords : s.reviewWords;
+        const completionsKey = isNewWords
+          ? "newWordCompletions"
+          : "reviewWordCompletions";
+        const completions = { ...s[completionsKey] };
+
+        const currentWord = words[s.currentWordIndex];
+        if (!currentWord) return {};
+
+        const completion = completions[currentWord.id];
+        if (!completion) return {};
+
+        // 已在模式 0，无法回退
+        if (completion.currentModeIndex <= 0) return {};
+
+        const prevMode = completion.currentModeIndex - 1;
+        completions[currentWord.id] = {
+          ...completion,
+          currentModeIndex: prevMode,
+        };
+
+        return {
+          [completionsKey]: completions,
+          regressionCount: s.regressionCount + 1,
+        };
+      }),
+
     addKeystrokes: (correct) =>
       set((s) => ({
         totalKeystrokes: s.totalKeystrokes + 1,
@@ -398,6 +434,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         reviewMeta: {},
         taskQueue: [],
         completedModeCount: 0,
+        regressionCount: 0,
         lastCompletedWordId: null,
         currentWordIndex: 0,
         startTime: null,
