@@ -88,6 +88,27 @@ interface VocabularySessionState {
   tickTimer: () => void;
   finishSession: () => void;
   resetSession: () => void;
+  restoreSession: (data: {
+    selectedWordBook: WordBookId | null;
+    phase: SessionPhase;
+    typingMode: TypingMode;
+    wordsPerRound: number;
+    newWords: Word[];
+    newWordCompletions: Record<string, WordCompletion>;
+    reviewWords: Word[];
+    reviewWordCompletions: Record<string, WordCompletion>;
+    reviewMeta: Record<string, ReviewWordMeta>;
+    taskQueue: LearningTask[];
+    currentWordIndex: number;
+    completedModeCount: number;
+    regressionCount: number;
+    lastCompletedWordId: string | null;
+    wordResults: WordResult[];
+    totalKeystrokes: number;
+    totalCorrectKeystrokes: number;
+    startTime: number | null;
+    elapsedSeconds: number;
+  }) => void;
 }
 
 /** 创建空的 WordCompletion */
@@ -443,6 +464,13 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         wordResults: [],
         totalKeystrokes: 0,
         totalCorrectKeystrokes: 0,
+      }),
+
+    restoreSession: (data) =>
+      set({
+        ...data,
+        isTyping: data.phase === "new-words" || data.phase === "review",
+        endTime: null,
       }),
   }),
 );

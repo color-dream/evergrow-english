@@ -12,3 +12,9 @@ export {
   getTotalStudySessions,
   getTotalCardsReviewed,
 } from "./repository";
+export {
+  saveLearningSession,
+  loadLearningSession,
+  deleteLearningSession,
+} from "./learning-session-repository";
+export type { LearningSessionRecord } from "./learning-session-repository";

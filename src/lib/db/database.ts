@@ -1,9 +1,11 @@
 import Dexie, { type EntityTable } from "dexie";
 import type { LearningCard, StudySessionRecord } from "@/lib/fsrs/types";
+import type { LearningSessionRecord } from "./learning-session-repository";
 
 export class EvergrowDB extends Dexie {
   learningCards!: EntityTable<LearningCard, "id">;
   studySessions!: EntityTable<StudySessionRecord, "id">;
+  learningSessions!: EntityTable<LearningSessionRecord, "bookId">;
 
   constructor() {
     super("evergrow-english");
@@ -12,6 +14,10 @@ export class EvergrowDB extends Dexie {
       learningCards:
         "id, cardType, bookId, fsrs.state, fsrs.lastReview, fsrs.stability, createdAt",
       studySessions: "++id, sessionType, startTime, endTime",
+    });
+
+    this.version(2).stores({
+      learningSessions: "bookId",
     });
   }
 }

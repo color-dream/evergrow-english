@@ -64,4 +64,5 @@ export const ROUTES = {
   LISTENING: "/listening",
   SPEAKING: "/speaking",
   SETTINGS: "/settings",
+  LEARN: "/learn",
 } as const;

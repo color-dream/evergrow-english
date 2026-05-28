@@ -7,6 +7,7 @@ import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 import { DashboardPage } from "@/components/pages/DashboardPage";
 import { ReviewPage } from "@/components/pages/ReviewPage";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
+import { ImmersiveLearnPage } from "@/components/pages/ImmersiveLearnPage";
 import { ROUTES } from "@/lib/constants";
 import { BookOpen, Headphones, Mic, Settings } from "lucide-react";
 
@@ -79,11 +80,12 @@ export function App() {
                     />
                   }
                 />
-                <Route
-                  path="*"
-                  element={<Navigate to={ROUTES.HOME} replace />}
-                />
               </Route>
+              <Route path={ROUTES.LEARN} element={<ImmersiveLearnPage />} />
+              <Route
+                path="*"
+                element={<Navigate to={ROUTES.HOME} replace />}
+              />
             </Routes>
           </BrowserRouter>
         </AudioProvider>
