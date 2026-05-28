@@ -1,12 +1,9 @@
 import { useState } from "react";
 import {
   useVocabularySessionStore,
-  getCurrentWord,
-  getCurrentLearnMode,
 } from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
 import type { TypingMode } from "@/types/vocabulary";
-import { WORD_LEARN_MODE_LABELS } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
 import { Settings, Play, Pause, RotateCw, X } from "lucide-react";
 
@@ -21,13 +18,6 @@ export function VocabularyHeader() {
 
   const [showSettings, setShowSettings] = useState(false);
   const bookMeta = selectedBook ? WORD_BOOK_META[selectedBook] : null;
-
-  // 获取当前模式信息
-  const state = useVocabularySessionStore.getState();
-  const currentWordInfo = getCurrentWord(state);
-  const currentLearnMode = currentWordInfo
-    ? getCurrentLearnMode(currentWordInfo.completion)
-    : null;
 
   const isActive = phase === "new-words" || phase === "review";
   const isReview = phase === "review";
@@ -64,14 +54,6 @@ export function VocabularyHeader() {
           <nav className="my-card flex w-auto items-center gap-2 rounded-xl bg-card px-4 py-2 shadow-my-card">
             {isActive && (
               <>
-                {/* 当前模式名称 */}
-                {currentLearnMode && (
-                  <span className="text-xs text-muted-foreground">
-                    {WORD_LEARN_MODE_LABELS[currentLearnMode]}
-                  </span>
-                )}
-
-                <div className="mx-1 h-5 w-px bg-border" />
 
                 {/* 暂停/继续 */}
                 <ToolIconButton

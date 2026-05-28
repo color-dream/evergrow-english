@@ -182,8 +182,6 @@ export function VocabularyPage() {
   const currentLearnMode = currentWordInfo
     ? getCurrentLearnMode(currentWordInfo.completion)
     : "typeWithWord";
-  const currentModeIndex = currentWordInfo?.completion.currentModeIndex ?? 0;
-
   // 前后词
   const currentWords = isReviewPhase ? reviewWords : newWords;
   const prevWord =
@@ -223,7 +221,6 @@ export function VocabularyPage() {
           <ProgressBar
             currentWordIndex={currentWordIndex}
             totalWords={currentWords.length}
-            currentModeIndex={currentModeIndex}
             isReview={isReviewPhase}
           />
           <SpeedBar />

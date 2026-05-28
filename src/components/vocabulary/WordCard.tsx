@@ -12,7 +12,7 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useAudio } from "@/app/providers/AudioProvider";
 import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
-import { SkipForward, Volume2 } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { FSRS_RATING_LABELS } from "@/lib/constants";
 
 interface WordCardProps {
@@ -116,8 +116,6 @@ export function WordCard({
     }
   }, [state.isFinished, state.wrongCount, learnMode, onComplete, getLetterMistakes]);
 
-  const showSkip = state.wrongCount >= 4;
-
   // 暂停遮罩提示文字
   const pauseHint = !showWord
     ? "按任意键凭记忆输入"
@@ -167,26 +165,18 @@ export function WordCard({
                 state.hasWrong && "animate-shake"
               )}
             >
-              {showWord ? (
-                state.displayWord.split("").map((letter, index) => (
+              {state.displayWord.split("").map((letter, index) => {
+                const hasTyped = index < state.inputWord.length;
+                return (
                   <LetterBox
                     key={`${index}-${letter}`}
                     letter={letter}
                     state={state.letterStates[index]}
-                    visible={true}
+                    visible={showWord}
+                    userChar={hasTyped ? state.inputWord[index] : null}
                   />
-                ))
-              ) : (
-                <div className="flex h-16 items-center justify-center">
-                  <span className="font-mono text-2xl text-muted-foreground/40">
-                    {state.displayWord.split("").map((_, i) => (
-                      <span key={i} className="pr-[0.2rem]">
-                        _
-                      </span>
-                    ))}
-                  </span>
-                </div>
-              )}
+                );
+              })}
             </div>
 
             {/* 音标 & 播放按钮 */}
@@ -234,27 +224,6 @@ export function WordCard({
         </div>
       </div>
 
-      {/* 跳过按钮 */}
-      {showSkip && (
-        <div className="mb-6 flex justify-center">
-          <button
-            onClick={() => {
-              completedRef.current = true;
-              const letterMistakes = getLetterMistakes();
-              onComplete({
-                mode: learnMode,
-                wrongCount: state.wrongCount,
-                isCorrect: false,
-                letterMistakes,
-              });
-            }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-400 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
-          >
-            <SkipForward className="h-4 w-4" />
-            跳过此词
-          </button>
-        </div>
-      )}
     </div>
   );
 }
