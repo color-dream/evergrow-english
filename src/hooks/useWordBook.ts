@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { loadWordBook } from "@/lib/word-book-registry";
-import { FIXED_WORDS_PER_ROUND } from "@/lib/constants";
 import { getCardsByBookId } from "@/lib/db";
 import { getDueCards } from "@/lib/fsrs";
 import type { WordBookId } from "@/types/vocabulary";
@@ -43,26 +42,6 @@ export function useWordBook() {
     [setSelectedBook]
   );
 
-  const getDueReviewWords = useCallback(
-    async (bookId: WordBookId): Promise<Word[]> => {
-      const cards = await getCardsByBookId(bookId);
-      const dueCards = getDueCards(cards, Date.now());
-
-      // 将 LearningCard 转换为 Word 格式
-      return dueCards.slice(0, FIXED_WORDS_PER_ROUND).map((card) => ({
-        id: card.id,
-        text: card.wordText,
-        lemma: card.wordText,
-        definition: card.definition,
-        partOfSpeech: "other" as const,
-        difficulty: "B1" as const,
-        tags: [],
-        createdAt: card.createdAt,
-      }));
-    },
-    []
-  );
-
   return {
     loadedWords,
     isLoading,
@@ -70,6 +49,5 @@ export function useWordBook() {
     dueCount,
     selectedBook,
     selectBook,
-    getDueReviewWords,
   };
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   useVocabularySessionStore,
   getCurrentWord,
@@ -11,7 +11,6 @@ import { useWordCompletion } from "@/hooks/useWordCompletion";
 import { addStudySession, getCardsByBookId } from "@/lib/db";
 import { getDueCards } from "@/lib/fsrs";
 import { shuffleArray } from "@/lib/vocabulary-utils";
-import { FIXED_WORDS_PER_ROUND } from "@/lib/constants";
 import { VocabularyHeader } from "./VocabularyHeader";
 import { WordCard } from "./WordCard";
 import { ProgressBar } from "./ProgressBar";
@@ -21,6 +20,8 @@ import type { WordBookId } from "@/types/vocabulary";
 import type { FSRSState } from "@/types/domain";
 import { useUIStore } from "@/stores/ui-store";
 import { WordBookList } from "./WordBookList";
+import { PreSettingsDialog } from "./PreSettingsDialog";
+import { WORD_BOOK_META } from "@/lib/word-book-registry";
 
 /** 从 FSRS 状态推导上次评分（用于展示） */
 function deriveFSRSRatingFromState(fsrs: FSRSState): number {
@@ -35,6 +36,7 @@ export function VocabularyPage() {
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const startTime = useVocabularySessionStore((s) => s.startTime);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
+  const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
   const newWords = useVocabularySessionStore((s) => s.newWords);
   const newWordCompletions = useVocabularySessionStore(
     (s) => s.newWordCompletions
@@ -44,6 +46,9 @@ export function VocabularyPage() {
   const completedModeCount = useVocabularySessionStore(
     (s) => s.completedModeCount
   );
+
+  const [preSettingsBookId, setPreSettingsBookId] =
+    useState<WordBookId | null>(null);
 
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
   const finishSession = useVocabularySessionStore((s) => s.finishSession);
@@ -126,8 +131,9 @@ export function VocabularyPage() {
         return;
       }
 
+      const limit = useVocabularySessionStore.getState().wordsPerRound;
       const reviewWordsList = dueCards
-        .slice(0, FIXED_WORDS_PER_ROUND)
+        .slice(0, limit)
         .map((card) => ({
           id: card.id,
           text: card.wordText,
@@ -140,7 +146,7 @@ export function VocabularyPage() {
         }));
 
       const meta: Record<string, ReviewWordMeta> = {};
-      for (const card of dueCards.slice(0, FIXED_WORDS_PER_ROUND)) {
+      for (const card of dueCards.slice(0, limit)) {
         meta[card.id] = {
           previousRating: deriveFSRSRatingFromState(card.fsrs),
           lastReviewTime: card.fsrs.lastReview,
@@ -155,17 +161,43 @@ export function VocabularyPage() {
     }
   }, [selectedBook, startReviewPhase, finishSession]);
 
-  const handleSelectBook = useCallback(
-    async (id: WordBookId) => {
-      const loadedWords = await selectBook(id);
-      const newRoundWords = shuffleArray(loadedWords).slice(
-        0,
-        FIXED_WORDS_PER_ROUND
-      );
+  const startLearningWithBook = useCallback(
+    async (bookId: WordBookId) => {
+      const loadedWords = await selectBook(bookId);
+      const count = useVocabularySessionStore.getState().wordsPerRound;
+      const newRoundWords = shuffleArray(loadedWords).slice(0, count);
       startNewWordsPhase(newRoundWords);
     },
     [selectBook, startNewWordsPhase]
   );
+
+  const handleSelectBook = useCallback(
+    async (id: WordBookId) => {
+      if (phase === "idle") {
+        setPreSettingsBookId(id);
+      } else {
+        await startLearningWithBook(id);
+      }
+    },
+    [phase, startLearningWithBook]
+  );
+
+  const handlePreSettingsConfirm = useCallback(
+    (wordsPerRoundValue: number) => {
+      const store = useVocabularySessionStore.getState();
+      store.setWordsPerRound(wordsPerRoundValue);
+      const bookId = preSettingsBookId;
+      setPreSettingsBookId(null);
+      if (bookId) {
+        startLearningWithBook(bookId);
+      }
+    },
+    [preSettingsBookId, startLearningWithBook]
+  );
+
+  const handlePreSettingsCancel = useCallback(() => {
+    setPreSettingsBookId(null);
+  }, []);
 
   const onKeystroke = useCallback(
     (correct: boolean) => {
@@ -194,6 +226,17 @@ export function VocabularyPage() {
       {/* 空闲：单词本列表 */}
       {phase === "idle" && (
         <WordBookList onSelectBook={handleSelectBook} />
+      )}
+
+      {/* 选书预设弹窗 */}
+      {preSettingsBookId && (
+        <PreSettingsDialog
+          open={true}
+          bookName={WORD_BOOK_META[preSettingsBookId].label}
+          initialWordsPerRound={wordsPerRound}
+          onConfirm={handlePreSettingsConfirm}
+          onCancel={handlePreSettingsCancel}
+        />
       )}
 
       {/* 学习中（新词或复习） */}
@@ -230,13 +273,13 @@ export function VocabularyPage() {
           </div>
           <ResultScreen
             onRepeat={() => {
-              if (selectedBook) handleSelectBook(selectedBook);
+              if (selectedBook) startLearningWithBook(selectedBook);
             }}
             onChangeBook={() => {
               resetSession();
             }}
             onDictationRepeat={() => {
-              if (selectedBook) handleSelectBook(selectedBook);
+              if (selectedBook) startLearningWithBook(selectedBook);
             }}
           />
         </>

@@ -18,7 +18,7 @@ import {
 } from "@/lib/fsrs/learning-scheduler";
 import type { LearningTask } from "@/lib/fsrs/learning-scheduler";
 import type { FSRSState } from "@/types/domain";
-import { SKIP_WRONG_THRESHOLD } from "@/lib/constants";
+import { SKIP_WRONG_THRESHOLD, DEFAULT_WORDS_PER_ROUND } from "@/lib/constants";
 
 /** 复习卡片的FSRS元数据 */
 export interface ReviewWordMeta {
@@ -32,6 +32,7 @@ interface VocabularySessionState {
   // ── 配置 ──
   selectedWordBook: WordBookId | null;
   typingMode: TypingMode;
+  wordsPerRound: number;
 
   // ── 阶段管理 ──
   phase: SessionPhase;
@@ -69,6 +70,7 @@ interface VocabularySessionState {
   // ── Actions ──
   setSelectedWordBook: (id: WordBookId) => void;
   setTypingMode: (mode: TypingMode) => void;
+  setWordsPerRound: (n: number) => void;
   setIsTyping: (val: boolean) => void;
 
   startNewWordsPhase: (words: Word[]) => void;
@@ -128,6 +130,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
   (set) => ({
     selectedWordBook: null,
     typingMode: "strict",
+    wordsPerRound: DEFAULT_WORDS_PER_ROUND,
 
     phase: "idle",
 
@@ -156,6 +159,31 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
 
     setSelectedWordBook: (id) => set({ selectedWordBook: id }),
     setTypingMode: (mode) => set({ typingMode: mode }),
+    setWordsPerRound: (n) =>
+      set((s) => {
+        const isActive = s.phase === "new-words" || s.phase === "review";
+        if (!isActive) return { wordsPerRound: n };
+        // 活跃中更改 → 重置会话进度，保留配置
+        return {
+          wordsPerRound: n,
+          phase: "idle",
+          newWords: [],
+          newWordCompletions: {},
+          reviewWords: [],
+          reviewWordCompletions: {},
+          reviewMeta: {},
+          taskQueue: [],
+          completedModeCount: 0,
+          lastCompletedWordId: null,
+          currentWordIndex: 0,
+          startTime: null,
+          endTime: null,
+          elapsedSeconds: 0,
+          wordResults: [],
+          totalKeystrokes: 0,
+          totalCorrectKeystrokes: 0,
+        };
+      }),
     setIsTyping: (val) => set({ isTyping: val }),
 
     startNewWordsPhase: (words) => {

@@ -25,3 +25,6 @@ dist-ssr
 
 references
 bun.lock
+
+.codegraph
+

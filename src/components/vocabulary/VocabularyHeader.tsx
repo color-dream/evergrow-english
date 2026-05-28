@@ -3,6 +3,7 @@ import {
   useVocabularySessionStore,
 } from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
+import { WORDS_PER_ROUND_OPTIONS } from "@/lib/constants";
 import type { TypingMode } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
 import { Settings, Play, Pause, RotateCw, X } from "lucide-react";
@@ -13,6 +14,8 @@ export function VocabularyHeader() {
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
   const setTypingMode = useVocabularySessionStore((s) => s.setTypingMode);
+  const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
+  const setWordsPerRound = useVocabularySessionStore((s) => s.setWordsPerRound);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
 
@@ -124,6 +127,8 @@ export function VocabularyHeader() {
         onClose={() => setShowSettings(false)}
         mode={typingMode}
         onModeChange={setTypingMode}
+        wordsPerRound={wordsPerRound}
+        onWordsPerRoundChange={setWordsPerRound}
       />
     </>
   );
@@ -161,11 +166,15 @@ function SettingsDialog({
   onClose,
   mode,
   onModeChange,
+  wordsPerRound,
+  onWordsPerRoundChange,
 }: {
   open: boolean;
   onClose: () => void;
   mode: TypingMode;
   onModeChange: (mode: TypingMode) => void;
+  wordsPerRound: number;
+  onWordsPerRoundChange: (n: number) => void;
 }) {
   if (!open) return null;
 
@@ -211,6 +220,32 @@ function SettingsDialog({
               {mode === "strict"
                 ? "打错即重置当前词，从头开始"
                 : "允许退格修正，输完整体比对"}
+            </p>
+          </div>
+
+          {/* 每轮单词数量 */}
+          <div className="mb-6">
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              每轮单词数量
+            </h3>
+            <div className="flex gap-2">
+              {WORDS_PER_ROUND_OPTIONS.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => onWordsPerRoundChange(n)}
+                  className={cn(
+                    "flex-1 rounded-lg border py-2 text-sm font-medium transition-all",
+                    wordsPerRound === n
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
+                      : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              共 {wordsPerRound} 词 × 4 模式 = {wordsPerRound * 4} 个练习任务
             </p>
           </div>
         </div>
