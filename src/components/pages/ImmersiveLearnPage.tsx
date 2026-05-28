@@ -22,7 +22,6 @@ import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
 import { WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_MIN } from "@/lib/constants";
 import { List, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
@@ -313,37 +312,26 @@ export function ImmersiveLearnPage() {
 
       {/* ── 浮动按钮 ── */}
       {isInSession && (
-        <>
-          <button
-            onClick={() => setShowWordList((v) => !v)}
-            className={cn(
-              "absolute top-4 z-40 flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all duration-[400ms] hover:scale-105 active:scale-95",
-              showWordList ? "rounded-full" : "rounded-r-full"
-            )}
-            style={{
-              left: showWordList ? "18rem" : "0",
-              background: "var(--glass-sheet-bg)",
-              backdropFilter:
-                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-              WebkitBackdropFilter:
-                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-              border: "1px solid var(--glass-sheet-border)",
-              boxShadow: showWordList ? "none" : "var(--shadow-sm)",
-              color: "var(--color-foreground)",
-              opacity: 0.75,
-              transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget.style.opacity = "1"); }}
-            onMouseLeave={(e) => { if (!showWordList) (e.currentTarget.style.opacity = "0.75"); }}
-            title={showWordList ? "关闭列表" : "单词列表"}
-          >
-            {showWordList ? (
-              <X className="h-4 w-4" />
-            ) : (
-              <List className="h-4 w-4" />
-            )}
-          </button>
-        </>
+        <button
+          onClick={() => setShowWordList((v) => !v)}
+          className="absolute top-4 left-4 z-40 rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground/60 hover:text-foreground"
+          style={{
+            background: "var(--glass-sheet-bg)",
+            backdropFilter:
+              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            WebkitBackdropFilter:
+              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            border: "1px solid var(--glass-sheet-border)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+          title={showWordList ? "关闭列表" : "单词列表"}
+        >
+          {showWordList ? (
+            <X className="h-4 w-4" />
+          ) : (
+            <List className="h-4 w-4" />
+          )}
+        </button>
       )}
 
       {/* ── 学习区域 ── */}

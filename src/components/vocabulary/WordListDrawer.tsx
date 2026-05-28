@@ -63,16 +63,15 @@ export function WordListDrawer({ open, onClose }: WordListDrawerProps) {
       >
         {/* 标题栏 */}
         <div
-          className="flex items-center justify-between px-4 py-3"
+          className="flex items-center justify-center pt-6 pb-5 px-4"
           style={{ borderBottom: "1px solid var(--glass-sheet-border)" }}
         >
           <h3 className="text-sm font-semibold text-foreground/85">
             本轮单词 ({completedCount}/{words.length})
           </h3>
-          {/* 关闭按钮已移至面板外右边缘，由 ImmersiveLearnPage 的统一按钮接管 */}
         </div>
         {/* 列表 */}
-        <div className="overflow-y-auto h-[calc(100%-45px)]">
+        <div className="overflow-y-auto h-[calc(100%-100px)]">
           {words.map((word, index) => (
             <WordItem
               key={word.id}
