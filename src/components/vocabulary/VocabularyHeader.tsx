@@ -3,7 +3,7 @@ import {
   useVocabularySessionStore,
 } from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
-import { WORDS_PER_ROUND_OPTIONS } from "@/lib/constants";
+import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
 import type { TypingMode } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
 import { Settings, Play, Pause, RotateCw, X } from "lucide-react";
@@ -228,25 +228,24 @@ function SettingsDialog({
             <h3 className="mb-3 text-sm font-medium text-muted-foreground">
               每轮单词数量
             </h3>
-            <div className="flex gap-2">
-              {WORDS_PER_ROUND_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => onWordsPerRoundChange(n)}
-                  className={cn(
-                    "flex-1 rounded-lg border py-2 text-sm font-medium transition-all",
-                    wordsPerRound === n
-                      ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
-                      : "border-border text-muted-foreground hover:border-muted-foreground/40"
-                  )}
-                >
-                  {n}
-                </button>
-              ))}
+            <div className="relative">
+              <input
+                type="range"
+                min={WORDS_PER_ROUND_MIN}
+                max={WORDS_PER_ROUND_MAX}
+                step={WORDS_PER_ROUND_STEP}
+                value={wordsPerRound}
+                onChange={(e) => onWordsPerRoundChange(Number(e.target.value))}
+                className="w-full accent-indigo-500"
+              />
+              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                <span>{WORDS_PER_ROUND_MIN}</span>
+                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                  {wordsPerRound}
+                </span>
+                <span>{WORDS_PER_ROUND_MAX}</span>
+              </div>
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              共 {wordsPerRound} 词 × 4 模式 = {wordsPerRound * 4} 个练习任务
-            </p>
           </div>
         </div>
       </div>

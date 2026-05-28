@@ -1,11 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  BookOpen,
-  Headphones,
-  Mic,
   BookMarked,
-  Repeat,
   Settings,
   ChevronLeft,
 } from "lucide-react";
@@ -15,11 +11,7 @@ import { useUIStore } from "@/stores/ui-store";
 
 const navItems = [
   { to: ROUTES.DASHBOARD, label: "仪表盘", icon: LayoutDashboard },
-  { to: ROUTES.REVIEW, label: "今日复习", icon: Repeat },
   { to: ROUTES.VOCABULARY, label: "词汇", icon: BookMarked },
-  { to: ROUTES.READING, label: "阅读", icon: BookOpen },
-  { to: ROUTES.LISTENING, label: "听力", icon: Headphones },
-  { to: ROUTES.SPEAKING, label: "口语", icon: Mic },
   { to: ROUTES.SETTINGS, label: "设置", icon: Settings },
 ];
 

@@ -34,7 +34,9 @@ export const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 // ── 词汇学习 ──
 
 export const DEFAULT_WORDS_PER_ROUND = 20;
-export const WORDS_PER_ROUND_OPTIONS = [10, 20, 30, 40, 50] as const;
+export const WORDS_PER_ROUND_MIN = 5;
+export const WORDS_PER_ROUND_MAX = 50;
+export const WORDS_PER_ROUND_STEP = 5;
 
 /** 严格模式：打错后重置延迟 (ms) */
 export const WRONG_RESET_DELAY_MS = 300;
