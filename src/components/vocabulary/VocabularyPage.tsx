@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
-import { VocabularyHeader } from "./VocabularyHeader";
 import { WordBookList } from "./WordBookList";
 import { PreSettingsDialog } from "./PreSettingsDialog";
 import type { WordBookId } from "@/types/vocabulary";
@@ -63,8 +62,6 @@ export function VocabularyPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <VocabularyHeader />
-
       <WordBookList
         onSelectBook={handleSelectBook}
         onSelectInProgressBook={handleOpenInProgressBook}
