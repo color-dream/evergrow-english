@@ -120,20 +120,6 @@ export function ImmersiveLearnPage() {
     init();
   }, [bookId, wordsPerRoundParam, startNewWordsPhase]);
 
-  // 新词全部完成 → 加载复习阶段
-  useEffect(() => {
-    if (phase !== "new-words") return;
-    if (newWords.length === 0) return;
-
-    const allDone = Object.values(
-      useVocabularySessionStore.getState().newWordCompletions
-    ).every((c) => c.isFullyCompleted);
-
-    if (allDone && selectedBook) {
-      loadReviewPhase();
-    }
-  }, [phase, newWords, selectedBook]);
-
   const loadReviewPhase = useCallback(async () => {
     if (!selectedBook) {
       finishSession();
@@ -176,6 +162,20 @@ export function ImmersiveLearnPage() {
       finishSession();
     }
   }, [selectedBook, startReviewPhase, finishSession]);
+
+  // 新词全部完成 → 加载复习阶段
+  useEffect(() => {
+    if (phase !== "new-words") return;
+    if (newWords.length === 0) return;
+
+    const allDone = Object.values(
+      useVocabularySessionStore.getState().newWordCompletions
+    ).every((c) => c.isFullyCompleted);
+
+    if (allDone && selectedBook) {
+      loadReviewPhase();
+    }
+  }, [phase, newWords, selectedBook, completedModeCount, loadReviewPhase, finishSession]);
 
   const onKeystroke = useCallback(
     (correct: boolean) => addKeystrokes(correct),

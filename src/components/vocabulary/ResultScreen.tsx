@@ -132,9 +132,14 @@ export function ResultScreen({
                 onRepeat();
               }}
             >
-              重复本章节
+              再来一轮
             </PrimaryButton>
-            <PrimaryButton onClick={onChangeBook}>更换词库</PrimaryButton>
+            <button
+              onClick={onChangeBook}
+              className="flex items-center justify-center rounded-lg border-2 border-indigo-300 bg-transparent px-6 py-2 text-base text-indigo-500 transition-all hover:bg-indigo-50 active:scale-[0.98] dark:border-indigo-600 dark:text-indigo-400 dark:hover:bg-indigo-950"
+            >
+              休息一下
+            </button>
           </div>
         </div>
       </div>
