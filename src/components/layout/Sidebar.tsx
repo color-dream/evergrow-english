@@ -22,9 +22,15 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-border bg-card transition-all duration-300",
+        "flex flex-col transition-all duration-300",
         open ? "w-60" : "w-16"
       )}
+      style={{
+        background: "var(--glass-sheet-bg)",
+        backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        borderRight: "1px solid var(--glass-sheet-border)",
+      }}
     >
       {/* 品牌区 */}
       <div className="flex h-14 items-center justify-between px-4">
@@ -36,7 +42,7 @@ export function Sidebar() {
         <button
           onClick={toggle}
           className={cn(
-            "rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-muted hover:text-foreground",
+            "rounded-full p-1.5 text-foreground/40 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95",
             !open && "mx-auto"
           )}
           aria-label={open ? "收起侧边栏" : "展开侧边栏"}
@@ -58,10 +64,10 @@ export function Sidebar() {
             to={to}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                "flex items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium transition-all duration-300 hover:scale-[1.02] active:scale-[0.97]",
                 isActive
-                  ? "bg-primary/8 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground/50 hover:text-foreground hover:bg-foreground/5"
               )
             }
           >
@@ -73,8 +79,11 @@ export function Sidebar() {
 
       {/* 底部版本信息 */}
       {open && (
-        <div className="border-t border-border px-4 py-3">
-          <p className="text-xs text-muted-foreground/60">
+        <div
+          className="px-4 py-3"
+          style={{ borderTop: "1px solid var(--glass-sheet-border)" }}
+        >
+          <p className="text-xs text-foreground/30">
             Evergrow English v0.1.0
           </p>
         </div>

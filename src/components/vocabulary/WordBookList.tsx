@@ -29,7 +29,7 @@ export function WordBookList({ onSelectBook, onSelectInProgressBook }: WordBookL
   return (
     <div className="mx-auto max-w-3xl px-6 py-10 animate-fade-in">
       <h1 className="text-2xl font-bold text-foreground">词汇打字</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-foreground/55">
         选择单词本开始学习
       </p>
 
@@ -38,7 +38,11 @@ export function WordBookList({ onSelectBook, onSelectInProgressBook }: WordBookL
           {WORD_BOOK_OPTIONS.map((book) => (
             <div
               key={book.id}
-              className="h-32 animate-pulse rounded-xl border border-border bg-card"
+              className="h-32 animate-pulse rounded-2xl"
+              style={{
+                background: "var(--glass-card-bg)",
+                border: "1px solid var(--glass-card-border)",
+              }}
             />
           ))}
         </div>
@@ -46,7 +50,7 @@ export function WordBookList({ onSelectBook, onSelectInProgressBook }: WordBookL
         <>
           {inProgress.length > 0 && (
             <div className="mt-8">
-              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+              <h2 className="mb-3 text-sm font-semibold text-foreground/50">
                 进行中
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -64,7 +68,7 @@ export function WordBookList({ onSelectBook, onSelectInProgressBook }: WordBookL
 
           {notStarted.length > 0 && (
             <div className={inProgress.length > 0 ? "mt-8" : "mt-8"}>
-              <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+              <h2 className="mb-3 text-sm font-semibold text-foreground/50">
                 未开始
               </h2>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

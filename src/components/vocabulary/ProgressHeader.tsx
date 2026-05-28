@@ -30,15 +30,25 @@ export function ProgressHeader() {
         : "text-destructive";
 
   return (
-    <div className="sticky top-0 z-10 -mx-4 px-4 pb-3 pt-1 bg-background/85 backdrop-blur-sm">
+    <div
+      className="sticky top-0 z-10 -mx-4 px-4 pb-3 pt-1"
+      style={{
+        background: "var(--glass-sheet-bg)",
+        backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        borderBottom: "1px solid var(--glass-sheet-border)",
+      }}
+    >
       {/* 进度条 */}
-      <div className="mb-3 h-1 w-full rounded-full bg-muted">
+      <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-foreground/8">
         <div
           className={cn(
-            "h-full rounded-full transition-all duration-500 ease-out",
-            isReview ? "bg-amber-400" : "bg-primary"
+            "h-full rounded-full transition-all duration-500",
+            isReview
+              ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400"
+              : "bg-gradient-to-r from-primary via-cyan-400 to-primary"
           )}
-          style={{ width: `${progress}%` }}
+          style={{ width: `${progress}%`, backgroundSize: "200% 100%" }}
         />
       </div>
 
@@ -46,13 +56,13 @@ export function ProgressHeader() {
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium tabular-nums">
           <span className="text-foreground">{completedModeCount}</span>
-          <span className="text-muted-foreground"> / {totalModes} 模式</span>
+          <span className="text-foreground/45"> / {totalModes} 模式</span>
           {isReview && (
-            <span className="ml-2 text-xs text-amber-600">复习</span>
+            <span className="ml-2 text-xs" style={{ color: "oklch(0.55 0.14 80)" }}>复习</span>
           )}
         </span>
 
-        <span className="font-mono tabular-nums text-muted-foreground">
+        <span className="font-mono tabular-nums text-foreground/45">
           {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
         </span>
 

@@ -117,17 +117,21 @@ export function ReviewPage() {
   // 无到期卡片
   if (phase === "empty") {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 animate-fade-in">
-        <CheckCircle className="h-12 w-12 text-green-400" />
+      <div className="flex h-full flex-col items-center justify-center gap-4 animate-spring-scale">
+        <CheckCircle className="h-12 w-12 text-success" />
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">今日复习已完成</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground/55">
             暂无到期的复习卡片，去学些新词吧
           </p>
         </div>
         <button
           onClick={() => navigate(ROUTES.VOCABULARY)}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
+            boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
+          }}
         >
           去学新词
           <ArrowRight className="h-4 w-4" />
@@ -140,17 +144,21 @@ export function ReviewPage() {
   if (phase === "finished") {
     const wordsCorrect = results.filter((r) => r.isCorrect).length;
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 animate-fade-in">
-        <CheckCircle className="h-12 w-12 text-green-400" />
+      <div className="flex h-full flex-col items-center justify-center gap-4 animate-spring-scale">
+        <CheckCircle className="h-12 w-12 text-success" />
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground">复习完成</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-foreground/55">
             共复习 {dueCards.length} 个单词，正确 {wordsCorrect} 个
           </p>
         </div>
         <button
           onClick={() => navigate(ROUTES.DASHBOARD)}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
+          style={{
+            background: "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
+            boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
+          }}
         >
           返回仪表盘
           <ArrowRight className="h-4 w-4" />
@@ -171,10 +179,19 @@ export function ReviewPage() {
           onComplete={() => {}}
           onKeystroke={() => {}}
         />
-        {/* 评分遮罩 */}
+        {/* 评分遮罩 — iOS 26 毛玻璃面板 */}
         <div className="absolute inset-0 z-20 flex items-end justify-center pb-20">
-          <div className="flex flex-col items-center gap-4 rounded-2xl bg-card/95 px-8 py-6 shadow-lg backdrop-blur-sm">
-            <p className="text-sm text-muted-foreground">
+          <div
+            className="flex flex-col items-center gap-4 rounded-3xl px-8 py-6 animate-spring-up"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-lg)",
+            }}
+          >
+            <p className="text-sm text-foreground/70">
               {currentWord.text} — 你的掌握程度？
             </p>
             <div className="flex gap-3">
@@ -182,17 +199,16 @@ export function ReviewPage() {
                 <button
                   key={r}
                   onClick={() => onRate(r)}
-                  className={cn(
-                    "rounded-lg px-5 py-2.5 text-sm font-medium transition-all hover:scale-105 active:scale-95",
-                    r === 1 &&
-                      "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300",
-                    r === 2 &&
-                      "bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300",
-                    r === 3 &&
-                      "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
-                    r === 4 &&
-                      "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300"
-                  )}
+                  className="rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+                  style={
+                    r === 1
+                      ? { background: "oklch(0.52 0.2 18 / 0.12)", color: "oklch(0.52 0.2 18)", border: "1px solid oklch(0.52 0.2 18 / 0.2)" }
+                      : r === 2
+                        ? { background: "oklch(0.72 0.18 85 / 0.12)", color: "oklch(0.55 0.14 80)", border: "1px solid oklch(0.72 0.18 85 / 0.2)" }
+                        : r === 3
+                          ? { background: "oklch(0.55 0.195 252 / 0.1)", color: "oklch(0.55 0.195 252)", border: "1px solid oklch(0.55 0.195 252 / 0.2)" }
+                          : { background: "oklch(0.56 0.19 148 / 0.1)", color: "oklch(0.56 0.19 148)", border: "1px solid oklch(0.56 0.19 148 / 0.2)" }
+                  }
                 >
                   {FSRS_RATING_LABELS[r]}
                 </button>
@@ -209,9 +225,17 @@ export function ReviewPage() {
     return (
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-6 pt-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Repeat className="h-4 w-4" />
-            <span>
+          <div
+            className="flex items-center gap-2 rounded-full px-3 py-1.5 text-sm"
+            style={{
+              background: "var(--glass-pill-bg)",
+              backdropFilter: "blur(var(--glass-pill-blur))",
+              WebkitBackdropFilter: "blur(var(--glass-pill-blur))",
+              border: "1px solid var(--glass-pill-border)",
+            }}
+          >
+            <Repeat className="h-4 w-4 text-foreground/50" />
+            <span className="text-foreground/60">
               复习 {currentIdx + 1} / {dueCards.length}
             </span>
           </div>
@@ -233,7 +257,3 @@ export function ReviewPage() {
   return null;
 }
 
-/** 拼接 class 名的小工具，避免额外 import */
-function cn(...classes: (string | false | undefined | null)[]): string {
-  return classes.filter(Boolean).join(" ");
-}

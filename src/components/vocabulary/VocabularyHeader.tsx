@@ -31,22 +31,31 @@ export function VocabularyHeader() {
         <div className="flex w-full flex-col items-center justify-between gap-3 lg:flex-row lg:gap-0">
           {/* 左侧：标题 */}
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-indigo-500 lg:text-4xl">
+            <h1 className="text-2xl font-bold text-primary lg:text-4xl">
               Evergrow English
             </h1>
             {bookMeta && phase !== "finished" && (
-              <span className="rounded-full bg-indigo-100 px-3 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+              <span
+                className="rounded-full px-3 py-0.5 text-xs font-medium"
+                style={{
+                  background: "oklch(0.55 0.195 252 / 0.08)",
+                  color: "oklch(0.55 0.195 252)",
+                }}
+              >
                 {bookMeta.label}
               </span>
             )}
             {isActive && (
               <span
-                className={cn(
-                  "rounded-full px-3 py-0.5 text-xs font-medium",
-                  isReview
-                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
-                    : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                )}
+                className="rounded-full px-3 py-0.5 text-xs font-medium"
+                style={{
+                  background: isReview
+                    ? "oklch(0.72 0.18 85 / 0.12)"
+                    : "oklch(0.56 0.19 148 / 0.1)",
+                  color: isReview
+                    ? "oklch(0.55 0.14 80)"
+                    : "oklch(0.56 0.19 148)",
+                }}
               >
                 {isReview ? "复习阶段" : "新词学习"}
               </span>
@@ -54,7 +63,16 @@ export function VocabularyHeader() {
           </div>
 
           {/* 右侧：工具栏 */}
-          <nav className="my-card flex w-auto items-center gap-2 rounded-xl bg-card px-4 py-2 shadow-my-card">
+          <nav
+            className="flex w-auto items-center gap-2 rounded-full px-4 py-2"
+            style={{
+              background: "var(--glass-card-bg)",
+              backdropFilter: "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter: "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-card-border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
             {isActive && (
               <>
 
@@ -80,19 +98,28 @@ export function VocabularyHeader() {
                   <RotateCw className="h-4 w-4" />
                 </ToolIconButton>
 
-                <div className="mx-1 h-5 w-px bg-border" />
+                <div
+                  className="mx-1 h-5 w-px"
+                  style={{ background: "var(--glass-card-border)" }}
+                />
 
                 {/* 打字模式 */}
-                <div className="flex rounded-lg border border-border p-0.5">
+                <div
+                  className="flex rounded-full p-0.5"
+                  style={{
+                    background: "var(--glass-pill-bg)",
+                    border: "1px solid var(--glass-pill-border)",
+                  }}
+                >
                   {(["strict", "loose"] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setTypingMode(m)}
                       className={cn(
-                        "rounded-md px-2.5 py-1 text-xs font-medium transition-all",
+                        "rounded-full px-2.5 py-1 text-xs font-medium transition-all duration-300",
                         typingMode === m
-                          ? "bg-indigo-400 text-white"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground/50 hover:text-foreground"
                       )}
                     >
                       {m === "strict" ? "严格" : "宽松"}
@@ -101,7 +128,10 @@ export function VocabularyHeader() {
                 </div>
 
                 {/* 设置 */}
-                <div className="mx-1 h-5 w-px bg-border" />
+                <div
+                  className="mx-1 h-5 w-px"
+                  style={{ background: "var(--glass-card-border)" }}
+                />
 
                 <ToolIconButton
                   onClick={() => setShowSettings(true)}
@@ -113,7 +143,7 @@ export function VocabularyHeader() {
             )}
 
             {phase === "finished" && (
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-foreground/50">
                 本轮完成
               </span>
             )}
@@ -151,8 +181,10 @@ function ToolIconButton({
       onClick={onClick}
       title={title}
       className={cn(
-        "rounded-lg p-1.5 text-indigo-400 transition-colors hover:bg-indigo-400 hover:text-white focus:outline-none",
-        active && "bg-indigo-400 text-white"
+        "rounded-full p-1.5 transition-all duration-300 hover:scale-105 active:scale-95 focus:outline-none",
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-foreground/40 hover:text-foreground"
       )}
     >
       {children}
@@ -181,14 +213,29 @@ function SettingsDialog({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div
-        className="absolute inset-0 bg-gray-300 opacity-80 dark:bg-gray-600"
+        className="absolute inset-0"
+        style={{
+          background: "oklch(0.55 0.195 252 / 0.08)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
         onClick={onClose}
       />
       <div className="flex h-screen items-center justify-center">
-        <div className="my-card relative w-[90vw] max-w-md rounded-2xl bg-card p-6 shadow-my-card animate-fade-in">
+        <div
+          className="relative w-[90vw] max-w-md p-6 animate-spring-in"
+          style={{
+            background: "var(--glass-sheet-bg)",
+            backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            border: "1px solid var(--glass-sheet-border)",
+            borderRadius: "var(--radius-4xl)",
+            boxShadow: "var(--shadow-2xl)",
+          }}
+        >
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-lg p-1 text-muted-foreground hover:bg-muted"
+            className="absolute right-4 top-4 rounded-full p-1.5 text-foreground/40 transition-all duration-300 hover:text-foreground hover:scale-110"
           >
             <X className="h-4 w-4" />
           </button>
@@ -197,7 +244,7 @@ function SettingsDialog({
 
           {/* 打字模式 */}
           <div className="mb-6">
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+            <h3 className="mb-3 text-sm font-medium text-foreground/50">
               打字模式
             </h3>
             <div className="flex gap-2">
@@ -206,17 +253,18 @@ function SettingsDialog({
                   key={m}
                   onClick={() => onModeChange(m)}
                   className={cn(
-                    "flex-1 rounded-lg border py-2 text-sm font-medium transition-all",
+                    "flex-1 rounded-full border py-2 text-sm font-medium transition-all duration-300",
                     mode === m
-                      ? "border-indigo-400 bg-indigo-50 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
-                      : "border-border text-muted-foreground hover:border-muted-foreground/40"
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "text-foreground/50 hover:text-foreground"
                   )}
+                  style={mode === m ? {} : { borderColor: "var(--glass-card-border)" }}
                 >
                   {m === "strict" ? "严格模式" : "宽松模式"}
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
+            <p className="mt-1.5 text-xs text-foreground/45">
               {mode === "strict"
                 ? "打错即重置当前词，从头开始"
                 : "允许退格修正，输完整体比对"}
@@ -225,7 +273,7 @@ function SettingsDialog({
 
           {/* 每轮单词数量 */}
           <div className="mb-6">
-            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+            <h3 className="mb-3 text-sm font-medium text-foreground/50">
               每轮单词数量
             </h3>
             <div className="relative">
@@ -236,11 +284,17 @@ function SettingsDialog({
                 step={WORDS_PER_ROUND_STEP}
                 value={wordsPerRound}
                 onChange={(e) => onWordsPerRoundChange(Number(e.target.value))}
-                className="w-full accent-indigo-500"
+                className="w-full accent-primary"
               />
-              <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+              <div className="mt-1 flex justify-between text-xs text-foreground/50">
                 <span>{WORDS_PER_ROUND_MIN}</span>
-                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
+                <span
+                  className="rounded-full px-2 py-0.5 text-xs font-medium"
+                  style={{
+                    background: "oklch(0.55 0.195 252 / 0.1)",
+                    color: "oklch(0.55 0.195 252)",
+                  }}
+                >
                   {wordsPerRound}
                 </span>
                 <span>{WORDS_PER_ROUND_MAX}</span>
