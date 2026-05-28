@@ -369,31 +369,17 @@ export function ImmersiveLearnPage() {
 
       {/* ── 暂停蒙层 ── */}
       {isInSession && !isTyping && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "oklch(0 0 0 / 0.12)",
-              backdropFilter: "blur(6px)",
-              WebkitBackdropFilter: "blur(6px)",
-            }}
-          />
-          <div
-            className="relative rounded-3xl px-8 py-5 animate-spring-scale"
-            style={{
-              background: "var(--glass-sheet-bg)",
-              backdropFilter:
-                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-              WebkitBackdropFilter:
-                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-              border: "1px solid var(--glass-sheet-border)",
-              boxShadow: "var(--shadow-lg)",
-            }}
-          >
-            <p className="select-none text-lg font-medium text-foreground/80">
-              {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
-            </p>
-          </div>
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center"
+          style={{
+            background: "oklch(0 0 0 / 0.12)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+          }}
+        >
+          <p className="select-none text-lg font-medium text-foreground/80 animate-spring-scale">
+            {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
+          </p>
         </div>
       )}
 
