@@ -2,8 +2,8 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { cn } from "@/lib/utils";
 
 export function ProgressHeader() {
-  const currentWordIndex = useVocabularySessionStore(
-    (s) => s.currentWordIndex
+  const completedModeCount = useVocabularySessionStore(
+    (s) => s.completedModeCount
   );
   const phase = useVocabularySessionStore((s) => s.phase);
   const newWords = useVocabularySessionStore((s) => s.newWords);
@@ -14,9 +14,10 @@ export function ProgressHeader() {
 
   const isReview = phase === "review";
   const total = isReview ? reviewWords.length : newWords.length;
+  const totalModes = total * 4;
 
   const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 100;
-  const progress = total > 0 ? ((currentWordIndex + 1) / total) * 100 : 0;
+  const progress = totalModes > 0 ? (completedModeCount / totalModes) * 100 : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
@@ -43,8 +44,8 @@ export function ProgressHeader() {
       {/* 统计行 */}
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium tabular-nums">
-          <span className="text-foreground">{currentWordIndex + 1}</span>
-          <span className="text-muted-foreground"> / {total} 词</span>
+          <span className="text-foreground">{completedModeCount}</span>
+          <span className="text-muted-foreground"> / {totalModes} 模式</span>
           {isReview && (
             <span className="ml-2 text-xs text-amber-600">复习</span>
           )}

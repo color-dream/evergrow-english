@@ -17,8 +17,6 @@ import { FSRS_RATING_LABELS } from "@/lib/constants";
 
 interface WordCardProps {
   word: Word;
-  prevWord?: Word | null;
-  nextWord?: Word | null;
   learnMode: WordLearnMode;
   typingMode: TypingMode;
   onComplete: (result: WordModeResult) => void;
@@ -39,8 +37,6 @@ function getVisibility(learnMode: WordLearnMode) {
 
 export function WordCard({
   word,
-  prevWord,
-  nextWord,
   learnMode,
   typingMode,
   onComplete,
@@ -137,12 +133,6 @@ export function WordCard({
         </div>
       )}
 
-      {/* prev / next 词提示 */}
-      <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
-        {prevWord && <PrevNextHint type="prev" word={prevWord} />}
-        {nextWord && <PrevNextHint type="next" word={nextWord} />}
-      </div>
-
       {/* 词条区域 */}
       <div className="container flex flex-grow flex-col items-center justify-center">
         <div className="relative flex w-full justify-center">
@@ -224,22 +214,6 @@ export function WordCard({
         </div>
       </div>
 
-    </div>
-  );
-}
-
-/** 前一个 / 后一个 词提示 */
-function PrevNextHint({ type, word }: { type: "prev" | "next"; word: Word }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 text-sm text-muted-foreground/50",
-        type === "next" && "flex-row-reverse"
-      )}
-    >
-      <span className="text-xs">{type === "prev" ? "←" : "→"}</span>
-      <span className="font-mono text-base">{word.text}</span>
-      <span className="max-w-[200px] truncate text-xs">{word.definition}</span>
     </div>
   );
 }

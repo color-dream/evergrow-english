@@ -2,25 +2,23 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
-  /** 当前单词索引 */
-  currentWordIndex: number;
-  /** 总单词数 */
-  totalWords: number;
+  /** 已完成的模式数 */
+  completedModes: number;
+  /** 总模式数 (= 单词数 × 4) */
+  totalModes: number;
   /** 是否为复习阶段 */
   isReview: boolean;
 }
 
 export function ProgressBar({
-  currentWordIndex,
-  totalWords,
+  completedModes,
+  totalModes,
   isReview,
 }: ProgressBarProps) {
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
 
-  const wordProgress =
-    totalWords > 0
-      ? Math.floor(((currentWordIndex + 1) / totalWords) * 100)
-      : 0;
+  const progress =
+    totalModes > 0 ? Math.floor((completedModes / totalModes) * 100) : 0;
 
   const barColor = isReview
     ? "bg-amber-400 dark:bg-amber-500"
@@ -37,7 +35,7 @@ export function ProgressBar({
         isTyping ? "opacity-100" : "opacity-0"
       )}
     >
-      {/* 单词进度条 */}
+      {/* 模式进度条 */}
       <div
         className={cn(
           "mb-1 flex h-2 overflow-hidden rounded-xl text-xs transition-all duration-300",
@@ -45,7 +43,7 @@ export function ProgressBar({
         )}
       >
         <div
-          style={{ width: `${wordProgress}%` }}
+          style={{ width: `${progress}%` }}
           className={cn(
             "flex flex-col justify-center whitespace-nowrap rounded-xl text-center text-white shadow-none transition-all duration-300",
             barColor
@@ -56,7 +54,7 @@ export function ProgressBar({
       {/* 进度文字 */}
       <div className="text-center">
         <span className="text-xs text-muted-foreground">
-          {currentWordIndex + 1} / {totalWords}
+          {completedModes} / {totalModes}
           {isReview && " · 复习"}
         </span>
       </div>

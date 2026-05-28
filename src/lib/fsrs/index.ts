@@ -6,4 +6,11 @@ export {
   getTodayReviewedCount,
   getMasteredCount,
 } from "./scheduler";
+export {
+  createNewWordTaskQueue,
+  createReviewTaskQueue,
+  sortQueueByPriority,
+  createTask,
+} from "./learning-scheduler";
+export type { LearningTask } from "./learning-scheduler";
 export type { LearningCard, StudySessionRecord } from "./types";

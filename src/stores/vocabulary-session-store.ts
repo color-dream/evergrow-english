@@ -10,12 +10,22 @@ import type {
   WordCompletion,
 } from "@/types/vocabulary";
 import { WORD_LEARN_MODE_SEQUENCE } from "@/types/vocabulary";
+import {
+  createNewWordTaskQueue,
+  createReviewTaskQueue,
+  sortQueueByPriority,
+  createTask,
+} from "@/lib/fsrs/learning-scheduler";
+import type { LearningTask } from "@/lib/fsrs/learning-scheduler";
+import type { FSRSState } from "@/types/domain";
+import { SKIP_WRONG_THRESHOLD } from "@/lib/constants";
 
 /** 复习卡片的FSRS元数据 */
 export interface ReviewWordMeta {
   previousRating: number;
   lastReviewTime: number;
   stability: number;
+  fsrs?: FSRSState;
 }
 
 interface VocabularySessionState {
@@ -34,6 +44,11 @@ interface VocabularySessionState {
   reviewWords: Word[];
   reviewWordCompletions: Record<string, WordCompletion>;
   reviewMeta: Record<string, ReviewWordMeta>;
+
+  // ── 任务队列（交错调度）──
+  taskQueue: LearningTask[];
+  completedModeCount: number;
+  lastCompletedWordId: string | null;
 
   // ── 当前位置 ──
   currentWordIndex: number;
@@ -59,15 +74,11 @@ interface VocabularySessionState {
   startNewWordsPhase: (words: Word[]) => void;
   startReviewPhase: (
     words: Word[],
-    meta: Record<string, ReviewWordMeta>
+    meta: Record<string, ReviewWordMeta>,
   ) => void;
 
-  recordModeResult: (wordId: string, result: WordModeResult) => void;
-  advanceToNextMode: () => void;
-  resetToFirstMode: () => void;
-  advanceToNextWord: () => void;
+  scheduleNextTask: (result: WordModeResult) => void;
 
-  addWordResult: (result: WordResult) => void;
   addKeystrokes: (correct: boolean) => void;
   setElapsedSeconds: (seconds: number) => void;
   tickTimer: () => void;
@@ -85,6 +96,34 @@ function createCompletion(wordId: string): WordCompletion {
   };
 }
 
+/** 聚合4模式结果为最终 WordResult */
+function aggregateWordResult(
+  wordId: string,
+  wordText: string,
+  definition: string,
+  allResults: WordModeResult[],
+): WordResult {
+  const worstWrongCount = Math.max(...allResults.map((r) => r.wrongCount));
+  const isCorrect = allResults.every((r) => r.isCorrect);
+
+  const mergedMistakes: Record<number, string[]> = {};
+  for (const r of allResults) {
+    for (const [pos, mistakes] of Object.entries(r.letterMistakes)) {
+      const key = Number(pos);
+      mergedMistakes[key] = [...(mergedMistakes[key] ?? []), ...mistakes];
+    }
+  }
+
+  return {
+    wordId,
+    wordText,
+    definition,
+    wrongCount: worstWrongCount,
+    isCorrect,
+    letterMistakes: mergedMistakes,
+  };
+}
+
 export const useVocabularySessionStore = create<VocabularySessionState>()(
   (set) => ({
     selectedWordBook: null,
@@ -98,6 +137,10 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     reviewWords: [],
     reviewWordCompletions: {},
     reviewMeta: {},
+
+    taskQueue: [],
+    completedModeCount: 0,
+    lastCompletedWordId: null,
 
     currentWordIndex: 0,
 
@@ -120,11 +163,18 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
       for (const word of words) {
         completions[word.id] = createCompletion(word.id);
       }
+
+      const queue = createNewWordTaskQueue(words);
+      const firstTask = queue[0];
+
       set({
         phase: "new-words",
         newWords: words,
         newWordCompletions: completions,
-        currentWordIndex: 0,
+        taskQueue: queue.slice(1), // [0] 已取出作为当前任务
+        completedModeCount: 0,
+        lastCompletedWordId: null,
+        currentWordIndex: firstTask?.wordIndex ?? 0,
         isTyping: true,
         startTime: Date.now(),
         endTime: null,
@@ -140,108 +190,155 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
       for (const word of words) {
         completions[word.id] = createCompletion(word.id);
       }
+
+      // 构建 FSRS 优先级排序的初始队列
+      const fsrsMap: Record<string, FSRSState> = {};
+      for (const [wordId, m] of Object.entries(meta)) {
+        if (m.fsrs) {
+          fsrsMap[wordId] = m.fsrs;
+        }
+      }
+      const queue = createReviewTaskQueue(words, fsrsMap);
+      const firstTask = queue[0];
+
       set({
         phase: "review",
         reviewWords: words,
         reviewWordCompletions: completions,
         reviewMeta: meta,
-        currentWordIndex: 0,
+        taskQueue: queue.slice(1),
+        completedModeCount: 0,
+        lastCompletedWordId: null,
+        currentWordIndex: firstTask?.wordIndex ?? 0,
         isTyping: true,
       });
     },
 
-    recordModeResult: (wordId, result) =>
-      set((s) => {
-        const isNewWords = s.phase === "new-words";
-        const completionsKey = isNewWords
-          ? "newWordCompletions"
-          : "reviewWordCompletions";
-        const completions = { ...s[completionsKey] };
-        const completion = completions[wordId];
-        if (!completion) return {};
-
-        completions[wordId] = {
-          ...completion,
-          modeResults: [...completion.modeResults, result],
-        };
-
-        return { [completionsKey]: completions };
-      }),
-
-    advanceToNextMode: () =>
+    scheduleNextTask: (result) =>
       set((s) => {
         const isNewWords = s.phase === "new-words";
         const wordsKey = isNewWords ? "newWords" : "reviewWords";
         const completionsKey = isNewWords
           ? "newWordCompletions"
           : "reviewWordCompletions";
-        const words = s[wordsKey];
+        const words = s[wordsKey] as Word[];
         const completions = { ...s[completionsKey] };
+
+        // 从 taskQueue[0] 获取当前任务（已经在展示前弹出，此处通过
+        // currentWordIndex 找到当前词和模式）
         const currentWord = words[s.currentWordIndex];
         if (!currentWord) return {};
 
         const completion = completions[currentWord.id];
         if (!completion) return {};
 
-        const nextModeIndex = completion.currentModeIndex + 1;
-        completions[currentWord.id] = {
-          ...completion,
-          currentModeIndex: nextModeIndex,
-          isFullyCompleted: nextModeIndex >= 4,
-        };
+        // 当前模式索引
+        const currentMode = completion.currentModeIndex;
 
-        return { [completionsKey]: completions };
-      }),
+        // 递增已完成模式计数
+        const newCompletedModeCount = s.completedModeCount + 1;
 
-    resetToFirstMode: () =>
-      set((s) => {
-        const isNewWords = s.phase === "new-words";
-        const wordsKey = isNewWords ? "newWords" : "reviewWords";
-        const completionsKey = isNewWords
-          ? "newWordCompletions"
-          : "reviewWordCompletions";
-        const words = s[wordsKey];
-        const completions = { ...s[completionsKey] };
-        const currentWord = words[s.currentWordIndex];
-        if (!currentWord) return {};
+        // 追加本模式结果
+        const updatedModeResults = [...completion.modeResults, result];
 
-        completions[currentWord.id] = {
-          ...completions[currentWord.id],
-          currentModeIndex: 0,
-          modeResults: [],
-          isFullyCompleted: false,
-        };
+        let newQueue = [...s.taskQueue];
+        let newCompletions = { ...completions };
+        let newLastCompletedWordId: string | null = null;
+        let newWordResults = [...s.wordResults];
+        let nextWordIndex = s.currentWordIndex;
+        let nextPhase: SessionPhase = s.phase;
 
-        return { [completionsKey]: completions };
-      }),
-
-    advanceToNextWord: () =>
-      set((s) => {
-        const isNewWords = s.phase === "new-words";
-        const wordsKey = isNewWords ? "newWords" : "reviewWords";
-        const words = s[wordsKey];
-        const nextIndex = s.currentWordIndex + 1;
-
-        if (nextIndex >= words.length) {
-          if (isNewWords) {
-            return {
-              currentWordIndex: nextIndex,
-            };
-          }
-          return {
-            currentWordIndex: nextIndex,
-            phase: "finished",
-            endTime: Date.now(),
+        if (result.wrongCount >= SKIP_WRONG_THRESHOLD) {
+          // ── 失败：重置到 mode 0 ──
+          newCompletions[currentWord.id] = {
+            ...completion,
+            currentModeIndex: 0,
+            modeResults: [],
+            isFullyCompleted: false,
           };
+
+          // 高优重新入队
+          const resetTask = createTask(currentWord.id, s.currentWordIndex, 0, result.wrongCount);
+          newQueue.push(resetTask);
+        } else if (currentMode >= 3) {
+          // ── 4 种模式全完成 ──
+          newCompletions[currentWord.id] = {
+            ...completion,
+            modeResults: updatedModeResults,
+            currentModeIndex: 4,
+            isFullyCompleted: true,
+          };
+
+          // 聚合 WordResult
+          const finalResult = aggregateWordResult(
+            currentWord.id,
+            currentWord.text,
+            currentWord.definition,
+            updatedModeResults,
+          );
+          newWordResults = [...newWordResults, finalResult];
+          newLastCompletedWordId = currentWord.id;
+        } else {
+          // ── 推进到下一模式 ──
+          const nextMode = currentMode + 1;
+          newCompletions[currentWord.id] = {
+            ...completion,
+            modeResults: updatedModeResults,
+            currentModeIndex: nextMode,
+          };
+
+          const nextTask = createTask(currentWord.id, s.currentWordIndex, nextMode, result.wrongCount);
+          newQueue.push(nextTask);
         }
 
-        return { currentWordIndex: nextIndex };
-      }),
+        // 按优先级重排
+        const fsrsMap: Record<string, FSRSState> = {};
+        if (!isNewWords) {
+          for (const [wordId, meta] of Object.entries(s.reviewMeta)) {
+            if (meta.fsrs) {
+              fsrsMap[wordId] = meta.fsrs;
+            }
+          }
+        }
+        newQueue = sortQueueByPriority(newQueue, isNewWords, fsrsMap);
 
-    addWordResult: (result) =>
-      set((s) => ({
-        wordResults: [...s.wordResults, result],
-      })),
+        // 取出队头作为下一个任务
+        if (newQueue.length > 0) {
+          const nextTask = newQueue[0];
+          newQueue = newQueue.slice(1);
+          nextWordIndex = nextTask.wordIndex;
+
+          // 需要更新 completion 中的 modeIndex 以反映当前任务
+          const nextCompletion = newCompletions[nextTask.wordId];
+          if (nextCompletion && nextCompletion.currentModeIndex !== nextTask.modeIndex) {
+            newCompletions[nextTask.wordId] = {
+              ...nextCompletion,
+              currentModeIndex: nextTask.modeIndex,
+            };
+          }
+        } else {
+          // 队列空 → 阶段结束
+          if (isNewWords) {
+            // 新词阶段结束，由 VocabularyPage useEffect 侦测并触发复习加载
+            // 设为越界索引使 getCurrentWord 返回 null，避免闪烁
+            nextWordIndex = words.length;
+          } else {
+            // 复习阶段结束
+            nextPhase = "finished";
+          }
+        }
+
+        return {
+          [completionsKey]: newCompletions,
+          taskQueue: newQueue,
+          completedModeCount: newCompletedModeCount,
+          lastCompletedWordId: newLastCompletedWordId,
+          currentWordIndex: nextWordIndex,
+          wordResults: newWordResults,
+          phase: nextPhase,
+          endTime: nextPhase === "finished" ? Date.now() : s.endTime,
+        };
+      }),
 
     addKeystrokes: (correct) =>
       set((s) => ({
@@ -271,6 +368,9 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         reviewWords: [],
         reviewWordCompletions: {},
         reviewMeta: {},
+        taskQueue: [],
+        completedModeCount: 0,
+        lastCompletedWordId: null,
         currentWordIndex: 0,
         startTime: null,
         endTime: null,
@@ -279,7 +379,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
         totalKeystrokes: 0,
         totalCorrectKeystrokes: 0,
       }),
-  })
+  }),
 );
 
 /** 获取当前活跃的单词和完成状态 */
@@ -304,7 +404,7 @@ export function getCurrentWord(state: VocabularySessionState): {
 
 /** 获取当前单词的学习模式 */
 export function getCurrentLearnMode(
-  completion: WordCompletion
+  completion: WordCompletion,
 ): WordLearnMode {
   return WORD_LEARN_MODE_SEQUENCE[completion.currentModeIndex] ?? "typeWithWord";
 }

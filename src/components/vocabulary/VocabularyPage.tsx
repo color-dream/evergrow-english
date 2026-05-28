@@ -33,9 +33,6 @@ function deriveFSRSRatingFromState(fsrs: FSRSState): number {
 export function VocabularyPage() {
   const phase = useVocabularySessionStore((s) => s.phase);
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
-  const currentWordIndex = useVocabularySessionStore(
-    (s) => s.currentWordIndex
-  );
   const startTime = useVocabularySessionStore((s) => s.startTime);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
   const newWords = useVocabularySessionStore((s) => s.newWords);
@@ -44,6 +41,9 @@ export function VocabularyPage() {
   );
   const reviewWords = useVocabularySessionStore((s) => s.reviewWords);
   const reviewMeta = useVocabularySessionStore((s) => s.reviewMeta);
+  const completedModeCount = useVocabularySessionStore(
+    (s) => s.completedModeCount
+  );
 
   const resetSession = useVocabularySessionStore((s) => s.resetSession);
   const finishSession = useVocabularySessionStore((s) => s.finishSession);
@@ -145,6 +145,7 @@ export function VocabularyPage() {
           previousRating: deriveFSRSRatingFromState(card.fsrs),
           lastReviewTime: card.fsrs.lastReview,
           stability: card.fsrs.stability,
+          fsrs: card.fsrs,
         };
       }
 
@@ -182,14 +183,8 @@ export function VocabularyPage() {
   const currentLearnMode = currentWordInfo
     ? getCurrentLearnMode(currentWordInfo.completion)
     : "typeWithWord";
-  // 前后词
   const currentWords = isReviewPhase ? reviewWords : newWords;
-  const prevWord =
-    currentWordIndex > 0 ? currentWords[currentWordIndex - 1] : null;
-  const nextWord =
-    currentWordIndex < currentWords.length - 1
-      ? currentWords[currentWordIndex + 1]
-      : null;
+  const totalModes = currentWords.length * 4;
 
   return (
     <div className="flex h-full flex-col">
@@ -207,8 +202,6 @@ export function VocabularyPage() {
           <WordCard
             key={`${currentWord.id}-${currentLearnMode}`}
             word={currentWord}
-            prevWord={prevWord}
-            nextWord={nextWord}
             learnMode={currentLearnMode}
             typingMode={typingMode}
             onComplete={recordModeComplete}
@@ -219,8 +212,8 @@ export function VocabularyPage() {
             }
           />
           <ProgressBar
-            currentWordIndex={currentWordIndex}
-            totalWords={currentWords.length}
+            completedModes={completedModeCount}
+            totalModes={totalModes}
             isReview={isReviewPhase}
           />
           <SpeedBar />
