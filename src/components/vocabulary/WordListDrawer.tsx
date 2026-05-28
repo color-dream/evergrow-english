@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { cn } from "@/lib/utils";
-import { X, CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 import type { Word } from "@/types/domain";
 
 interface WordListDrawerProps {
@@ -69,12 +69,7 @@ export function WordListDrawer({ open, onClose }: WordListDrawerProps) {
           <h3 className="text-sm font-semibold text-foreground/85">
             本轮单词 ({completedCount}/{words.length})
           </h3>
-          <button
-            onClick={onClose}
-            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+          {/* 关闭按钮已移至面板外右边缘，由 ImmersiveLearnPage 的统一按钮接管 */}
         </div>
         {/* 列表 */}
         <div className="overflow-y-auto h-[calc(100%-45px)]">
@@ -104,7 +99,7 @@ function WordItem({
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 px-4 py-2.5 transition-all duration-300",
+        "flex items-start gap-3 px-4 py-3 transition-all duration-300 overflow-hidden",
         isCurrent && "border-l-[3px] border-l-primary",
         isCompleted && !isCurrent && "opacity-50"
       )}
@@ -115,22 +110,22 @@ function WordItem({
       }
     >
       {isCompleted ? (
-        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500 mt-0.5" />
       ) : (
-        <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30" />
+        <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 mt-0.5" />
       )}
-      <div className="min-w-0 flex-1">
-        <span
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <p
           className={cn(
-            "font-mono text-sm tabular-nums",
+            "font-mono text-sm truncate",
             isCurrent ? "font-semibold text-primary" : "text-foreground"
           )}
         >
           {word.text}
-        </span>
-        <span className="ml-2 truncate text-xs text-muted-foreground">
+        </p>
+        <p className="truncate text-xs text-foreground/45">
           {word.definition}
-        </span>
+        </p>
       </div>
     </div>
   );
