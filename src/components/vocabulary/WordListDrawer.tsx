@@ -36,13 +36,37 @@ export function WordListDrawer({ open, onClose }: WordListDrawerProps) {
 
   return (
     <div className="absolute inset-0 z-30">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/10" onClick={onClose} />
-      {/* 左贴边全高面板 */}
-      <div className="absolute left-0 top-0 bottom-0 w-64 border-r border-border bg-card shadow-lg animate-slide-in-left rounded-r-xl">
+      {/* 遮罩 — iOS 26 微模糊 */}
+      <div
+        className="absolute inset-0 transition-opacity duration-300"
+        style={{
+          background: "oklch(0 0 0 / 0.15)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+        }}
+        onClick={onClose}
+      />
+      {/* 左贴边全高面板 — 毛玻璃 sheet */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-72 animate-slide-in-left"
+        style={{
+          background: "var(--glass-sheet-bg)",
+          backdropFilter:
+            "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+          WebkitBackdropFilter:
+            "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+          borderRight: "1px solid var(--glass-sheet-border)",
+          boxShadow: "var(--shadow-xl)",
+          borderTopRightRadius: "var(--radius-2xl)",
+          borderBottomRightRadius: "var(--radius-2xl)",
+        }}
+      >
         {/* 标题栏 */}
-        <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-          <h3 className="text-sm font-medium text-foreground">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ borderBottom: "1px solid var(--glass-sheet-border)" }}
+        >
+          <h3 className="text-sm font-semibold text-foreground/85">
             本轮单词 ({completedCount}/{words.length})
           </h3>
           <button
@@ -80,10 +104,15 @@ function WordItem({
   return (
     <div
       className={cn(
-        "flex items-center gap-2.5 px-3 py-2 transition-colors",
-        isCurrent && "border-l-2 border-l-indigo-400 bg-indigo-50 dark:bg-indigo-900/20",
+        "flex items-center gap-2.5 px-4 py-2.5 transition-all duration-300",
+        isCurrent && "border-l-[3px] border-l-primary",
         isCompleted && !isCurrent && "opacity-50"
       )}
+      style={
+        isCurrent
+          ? { background: "oklch(0.55 0.195 252 / 0.08)" }
+          : undefined
+      }
     >
       {isCompleted ? (
         <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
@@ -94,7 +123,7 @@ function WordItem({
         <span
           className={cn(
             "font-mono text-sm tabular-nums",
-            isCurrent ? "font-semibold text-indigo-600 dark:text-indigo-400" : "text-foreground"
+            isCurrent ? "font-semibold text-primary" : "text-foreground"
           )}
         >
           {word.text}

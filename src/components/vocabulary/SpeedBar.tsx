@@ -13,7 +13,18 @@ export function SpeedBar() {
   const seconds = elapsed % 60;
 
   return (
-    <div className="flex w-full shrink-0 px-4 py-2 opacity-30 transition-opacity hover:opacity-60">
+    <div
+      className="mx-auto mb-4 flex w-fit items-center gap-1 rounded-full px-4 py-2 animate-spring-up"
+      style={{
+        background: "var(--glass-card-bg)",
+        backdropFilter:
+          "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter:
+          "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+        border: "1px solid var(--glass-card-border)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
       <InfoBox
         value={`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
         label="时间"
@@ -28,11 +39,11 @@ export function SpeedBar() {
 
 function InfoBox({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center">
-      <span className="font-mono text-sm font-bold tabular-nums text-foreground">
+    <div className="flex flex-col items-center px-2.5">
+      <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
         {value}
       </span>
-      <span className="text-[10px] text-muted-foreground">{label}</span>
+      <span className="text-[10px] font-medium text-foreground/40">{label}</span>
     </div>
   );
 }

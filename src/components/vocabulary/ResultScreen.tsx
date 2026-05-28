@@ -49,14 +49,34 @@ export function ResultScreen({
 
   return (
     <div className="fixed inset-0 z-30 overflow-y-auto">
-      <div className="absolute inset-0 bg-gray-300 opacity-80 dark:bg-gray-600" />
+      {/* 遮罩 — iOS 26 蓝色调模糊 */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "oklch(0.55 0.195 252 / 0.08)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      />
 
       <div className="flex h-screen items-center justify-center">
-        <div className="my-card fixed flex w-[90vw] max-w-3xl flex-col rounded-3xl bg-card pb-14 pl-10 pr-5 pt-10 shadow-my-card animate-fade-in md:w-4/5">
+        <div
+          className="fixed flex w-[90vw] max-w-3xl flex-col pb-14 pl-10 pr-5 pt-10 animate-spring-in md:w-4/5"
+          style={{
+            background: "var(--glass-sheet-bg)",
+            backdropFilter:
+              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            WebkitBackdropFilter:
+              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            border: "1px solid var(--glass-sheet-border)",
+            borderRadius: "var(--radius-4xl)",
+            boxShadow: "var(--shadow-2xl)",
+          }}
+        >
           {/* 关闭按钮 */}
           <button
             onClick={onChangeBook}
-            className="absolute right-5 top-5 rounded-lg p-1 text-muted-foreground hover:bg-muted"
+            className="absolute right-5 top-5 rounded-full p-1.5 text-foreground/40 transition-all duration-300 hover:text-foreground hover:scale-110"
           >
             <X className="h-5 w-5" />
           </button>
@@ -91,7 +111,13 @@ export function ResultScreen({
             </div>
 
             {/* 中间：错误词列表 */}
-            <div className="flex flex-1 flex-col rounded-xl bg-indigo-50 p-4 dark:bg-gray-700">
+            <div
+              className="flex flex-1 flex-col rounded-2xl p-4"
+              style={{
+                background: "oklch(0.55 0.195 252 / 0.06)",
+                border: "1px solid oklch(0.55 0.195 252 / 0.08)",
+              }}
+            >
               <div className="max-h-80 overflow-y-auto">
                 {wrongWords.length === 0 ? (
                   <div className="flex h-full items-center justify-center py-10 text-sm text-muted-foreground">
@@ -111,7 +137,13 @@ export function ResultScreen({
               </div>
 
               {/* 结语 */}
-              <div className="mt-auto flex items-center gap-2 rounded-xl bg-indigo-200 px-4 py-3 text-sm font-medium text-indigo-800 dark:bg-indigo-400 dark:text-indigo-100">
+              <div
+                className="mt-auto flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium"
+                style={{
+                  background: "oklch(0.55 0.195 252 / 0.12)",
+                  color: "var(--color-primary)",
+                }}
+              >
                 <ConclusionIcon
                   accuracy={accuracy}
                   wrongCount={wrongWords.length}
@@ -136,7 +168,13 @@ export function ResultScreen({
             </PrimaryButton>
             <button
               onClick={onChangeBook}
-              className="flex items-center justify-center rounded-lg border-2 border-indigo-300 bg-transparent px-6 py-2 text-base text-indigo-500 transition-all hover:bg-indigo-50 active:scale-[0.98] dark:border-indigo-600 dark:text-indigo-400 dark:hover:bg-indigo-950"
+              className="flex items-center justify-center rounded-full px-6 py-2 text-base font-medium text-primary transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{
+                background: "var(--glass-pill-bg)",
+                backdropFilter: "blur(var(--glass-pill-blur))",
+                WebkitBackdropFilter: "blur(var(--glass-pill-blur))",
+                border: "1px solid var(--glass-card-border)",
+              }}
             >
               休息一下
             </button>
@@ -162,10 +200,26 @@ function RemarkRing({
   color?: string;
 }) {
   const displayColor = color ?? "text-foreground";
+  const glowColor =
+    color === "text-green-500"
+      ? "oklch(0.55 0.19 148 / 0.15)"
+      : color === "text-yellow-500"
+        ? "oklch(0.72 0.18 85 / 0.15)"
+        : "oklch(0.52 0.2 18 / 0.15)";
   return (
     <div className="flex flex-col items-center gap-1">
       <div
-        className={`rounded-full ${showRing ? "border-8 border-indigo-200" : ""} flex h-28 w-28 items-center justify-center`}
+        className="flex h-28 w-28 items-center justify-center"
+        style={
+          showRing
+            ? {
+                borderRadius: "50%",
+                border: "4px solid oklch(0.55 0.195 252 / 0.2)",
+                background: "oklch(0.55 0.195 252 / 0.04)",
+                boxShadow: `inset 0 0 20px ${glowColor}`,
+              }
+            : {}
+        }
       >
         <div className="text-center">
           <span className={`text-xl font-bold tabular-nums ${displayColor}`}>
@@ -184,7 +238,13 @@ function WordChip({ word, wrongCount }: { word: string; wrongCount: number }) {
   return (
     <span
       title={`错误 ${wrongCount} 次`}
-      className="word-chip inline-flex h-10 cursor-pointer flex-row items-center justify-center rounded-md border-2 border-solid border-indigo-400 bg-card px-3 py-0.5 font-mono text-xl font-light text-foreground transition-colors duration-100 hover:bg-indigo-100 dark:border-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 md:h-12 md:px-5"
+      className="inline-flex h-10 cursor-pointer flex-row items-center justify-center rounded-xl px-3 py-0.5 font-mono text-xl font-light text-foreground transition-all duration-300 hover:scale-105 active:scale-95 md:h-12 md:px-5"
+      style={{
+        background: "var(--glass-pill-bg)",
+        backdropFilter: "blur(var(--glass-pill-blur))",
+        WebkitBackdropFilter: "blur(var(--glass-pill-blur))",
+        border: "1px solid var(--glass-sheet-border)",
+      }}
     >
       {word}
     </span>
@@ -226,7 +286,12 @@ function PrimaryButton({
   return (
     <button
       onClick={onClick}
-      className="my-btn-primary flex items-center justify-center rounded-lg bg-indigo-400 px-6 py-2 text-base text-white transition-all hover:opacity-90 active:scale-[0.98]"
+      className="flex items-center justify-center rounded-full px-8 py-2.5 text-base font-medium text-white transition-all duration-300 hover:scale-105 active:scale-95"
+      style={{
+        background:
+          "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
+        boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
+      }}
     >
       {children}
     </button>

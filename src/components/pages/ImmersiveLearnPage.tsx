@@ -231,7 +231,7 @@ export function ImmersiveLearnPage() {
           <p className="text-lg text-foreground">{initError}</p>
           <button
             onClick={handleClose}
-            className="mt-4 rounded-lg bg-indigo-500 px-4 py-2 text-sm text-white"
+            className="mt-4 rounded-full bg-primary px-4 py-2 text-sm text-white"
           >
             关闭
           </button>
@@ -244,7 +244,7 @@ export function ImmersiveLearnPage() {
   if (isInitializing) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/40 border-t-primary" />
       </div>
     );
   }
@@ -252,7 +252,13 @@ export function ImmersiveLearnPage() {
   const isInSession = phase === "new-words" || phase === "review";
 
   return (
-    <div className="relative flex h-screen flex-col bg-background">
+    <div
+      className="relative flex h-screen flex-col"
+      style={{
+        background:
+          "radial-gradient(ellipse 60% 50% at 50% 40%, oklch(0.85 0.055 252 / 0.18), transparent 70%), linear-gradient(180deg, var(--color-background), oklch(0.96 0.008 275 / 0.5), var(--color-background))",
+      }}
+    >
       {/* ── 顶部贴边进度条 ── */}
       {progressBarPosition === "top" && isInSession && (
         <ProgressBar
@@ -267,14 +273,30 @@ export function ImmersiveLearnPage() {
         <>
           <button
             onClick={() => setShowWordList((v) => !v)}
-            className="absolute top-3 left-3 z-20 rounded-lg p-1.5 text-muted-foreground opacity-50 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100"
+            className="absolute top-4 left-4 z-20 flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95"
+            style={{
+              background: "var(--glass-pill-bg)",
+              backdropFilter:
+                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter:
+                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-pill-border)",
+            }}
             title="单词列表"
           >
             <List className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowSettings((v) => !v)}
-            className="absolute top-3 right-3 z-20 rounded-lg p-1.5 text-muted-foreground opacity-50 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100"
+            className="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95"
+            style={{
+              background: "var(--glass-pill-bg)",
+              backdropFilter:
+                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter:
+                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-pill-border)",
+            }}
             title="设置"
           >
             <Settings className="h-4 w-4" />

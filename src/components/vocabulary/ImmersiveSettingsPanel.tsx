@@ -68,17 +68,28 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
       {/* 遮罩 */}
       <div className="absolute inset-0 bg-black/10" onClick={onClose} />
 
-      {/* 图标浮条 — 设置在右上角按钮左侧 */}
-      <div className="absolute top-3 right-12 z-40 flex items-center gap-0.5 rounded-lg border border-border bg-card px-1 py-1 shadow-sm animate-slide-in-right">
+      {/* 图标浮条 — iOS 26 玻璃胶囊 */}
+      <div
+        className="absolute top-4 right-16 z-40 flex items-center gap-1 rounded-full px-2 py-1.5 animate-slide-in-right"
+        style={{
+          background: "var(--glass-card-bg)",
+          backdropFilter:
+            "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+          WebkitBackdropFilter:
+            "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+          border: "1px solid var(--glass-card-border)",
+          boxShadow: "var(--shadow-lg)",
+        }}
+      >
         {/* 打字模式 */}
         <button
           onClick={toggleTypingMode}
           title={typingMode === "strict" ? "严格模式（点按切换）" : "宽松模式（点按切换）"}
           className={cn(
-            "rounded-md p-2 transition-colors hover:bg-muted",
+            "rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95",
             typingMode === "strict"
-              ? "text-indigo-500"
-              : "text-muted-foreground"
+              ? "text-primary"
+              : "text-foreground/50 hover:text-foreground"
           )}
         >
           <ALargeSmall className="h-4 w-4" />
@@ -91,18 +102,18 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
               <button
                 onClick={() => adjustWords(-WORDS_PER_ROUND_STEP)}
                 disabled={wordsPerRound <= WORDS_PER_ROUND_MIN}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                className="rounded-full p-1.5 text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 disabled:opacity-30"
                 title="减少"
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
-              <span className="min-w-[2ch] text-center text-xs font-mono font-medium text-foreground tabular-nums">
+              <span className="min-w-[2ch] text-center text-xs font-mono font-semibold text-foreground tabular-nums">
                 {wordsPerRound}
               </span>
               <button
                 onClick={() => adjustWords(WORDS_PER_ROUND_STEP)}
                 disabled={wordsPerRound >= WORDS_PER_ROUND_MAX}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                className="rounded-full p-1.5 text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 disabled:opacity-30"
                 title="增加"
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -112,7 +123,7 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
             <button
               onClick={() => setShowWordAdjuster(true)}
               title={`每轮 ${wordsPerRound} 词（点按调整）`}
-              className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105"
             >
               <Hash className="h-4 w-4" />
             </button>
@@ -123,10 +134,7 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
         <button
           onClick={toggleProgressPosition}
           title={progressBarPosition === "top" ? "进度条在上方（点按切换）" : "进度条在下方（点按切换）"}
-          className={cn(
-            "rounded-md p-2 transition-colors hover:bg-muted",
-            "text-muted-foreground"
-          )}
+          className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95"
         >
           {progressBarPosition === "top" ? (
             <ArrowUp className="h-4 w-4" />
@@ -136,13 +144,16 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
         </button>
 
         {/* 分隔 */}
-        <div className="mx-0.5 h-5 w-px bg-border" />
+        <div
+          className="mx-1 h-5 w-px"
+          style={{ background: "var(--glass-card-border)" }}
+        />
 
         {/* 关闭 */}
         <button
           onClick={onClose}
           title="关闭设置"
-          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="rounded-full p-2 text-foreground/40 transition-all duration-300 hover:text-foreground hover:scale-110"
         >
           <X className="h-4 w-4" />
         </button>

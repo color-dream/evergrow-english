@@ -51,8 +51,9 @@ const LetterBox = React.memo(function LetterBox({
 
   return (
     <span
-      className={`m-0 p-0 pr-[0.2rem] font-mono text-5xl font-normal select-none ${colorClass}`}
+      className={`m-0 p-0 pr-[0.3rem] font-mono text-4xl md:text-5xl font-medium select-none tracking-tight ${colorClass}`}
       aria-label={aria}
+      style={{ textShadow: "0 1px 0 oklch(0 0 0 / 0.04)" }}
     >
       {displayChar}
     </span>

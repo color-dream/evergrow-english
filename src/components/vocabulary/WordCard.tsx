@@ -149,10 +149,18 @@ export function WordCard({
       {/* 复习标记 */}
       {isReview && reviewMeta && (
         <div className="mb-4 flex items-center gap-2">
-          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+          <span
+            className="rounded-full px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
+            style={{
+              background: "oklch(0.9 0.06 85 / 0.55)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              border: "1px solid oklch(0.82 0.08 85 / 0.4)",
+            }}
+          >
             复习
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-foreground/45">
             上次评分: {FSRS_RATING_LABELS[reviewMeta.previousRating] ?? "未知"}
           </span>
         </div>
@@ -161,11 +169,22 @@ export function WordCard({
       {/* 词条区域 */}
       <div className="container flex flex-grow flex-col items-center justify-center">
         <div className="relative flex w-full justify-center">
-          {/* 暂停遮罩 */}
+          {/* 暂停遮罩 — iOS 26 毛玻璃卡片 */}
           {!isTyping && (
-            <div className="absolute z-10 flex h-full w-full items-center justify-center">
-              <div className="flex w-full items-center backdrop-blur-sm">
-                <p className="w-full select-none text-center text-xl text-gray-600 dark:text-gray-50">
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <div
+                className="rounded-3xl px-8 py-4 animate-spring-scale"
+                style={{
+                  background: "var(--glass-card-bg)",
+                  backdropFilter:
+                    "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+                  WebkitBackdropFilter:
+                    "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+                  border: "1px solid var(--glass-card-border)",
+                  boxShadow: "var(--shadow-md)",
+                }}
+              >
+                <p className="select-none text-lg font-medium text-foreground/80">
                   {pauseHint}
                 </p>
               </div>
@@ -198,7 +217,7 @@ export function WordCard({
             {showPhonetic && (word.phonetic || audio.supported) && (
               <div className="-mt-8 flex items-center gap-2">
                 {word.phonetic && (
-                  <span className="font-mono text-sm font-normal text-muted-foreground/60">
+                  <span className="font-mono text-sm font-normal text-muted-foreground/50">
                     {word.phonetic}
                   </span>
                 )}
@@ -218,10 +237,10 @@ export function WordCard({
                   >
                     <Volume2
                       className={cn(
-                        "h-5 w-5 transition-colors",
+                        "h-5 w-5 transition-all duration-300",
                         isPlaying
-                          ? "text-indigo-400 animate-breathe"
-                          : "text-muted-foreground/40 hover:text-indigo-400 cursor-pointer"
+                          ? "text-primary animate-breathe"
+                          : "text-muted-foreground/30 hover:text-primary cursor-pointer hover:scale-110"
                       )}
                     />
                   </button>
@@ -231,7 +250,7 @@ export function WordCard({
 
             {/* 释义 */}
             {showTranslation && (
-              <p className="-mt-4 select-none text-lg text-muted-foreground">
+              <p className="-mt-4 select-none text-lg text-foreground/55">
                 {word.definition}
               </p>
             )}

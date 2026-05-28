@@ -1,11 +1,8 @@
 import { cn } from "@/lib/utils";
 
 interface ProgressBarProps {
-  /** 已完成的模式数 */
   completedModes: number;
-  /** 总模式数 (= 单词数 × 4) */
   totalModes: number;
-  /** 是否为复习阶段 */
   isReview: boolean;
 }
 
@@ -17,23 +14,30 @@ export function ProgressBar({
   const progress =
     totalModes > 0 ? Math.floor((completedModes / totalModes) * 100) : 0;
 
-  const barColor = isReview
-    ? "bg-amber-400 dark:bg-amber-500"
-    : "bg-indigo-400 dark:bg-indigo-500";
-
-  const bgColor = isReview
-    ? "bg-amber-100 dark:bg-amber-200"
-    : "bg-indigo-100 dark:bg-indigo-200";
+  const gradientColor = isReview
+    ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400"
+    : "bg-gradient-to-r from-primary via-cyan-400 to-primary";
 
   return (
-    <div className={cn("w-full shrink-0", bgColor)}>
-      <div
-        style={{ width: `${progress}%` }}
-        className={cn(
-          "h-[3px] transition-all duration-300",
-          barColor
-        )}
-      />
+    <div
+      className="w-full shrink-0 px-2 py-1.5"
+      style={{
+        background: "var(--glass-pill-bg)",
+        backdropFilter:
+          "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter:
+          "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
+      }}
+    >
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
+        <div
+          style={{ width: `${progress}%`, backgroundSize: "200% 100%" }}
+          className={cn(
+            "h-full rounded-full transition-all duration-500 animate-shimmer",
+            gradientColor
+          )}
+        />
+      </div>
     </div>
   );
 }
