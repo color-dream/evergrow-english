@@ -3,22 +3,14 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import {
-  X,
-  ALargeSmall,
-  Hash,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-  Plus,
-} from "lucide-react";
+import { Settings, X, ALargeSmall, Hash, ArrowUp, ArrowDown, Minus, Plus } from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
-  onClose: () => void;
+  onToggle: () => void;
 }
 
-export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanelProps) {
+export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPanelProps) {
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const setTypingMode = useVocabularySessionStore((s) => s.setTypingMode);
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
@@ -33,18 +25,16 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onToggle();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [open, onToggle]);
 
-  // 关闭浮条时重置子面板状态
+  // 关闭时重置子面板状态
   useEffect(() => {
     if (!open) setShowWordAdjuster(false);
   }, [open]);
-
-  if (!open) return null;
 
   const toggleTypingMode = () => {
     setTypingMode(typingMode === "strict" ? "loose" : "strict");
@@ -63,30 +53,39 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
     }
   };
 
-  return (
-    <div className="absolute inset-0 z-30">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/10" onClick={onClose} />
+  const springEasing = "cubic-bezier(0.34, 1.56, 0.64, 1)";
 
-      {/* 图标浮条 — iOS 26 玻璃胶囊 */}
+  return (
+    <div
+      className="absolute top-4 right-4 z-40 flex items-center gap-1 rounded-full transition-all duration-[400ms]"
+      style={{
+        background: "var(--glass-sheet-bg)",
+        backdropFilter:
+          "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter:
+          "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+        border: "1px solid var(--glass-sheet-border)",
+        boxShadow: open ? "var(--shadow-lg)" : "var(--shadow-sm)",
+        color: "var(--color-foreground)",
+        paddingLeft: open ? "0.5rem" : "0",
+        paddingRight: open ? "0.5rem" : "0",
+        transitionTimingFunction: springEasing,
+      }}
+    >
+      {/* 设置项区域 — max-width 动画展开/收起 */}
       <div
-        className="absolute top-4 right-16 z-40 flex items-center gap-1 rounded-full px-2 py-1.5 animate-slide-in-right"
-        style={{
-          background: "var(--glass-card-bg)",
-          backdropFilter:
-            "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-          WebkitBackdropFilter:
-            "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-          border: "1px solid var(--glass-card-border)",
-          boxShadow: "var(--shadow-lg)",
-        }}
+        className={cn(
+          "flex items-center gap-1 overflow-hidden transition-all duration-[400ms]",
+          open ? "max-w-[20rem] opacity-100" : "max-w-0 opacity-0"
+        )}
+        style={{ transitionTimingFunction: springEasing }}
       >
         {/* 打字模式 */}
         <button
           onClick={toggleTypingMode}
           title={typingMode === "strict" ? "严格模式（点按切换）" : "宽松模式（点按切换）"}
           className={cn(
-            "rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95",
+            "rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0",
             typingMode === "strict"
               ? "text-primary"
               : "text-foreground/50 hover:text-foreground"
@@ -96,7 +95,7 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
         </button>
 
         {/* 词数调整器 */}
-        <div className="relative flex items-center">
+        <div className="relative flex items-center shrink-0">
           {showWordAdjuster ? (
             <div className="flex items-center gap-0.5 animate-fade-in">
               <button
@@ -134,7 +133,7 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
         <button
           onClick={toggleProgressPosition}
           title={progressBarPosition === "top" ? "进度条在上方（点按切换）" : "进度条在下方（点按切换）"}
-          className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95"
+          className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95 shrink-0"
         >
           {progressBarPosition === "top" ? (
             <ArrowUp className="h-4 w-4" />
@@ -142,22 +141,20 @@ export function ImmersiveSettingsPanel({ open, onClose }: ImmersiveSettingsPanel
             <ArrowDown className="h-4 w-4" />
           )}
         </button>
-
-        {/* 分隔 */}
-        <div
-          className="mx-1 h-5 w-px"
-          style={{ background: "var(--glass-card-border)" }}
-        />
-
-        {/* 关闭 */}
-        <button
-          onClick={onClose}
-          title="关闭设置"
-          className="rounded-full p-2 text-foreground/40 transition-all duration-300 hover:text-foreground hover:scale-110"
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
+
+      {/* 触发按钮 — 始终显示 */}
+      <button
+        onClick={onToggle}
+        className="rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 text-foreground/60 hover:text-foreground"
+        title={open ? "关闭设置" : "设置"}
+      >
+        {open ? (
+          <X className="h-4 w-4" />
+        ) : (
+          <Settings className="h-4 w-4" />
+        )}
+      </button>
     </div>
   );
 }

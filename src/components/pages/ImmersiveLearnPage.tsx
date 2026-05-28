@@ -21,7 +21,7 @@ import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
 import { WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_MIN } from "@/lib/constants";
-import { List, Settings, X } from "lucide-react";
+import { List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
@@ -301,21 +301,6 @@ export function ImmersiveLearnPage() {
               <List className="h-4 w-4" />
             )}
           </button>
-          <button
-            onClick={() => setShowSettings((v) => !v)}
-            className="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 active:scale-95"
-            style={{
-              background: "var(--glass-pill-bg)",
-              backdropFilter:
-                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
-              WebkitBackdropFilter:
-                "blur(var(--glass-pill-blur)) saturate(var(--glass-sheet-saturate))",
-              border: "1px solid var(--glass-pill-border)",
-            }}
-            title="设置"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
         </>
       )}
 
@@ -356,7 +341,7 @@ export function ImmersiveLearnPage() {
       />
       <ImmersiveSettingsPanel
         open={showSettings}
-        onClose={() => setShowSettings(false)}
+        onToggle={() => setShowSettings((v) => !v)}
       />
 
       {/* ── 结果页 ── */}
