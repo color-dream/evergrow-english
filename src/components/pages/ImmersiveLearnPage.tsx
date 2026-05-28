@@ -8,9 +8,10 @@ import {
 import type { ReviewWordMeta } from "@/stores/vocabulary-session-store";
 import { useTimer } from "@/hooks/useTimer";
 import { useWordCompletion } from "@/hooks/useWordCompletion";
+import { useFSRSSync } from "@/hooks/useFSRSSync";
 import { useLearningSessionPersistence } from "@/hooks/useLearningSessionPersistence";
 import { loadWordBook } from "@/lib/word-book-registry";
-import { shuffleArray } from "@/lib/vocabulary-utils";
+import { shuffleArray, resolveWordsPerRound } from "@/lib/vocabulary-utils";
 import { getDueCards } from "@/lib/fsrs";
 import { getCardsByBookId } from "@/lib/db";
 import type { FSRSState } from "@/types/domain";
@@ -38,6 +39,7 @@ export function ImmersiveLearnPage() {
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   const phase = useVocabularySessionStore((s) => s.phase);
   const typingMode = useVocabularySessionStore((s) => s.typingMode);
@@ -58,6 +60,7 @@ export function ImmersiveLearnPage() {
   const setElapsedSeconds = useVocabularySessionStore((s) => s.setElapsedSeconds);
 
   const { recordModeComplete } = useWordCompletion();
+  const { flushPendingSaves } = useFSRSSync();
 
   useLearningSessionPersistence(bookId);
 
@@ -94,9 +97,12 @@ export function ImmersiveLearnPage() {
         const parsed = Number(wordsPerRoundParam);
         if (parsed >= WORDS_PER_ROUND_MIN && parsed <= WORDS_PER_ROUND_MAX) {
           wpr = parsed;
-          useVocabularySessionStore.getState().setWordsPerRound(wpr);
         }
+      } else {
+        // 无 URL 参数时从缓存读取（进行中的书直接进入的场景）
+        wpr = await resolveWordsPerRound(bookId);
       }
+      useVocabularySessionStore.getState().setWordsPerRound(wpr);
 
       try {
         // 加载词库
@@ -192,11 +198,13 @@ export function ImmersiveLearnPage() {
     }
   }, [selectedBook, wordsPerRound, startNewWordsPhase]);
 
-  // 关闭窗口
-  const handleClose = useCallback(() => {
+  // 关闭窗口（先等待 FSRS 写入完成）
+  const handleClose = useCallback(async () => {
+    setIsClosing(true);
+    await flushPendingSaves(3000);
     resetSession();
     window.close();
-  }, [resetSession]);
+  }, [resetSession, flushPendingSaves]);
 
   // 获取当前单词
   const state = useVocabularySessionStore.getState();
@@ -244,7 +252,8 @@ export function ImmersiveLearnPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={handleClose}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            disabled={isClosing}
+            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             title="返回主窗口"
           >
             <ArrowLeft className="h-4 w-4" />

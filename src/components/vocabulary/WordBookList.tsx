@@ -6,9 +6,10 @@ import type { WordBookId } from "@/types/vocabulary";
 
 interface WordBookListProps {
   onSelectBook: (id: WordBookId) => void;
+  onSelectInProgressBook: (id: WordBookId) => void;
 }
 
-export function WordBookList({ onSelectBook }: WordBookListProps) {
+export function WordBookList({ onSelectBook, onSelectInProgressBook }: WordBookListProps) {
   const { stats, isLoading } = useWordBookStats();
 
   const { inProgress, notStarted } = useMemo(() => {
@@ -54,7 +55,7 @@ export function WordBookList({ onSelectBook }: WordBookListProps) {
                     key={book.id}
                     meta={book}
                     stats={stats.get(book.id)}
-                    onSelect={() => onSelectBook(book.id)}
+                    onSelect={() => onSelectInProgressBook(book.id)}
                   />
                 ))}
               </div>

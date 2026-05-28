@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { VocabularyHeader } from "./VocabularyHeader";
 import { WordBookList } from "./WordBookList";
 import { PreSettingsDialog } from "./PreSettingsDialog";
@@ -17,6 +18,21 @@ export function VocabularyPage() {
     setPreSettingsBookId(id);
   }, []);
 
+  const handleOpenInProgressBook = useCallback(
+    (id: WordBookId) => {
+      const win = window.open(
+        `${ROUTES.LEARN}?bookId=${id}`,
+        "_blank",
+        "width=1024,height=768"
+      );
+
+      if (!win) {
+        alert("弹窗被浏览器拦截，请允许弹窗后重试。");
+      }
+    },
+    []
+  );
+
   const handlePreSettingsConfirm = useCallback(
     (wordsPerRoundValue: number) => {
       const store = useVocabularySessionStore.getState();
@@ -25,6 +41,9 @@ export function VocabularyPage() {
       setPreSettingsBookId(null);
       if (!bookId) return;
 
+      // 缓存每轮单词数到 localStorage
+      useSettingsStore.getState().setBookWordsPerRound(bookId, wordsPerRoundValue);
+
       const win = window.open(
         `${ROUTES.LEARN}?bookId=${bookId}&wordsPerRound=${wordsPerRoundValue}`,
         "_blank",
@@ -32,7 +51,6 @@ export function VocabularyPage() {
       );
 
       if (!win) {
-        // 弹窗被拦截，给用户提示
         alert("弹窗被浏览器拦截，请允许弹窗后重试。");
       }
     },
@@ -47,7 +65,10 @@ export function VocabularyPage() {
     <div className="flex h-full flex-col">
       <VocabularyHeader />
 
-      <WordBookList onSelectBook={handleSelectBook} />
+      <WordBookList
+        onSelectBook={handleSelectBook}
+        onSelectInProgressBook={handleOpenInProgressBook}
+      />
 
       {preSettingsBookId && (
         <PreSettingsDialog
