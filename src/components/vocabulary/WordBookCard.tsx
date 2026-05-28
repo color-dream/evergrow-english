@@ -1,4 +1,4 @@
-import { BookMarked, RotateCcw } from "lucide-react";
+import { BookMarked } from "lucide-react";
 import type { WordBookMeta } from "@/lib/word-book-registry";
 import type { BookStats } from "@/hooks/useWordBookStats";
 
@@ -10,8 +10,8 @@ interface WordBookCardProps {
 
 export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
   const inProgress = stats && stats.totalCards > 0;
-  const progressPercent = inProgress
-    ? Math.min(100, Math.round((stats.masteredCount / meta.wordCount) * 100))
+  const learnedPercent = inProgress
+    ? Math.round((stats.totalCards / meta.wordCount) * 100)
     : 0;
 
   return (
@@ -44,29 +44,41 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
 
         {inProgress && (
           <div className="mt-3 space-y-2">
-            {/* 进度条 */}
+            {/* 进度条：已学习 / 总词数 */}
             <div>
-              <div className="mb-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>已掌握</span>
-                <span>
-                  {stats.masteredCount.toLocaleString()} / {meta.wordCount.toLocaleString()}
+              <div className="mb-1 flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">已学习</span>
+                <span className="font-medium text-foreground">
+                  {stats.totalCards.toLocaleString()}
+                  <span className="text-muted-foreground font-normal"> / {meta.wordCount.toLocaleString()}</span>
                 </span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${progressPercent}%` }}
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${Math.max(learnedPercent, stats.totalCards > 0 ? 2 : 0)}%` }}
                 />
               </div>
             </div>
 
-            {/* 待复习 */}
-            {stats.dueCount > 0 && (
-              <div className="flex items-center gap-1.5 text-[11px] text-warning">
-                <RotateCcw className="h-3 w-3" />
-                <span>{stats.dueCount} 词待复习</span>
-              </div>
-            )}
+            {/* 明细：已掌握 / 学习中 / 未学习 */}
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-muted-foreground">已掌握</span>
+                <span className="font-medium text-foreground">{stats.masteredCount}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-400" />
+                <span className="text-muted-foreground">学习中</span>
+                <span className="font-medium text-foreground">{stats.totalCards - stats.masteredCount}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-muted-foreground/30" />
+                <span className="text-muted-foreground">未学习</span>
+                <span className="font-medium text-foreground">{Math.max(0, meta.wordCount - stats.totalCards)}</span>
+              </span>
+            </div>
           </div>
         )}
       </div>
