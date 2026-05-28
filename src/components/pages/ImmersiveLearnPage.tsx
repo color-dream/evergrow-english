@@ -368,7 +368,7 @@ export function ImmersiveLearnPage() {
       )}
 
       {/* ── 暂停蒙层 ── */}
-      {isInSession && !isTyping && (
+      {isInSession && (showWordList || showSettings || !isTyping) && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center"
           style={{
@@ -377,9 +377,11 @@ export function ImmersiveLearnPage() {
             WebkitBackdropFilter: "blur(6px)",
           }}
         >
-          <p className="select-none text-lg font-medium text-foreground/80 animate-spring-scale">
-            {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
-          </p>
+          {!isTyping && !showWordList && !showSettings && (
+            <p className="select-none text-lg font-medium text-foreground/80 animate-spring-scale">
+              {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
+            </p>
+          )}
         </div>
       )}
 
