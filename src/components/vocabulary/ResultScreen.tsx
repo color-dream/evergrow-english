@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
+import type { WordCompletion } from "@/types/vocabulary";
+import { WORD_LEARN_MODE_SEQUENCE } from "@/types/vocabulary";
 
 import { X, Heart, ThumbsUp, AlertTriangle } from "lucide-react";
 
@@ -10,11 +12,49 @@ interface ResultScreenProps {
   onDictationRepeat: () => void;
 }
 
+/** 每个模式的最终得分状态 */
+type ModeStatus = "perfect" | "passed" | "failed" | "unreached";
+
+interface WordDetail {
+  wordId: string;
+  wordText: string;
+  definition: string;
+  modes: ModeStatus[];
+}
+
+function getModeStatus(completion: WordCompletion | undefined, modeIndex: number): ModeStatus {
+  if (!completion || completion.modeResults.length === 0) return "unreached";
+
+  // 取该模式最后一次结果（regress 时会重复）
+  const modeName = WORD_LEARN_MODE_SEQUENCE[modeIndex];
+  let lastResult = undefined;
+  for (let i = completion.modeResults.length - 1; i >= 0; i--) {
+    if (completion.modeResults[i].mode === modeName) {
+      lastResult = completion.modeResults[i];
+      break;
+    }
+  }
+  if (!lastResult) return "unreached";
+
+  if (lastResult.wrongCount === 0) return "perfect";
+  if (lastResult.wrongCount < 4) return "passed";
+  return "failed";
+}
+
+const DOT_COLORS: Record<ModeStatus, string> = {
+  perfect: "bg-green-400",
+  passed: "bg-amber-400",
+  failed: "bg-red-400",
+  unreached: "bg-foreground/10",
+};
+
 export function ResultScreen({
   onRepeat,
   onChangeBook,
 }: ResultScreenProps) {
   const wordResults = useVocabularySessionStore((s) => s.wordResults);
+  const newCompletions = useVocabularySessionStore((s) => s.newWordCompletions);
+  const reviewCompletions = useVocabularySessionStore((s) => s.reviewWordCompletions);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
   const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
@@ -28,6 +68,23 @@ export function ResultScreen({
 
   const bookMeta = selectedBook ? WORD_BOOK_META[selectedBook] : null;
   const wrongWords = wordResults.filter((r) => !r.isCorrect);
+
+  // 合并新词+复习的 completion，按 wordResults 顺序排列
+  const wordDetails: WordDetail[] = useMemo(() => {
+    const allCompletions = { ...newCompletions, ...reviewCompletions };
+    return wordResults.map((wr) => {
+      const comp = allCompletions[wr.wordId];
+      const modes: ModeStatus[] = WORD_LEARN_MODE_SEQUENCE.map(
+        (_, i) => getModeStatus(comp, i),
+      );
+      return {
+        wordId: wr.wordId,
+        wordText: wr.wordText,
+        definition: wr.definition,
+        modes,
+      };
+    });
+  }, [wordResults, newCompletions, reviewCompletions]);
 
   // 键盘快捷键
   useEffect(() => {
@@ -61,7 +118,7 @@ export function ResultScreen({
 
       <div className="flex h-screen items-center justify-center">
         <div
-          className="fixed flex w-[90vw] max-w-3xl flex-col pb-14 pl-10 pr-5 pt-10 animate-spring-in md:w-4/5"
+          className="fixed flex w-[90vw] max-w-4xl flex-col pb-14 pl-10 pr-5 pt-10 animate-spring-in md:w-4/5"
           style={{
             background: "var(--glass-sheet-bg)",
             backdropFilter:
@@ -110,7 +167,7 @@ export function ResultScreen({
               <RemarkRing value={`${wpm}`} label="WPM" />
             </div>
 
-            {/* 中间：错误词列表 */}
+            {/* 右侧：单词详细学习状况 */}
             <div
               className="flex flex-1 flex-col rounded-2xl p-4"
               style={{
@@ -118,40 +175,83 @@ export function ResultScreen({
                 border: "1px solid oklch(0.55 0.195 252 / 0.08)",
               }}
             >
-              <div className="max-h-80 overflow-y-auto">
-                {wrongWords.length === 0 ? (
-                  <div className="flex h-full items-center justify-center py-10 text-sm text-muted-foreground">
-                    全部正确，没有错误单词！
-                  </div>
-                ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {wrongWords.map((r) => (
-                      <WordChip
-                        key={r.wordId}
-                        word={r.wordText}
-                        wrongCount={r.wrongCount}
-                      />
-                    ))}
-                  </div>
-                )}
+              {/* 图例 + 结语 */}
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 text-xs text-foreground/40">
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-green-400" /> 全对
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-amber-400" /> 有错
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-red-400" /> 失败
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block h-2 w-2 rounded-full bg-foreground/10" /> 未到
+                  </span>
+                </div>
+                <div
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                  style={{
+                    background: "oklch(0.55 0.195 252 / 0.12)",
+                    color: "var(--color-primary)",
+                  }}
+                >
+                  <ConclusionIcon
+                    accuracy={accuracy}
+                    wrongCount={wrongWords.length}
+                  />
+                  <ConclusionMessage
+                    accuracy={accuracy}
+                    wrongCount={wrongWords.length}
+                  />
+                </div>
               </div>
 
-              {/* 结语 */}
-              <div
-                className="mt-auto flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium"
-                style={{
-                  background: "oklch(0.55 0.195 252 / 0.12)",
-                  color: "var(--color-primary)",
-                }}
-              >
-                <ConclusionIcon
-                  accuracy={accuracy}
-                  wrongCount={wrongWords.length}
-                />
-                <ConclusionMessage
-                  accuracy={accuracy}
-                  wrongCount={wrongWords.length}
-                />
+              {/* 单词列表 */}
+              <div className="max-h-72 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-foreground/25">
+                      <th className="pb-2 pr-3 text-left font-normal">模式</th>
+                      <th className="pb-2 pr-3 text-left font-normal">单词</th>
+                      <th className="pb-2 text-left font-normal">释义</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wordDetails.map((wd) => (
+                      <tr
+                        key={wd.wordId}
+                        className="border-t border-foreground/5"
+                      >
+                        <td className="py-1.5 pr-3">
+                          <span className="inline-flex gap-0.5">
+                            {wd.modes.map((status, i) => (
+                              <span
+                                key={i}
+                                className={`inline-block h-2 w-2 rounded-full ${DOT_COLORS[status]}`}
+                                title={`模式${i + 1}: ${
+                                  status === "perfect" ? "全对" :
+                                  status === "passed" ? "有错" :
+                                  status === "failed" ? "失败" : "未到达"
+                                }`}
+                              />
+                            ))}
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-3">
+                          <span className="font-mono text-sm text-foreground/80">
+                            {wd.wordText}
+                          </span>
+                        </td>
+                        <td className="py-1.5 text-xs text-foreground/45">
+                          {wd.definition}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -233,24 +333,6 @@ function RemarkRing({
   );
 }
 
-/** 错误词标签 */
-function WordChip({ word, wrongCount }: { word: string; wrongCount: number }) {
-  return (
-    <span
-      title={`错误 ${wrongCount} 次`}
-      className="inline-flex h-10 cursor-pointer flex-row items-center justify-center rounded-xl px-3 py-0.5 font-mono text-xl font-light text-foreground transition-all duration-300 hover:scale-105 active:scale-95 md:h-12 md:px-5"
-      style={{
-        background: "var(--glass-pill-bg)",
-        backdropFilter: "blur(var(--glass-pill-blur))",
-        WebkitBackdropFilter: "blur(var(--glass-pill-blur))",
-        border: "1px solid var(--glass-sheet-border)",
-      }}
-    >
-      {word}
-    </span>
-  );
-}
-
 function ConclusionIcon({
   accuracy,
   wrongCount,
@@ -258,9 +340,9 @@ function ConclusionIcon({
   accuracy: number;
   wrongCount: number;
 }) {
-  if (wrongCount === 0) return <Heart className="h-5 w-5" />;
-  if (accuracy >= 70) return <ThumbsUp className="h-5 w-5" />;
-  return <AlertTriangle className="h-5 w-5" />;
+  if (wrongCount === 0) return <Heart className="h-3.5 w-3.5" />;
+  if (accuracy >= 70) return <ThumbsUp className="h-3.5 w-3.5" />;
+  return <AlertTriangle className="h-3.5 w-3.5" />;
 }
 
 function ConclusionMessage({
