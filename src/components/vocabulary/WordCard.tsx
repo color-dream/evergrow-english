@@ -38,6 +38,29 @@ function playCorrectSound() {
   }
 }
 
+/** 播放单词完美完成庆祝音效 */
+function playCompleteSound() {
+  try {
+    if (!audioCtx) audioCtx = new AudioContext();
+    const t = audioCtx.currentTime;
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = audioCtx!.createOscillator();
+      const gain = audioCtx!.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx!.destination);
+      osc.type = "sine";
+      const start = t + i * 0.08;
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.07, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+      osc.start(start);
+      osc.stop(start + 0.18);
+    });
+  } catch {
+    // 静默失败
+  }
+}
+
 const POS_LABELS: Record<string, string> = {
   noun: "名",
   verb: "动",
@@ -96,6 +119,7 @@ export function WordCard({
   const pronunciation = useSettingsStore((s) => s.preferences.pronunciation);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [showCompleteAnim, setShowCompleteAnim] = useState(false);
   const completedRef = useRef(false);
   const prevHasWrong = useRef(false);
   const isTyping = useVocabularySessionStore((s) => s.isTyping);
@@ -136,6 +160,7 @@ export function WordCard({
   useEffect(() => {
     completedRef.current = false;
     setShowResult(false);
+    setShowCompleteAnim(false);
     prevHasWrong.current = false;
   }, [word.id, learnMode]);
 
@@ -169,13 +194,17 @@ export function WordCard({
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
       completedRef.current = true;
-      // 展示完整单词信息 1 秒
       setShowResult(true);
+      const isPerfect = state.wrongCount === 0;
+      if (isPerfect) {
+        playCompleteSound();
+        setShowCompleteAnim(true);
+      }
       const letterMistakes = getLetterMistakes();
       const result: WordModeResult = {
         mode: learnMode,
         wrongCount: state.wrongCount,
-        isCorrect: state.wrongCount === 0,
+        isCorrect: isPerfect,
         letterMistakes,
       };
       const timer = setTimeout(() => {
@@ -215,7 +244,8 @@ export function WordCard({
             <div
               className={cn(
                 "flex items-center justify-center",
-                state.hasWrong && "animate-shake"
+                state.hasWrong && "animate-shake",
+                showCompleteAnim && "animate-word-success"
               )}
             >
               {state.displayWord.split("").map((letter, index) => {

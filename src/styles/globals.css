@@ -69,6 +69,7 @@
   --animate-spring-in: spring-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-reveal-from-right: reveal-from-right 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   --animate-letter-pop: letter-pop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-word-success: word-success 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ═══ 词汇学习：Qwerty 风格 Letter 颜色 ═══ */
   --color-letter-normal: oklch(0.6 0.02 260);
@@ -285,6 +286,18 @@
   }
   50% {
     transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes word-success {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.1);
   }
   100% {
     transform: scale(1);
