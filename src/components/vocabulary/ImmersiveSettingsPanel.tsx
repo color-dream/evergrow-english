@@ -3,7 +3,7 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import { Settings, X, Hash, ArrowUp, ArrowDown, Minus, Plus } from "lucide-react";
+import { Settings, X, Hash, ArrowUp, ArrowDown, Check } from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
@@ -20,7 +20,14 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   const setPreferences = useSettingsStore((s) => s.setPreferences);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const [showWordAdjuster, setShowWordAdjuster] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showWordDropdown, setShowWordDropdown] = useState(false);
+
+  // 下拉选项
+  const wordOptions: number[] = [];
+  for (let n = WORDS_PER_ROUND_MIN; n <= WORDS_PER_ROUND_MAX; n += WORDS_PER_ROUND_STEP) {
+    wordOptions.push(n);
+  }
 
   // 展开时点击外部关闭
   useEffect(() => {
@@ -45,8 +52,20 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
 
   // 关闭时重置子面板状态
   useEffect(() => {
-    if (!open) setShowWordAdjuster(false);
+    if (!open) setShowWordDropdown(false);
   }, [open]);
+
+  // 下拉展开时点击外部关闭
+  useEffect(() => {
+    if (!showWordDropdown) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowWordDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [showWordDropdown]);
 
   const toggleProgressPosition = () => {
     setPreferences({
@@ -58,13 +77,6 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
     setPreferences({
       pronunciation: pronunciation === "us" ? "uk" : "us",
     });
-  };
-
-  const adjustWords = (delta: number) => {
-    const next = wordsPerRound + delta;
-    if (next >= WORDS_PER_ROUND_MIN && next <= WORDS_PER_ROUND_MAX) {
-      setWordsPerRound(next);
-    }
   };
 
   const springEasing = "cubic-bezier(0.34, 1.56, 0.64, 1)";
@@ -98,38 +110,44 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
         )}
         style={{ transitionTimingFunction: springEasing }}
       >
-        {/* 词数调整器 */}
-        <div className="relative flex items-center shrink-0">
-          {showWordAdjuster ? (
-            <div className="flex items-center gap-0.5 animate-fade-in">
-              <button
-                onClick={() => adjustWords(-WORDS_PER_ROUND_STEP)}
-                disabled={wordsPerRound <= WORDS_PER_ROUND_MIN}
-                className="rounded-full p-1.5 text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 disabled:opacity-30"
-                title="减少"
-              >
-                <Minus className="h-3.5 w-3.5" />
-              </button>
-              <span className="min-w-[2ch] text-center text-xs font-mono font-semibold text-foreground tabular-nums">
-                {wordsPerRound}
-              </span>
-              <button
-                onClick={() => adjustWords(WORDS_PER_ROUND_STEP)}
-                disabled={wordsPerRound >= WORDS_PER_ROUND_MAX}
-                className="rounded-full p-1.5 text-foreground/60 transition-all duration-300 hover:text-foreground hover:scale-105 disabled:opacity-30"
-                title="增加"
-              >
-                <Plus className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowWordAdjuster(true)}
-              title={`每轮 ${wordsPerRound} 词（点按调整）`}
-              className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105"
+        {/* 词数选择器 */}
+        <div ref={dropdownRef} className="relative flex items-center shrink-0">
+          <button
+            onClick={() => setShowWordDropdown(!showWordDropdown)}
+            title={`每轮 ${wordsPerRound} 词（点按选择）`}
+            className="rounded-full p-2 text-foreground/50 transition-all duration-300 hover:text-foreground hover:scale-105"
+          >
+            <Hash className="h-4 w-4" />
+          </button>
+          {showWordDropdown && (
+            <div
+              className="absolute left-0 top-full mt-1 animate-fade-in overflow-hidden rounded-2xl py-1"
+              style={{
+                background: "var(--glass-sheet-bg)",
+                backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+                WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+                border: "1px solid var(--glass-sheet-border)",
+                boxShadow: "var(--shadow-lg)",
+                minWidth: "4rem",
+              }}
             >
-              <Hash className="h-4 w-4" />
-            </button>
+              {wordOptions.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => {
+                    setWordsPerRound(n);
+                    setShowWordDropdown(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-3 px-4 py-1.5 text-sm transition-colors duration-150 hover:bg-foreground/5",
+                    n === wordsPerRound ? "text-primary" : "text-foreground/60"
+                  )}
+                >
+                  <span className="font-mono tabular-nums">{n}</span>
+                  {n === wordsPerRound && <Check className="h-3.5 w-3.5" />}
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
