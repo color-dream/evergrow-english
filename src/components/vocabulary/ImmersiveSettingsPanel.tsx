@@ -105,8 +105,8 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
       {/* 设置项区域 — max-width 动画展开/收起 */}
       <div
         className={cn(
-          "flex items-center gap-1 overflow-hidden transition-all duration-[400ms]",
-          open ? "max-w-[20rem] opacity-100" : "max-w-0 opacity-0"
+          "flex items-center gap-1 transition-all duration-[400ms]",
+          open ? "max-w-[20rem] opacity-100" : "max-w-0 opacity-0 overflow-hidden"
         )}
         style={{ transitionTimingFunction: springEasing }}
       >
