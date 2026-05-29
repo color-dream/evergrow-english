@@ -287,56 +287,52 @@ export function WordCard({
               })}
             </div>
 
-            {/* 音标 & 播放按钮 */}
-            {showPhonetic && (displayPhonetic || audio.supported) && (
-              <div className="-mt-4 flex items-center gap-2">
-                {displayPhonetic && (
-                  <span className="font-mono text-sm font-normal text-muted-foreground/50">
-                    [{displayPhonetic}]
-                    <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
-                  </span>
-                )}
-                {audio.supported && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsPlaying(true);
-                      audio
-                        .speak(word.text, { rate: 0.8, accent: pronunciation })
-                        .catch(() => {})
-                        .finally(() => setIsPlaying(false));
-                    }}
-                    aria-label={isPlaying ? "正在播放" : "播放发音"}
-                    title="播放发音"
-                    className="inline-flex"
-                  >
-                    <Volume2
-                      className={cn(
-                        "h-5 w-5 transition-colors duration-300",
-                        isPlaying
-                          ? "text-primary"
-                          : "text-muted-foreground/30 hover:text-primary cursor-pointer hover:scale-110"
-                      )}
-                      style={
-                        isPlaying
-                          ? { animation: "breathe 0.6s ease-in-out infinite" }
-                          : undefined
-                      }
-                    />
-                  </button>
-                )}
-              </div>
-            )}
+            {/* 音标 & 播放按钮 — 始终占位，避免布局跳动 */}
+            <div className={cn("-mt-4 flex items-center gap-2", !showPhonetic && "invisible")}>
+              {displayPhonetic && (
+                <span className="font-mono text-sm font-normal text-muted-foreground/50">
+                  [{displayPhonetic}]
+                  <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
+                </span>
+              )}
+              {audio.supported && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPlaying(true);
+                    audio
+                      .speak(word.text, { rate: 0.8, accent: pronunciation })
+                      .catch(() => {})
+                      .finally(() => setIsPlaying(false));
+                  }}
+                  aria-label={isPlaying ? "正在播放" : "播放发音"}
+                  title="播放发音"
+                  className="inline-flex"
+                >
+                  <Volume2
+                    className={cn(
+                      "h-5 w-5 transition-colors duration-300",
+                      isPlaying
+                        ? "text-primary"
+                        : "text-muted-foreground/30 hover:text-primary cursor-pointer hover:scale-110"
+                    )}
+                    style={
+                      isPlaying
+                        ? { animation: "breathe 0.6s ease-in-out infinite" }
+                        : undefined
+                    }
+                  />
+                </button>
+              )}
+            </div>
 
-            {/* 释义 */}
-            {showTranslation && (
-              <p className="-mt-4 select-none text-xl text-foreground/55">
-                {POS_LABELS[word.partOfSpeech] && (
-                  <span className="mr-1.5 text-sm text-foreground/35">{POS_LABELS[word.partOfSpeech]}</span>
-                )}
-                {word.definition}
-              </p>
-            )}
+            {/* 释义 — 始终占位，避免布局跳动 */}
+            <p className={cn("-mt-4 select-none text-xl text-foreground/55", !showTranslation && "invisible")}>
+              {POS_LABELS[word.partOfSpeech] && (
+                <span className="mr-1.5 text-sm text-foreground/35">{POS_LABELS[word.partOfSpeech]}</span>
+              )}
+              {word.definition}
+            </p>
           </div>
         </div>
       </div>
