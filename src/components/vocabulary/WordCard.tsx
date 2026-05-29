@@ -292,7 +292,7 @@ export function WordCard({
               <div className="-mt-4 flex items-center gap-2">
                 {displayPhonetic && (
                   <span className="font-mono text-sm font-normal text-muted-foreground/50">
-                    {displayPhonetic}
+                    [{displayPhonetic}]
                     <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
                   </span>
                 )}
