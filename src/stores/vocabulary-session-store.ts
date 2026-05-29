@@ -181,32 +181,7 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     totalCorrectKeystrokes: 0,
 
     setSelectedWordBook: (id) => set({ selectedWordBook: id }),
-    setWordsPerRound: (n) =>
-      set((s) => {
-        const isActive = s.phase === "new-words" || s.phase === "review";
-        if (!isActive) return { wordsPerRound: n };
-        // 活跃中更改 → 重置会话进度，保留配置
-        return {
-          wordsPerRound: n,
-          phase: "idle",
-          newWords: [],
-          newWordCompletions: {},
-          reviewWords: [],
-          reviewWordCompletions: {},
-          reviewMeta: {},
-          taskQueue: [],
-          completedModeCount: 0,
-          regressionCount: 0,
-          lastCompletedWordId: null,
-          currentWordIndex: 0,
-          startTime: null,
-          endTime: null,
-          elapsedSeconds: 0,
-          wordResults: [],
-          totalKeystrokes: 0,
-          totalCorrectKeystrokes: 0,
-        };
-      }),
+    setWordsPerRound: (n) => set({ wordsPerRound: n }),
     setIsTyping: (val) => set({ isTyping: val }),
 
     startNewWordsPhase: (words) => {
