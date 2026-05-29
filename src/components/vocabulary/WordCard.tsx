@@ -16,6 +16,28 @@ import { cn } from "@/lib/utils";
 import { Volume2 } from "lucide-react";
 import { FSRS_RATING_LABELS } from "@/lib/constants";
 
+/** 播放正确输入提示音 */
+let audioCtx: AudioContext | null = null;
+function playCorrectSound() {
+  try {
+    if (!audioCtx) audioCtx = new AudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = "sine";
+    // 快速滑音：低→高，清脆短促
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(1760, audioCtx.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.12);
+  } catch {
+    // 静默失败
+  }
+}
+
 const POS_LABELS: Record<string, string> = {
   noun: "名",
   verb: "动",
@@ -98,7 +120,8 @@ export function WordCard({
   // 暂停时不播放发音，暂停恢复时播放一次
   useEffect(() => {
     if (isTyping) {
-      audio.speak(word.text, { rate: 0.8, accent: pronunciation }).catch(() => {});
+      setIsPlaying(true);
+      audio.speak(word.text, { rate: 0.8, accent: pronunciation }).catch(() => {}).finally(() => setIsPlaying(false));
     }
   }, [isTyping, word.text, audio, pronunciation]);
 
@@ -124,6 +147,7 @@ export function WordCard({
       }
       const result = handleChar(char, typingMode);
       if (result.accepted) {
+        if (result.correct) playCorrectSound();
         onKeystroke(result.correct);
       }
     },
