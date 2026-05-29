@@ -312,11 +312,16 @@ export function WordCard({
                   >
                     <Volume2
                       className={cn(
-                        "h-5 w-5 transition-all duration-300",
+                        "h-5 w-5 transition-colors duration-300",
                         isPlaying
-                          ? "text-primary animate-breathe"
+                          ? "text-primary"
                           : "text-muted-foreground/30 hover:text-primary cursor-pointer hover:scale-110"
                       )}
+                      style={
+                        isPlaying
+                          ? { animation: "breathe 0.6s ease-in-out infinite" }
+                          : undefined
+                      }
                     />
                   </button>
                 )}
