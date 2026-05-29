@@ -3,7 +3,7 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import { Settings, X, ALargeSmall, Hash, ArrowUp, ArrowDown, Minus, Plus } from "lucide-react";
+import { Settings, X, Hash, ArrowUp, ArrowDown, Minus, Plus } from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
@@ -11,8 +11,6 @@ interface ImmersiveSettingsPanelProps {
 }
 
 export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPanelProps) {
-  const typingMode = useVocabularySessionStore((s) => s.typingMode);
-  const setTypingMode = useVocabularySessionStore((s) => s.setTypingMode);
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
   const setWordsPerRound = useVocabularySessionStore((s) => s.setWordsPerRound);
   const progressBarPosition = useSettingsStore(
@@ -49,10 +47,6 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   useEffect(() => {
     if (!open) setShowWordAdjuster(false);
   }, [open]);
-
-  const toggleTypingMode = () => {
-    setTypingMode(typingMode === "strict" ? "loose" : "strict");
-  };
 
   const toggleProgressPosition = () => {
     setPreferences({
@@ -104,20 +98,6 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
         )}
         style={{ transitionTimingFunction: springEasing }}
       >
-        {/* 打字模式 */}
-        <button
-          onClick={toggleTypingMode}
-          title={typingMode === "strict" ? "严格模式（点按切换）" : "宽松模式（点按切换）"}
-          className={cn(
-            "rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0",
-            typingMode === "strict"
-              ? "text-primary"
-              : "text-foreground/50 hover:text-foreground"
-          )}
-        >
-          <ALargeSmall className="h-4 w-4" />
-        </button>
-
         {/* 词数调整器 */}
         <div className="relative flex items-center shrink-0">
           {showWordAdjuster ? (

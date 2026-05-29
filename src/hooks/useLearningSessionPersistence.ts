@@ -127,7 +127,6 @@ function serializeState(state: ReturnType<typeof useVocabularySessionStore.getSt
   return {
     selectedWordBook: state.selectedWordBook,
     phase: state.phase,
-    typingMode: state.typingMode,
     wordsPerRound: state.wordsPerRound,
     newWords: state.newWords,
     newWordCompletions: state.newWordCompletions,

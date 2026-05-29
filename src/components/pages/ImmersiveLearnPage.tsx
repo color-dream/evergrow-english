@@ -47,7 +47,6 @@ export function ImmersiveLearnPage() {
 
   const phase = useVocabularySessionStore((s) => s.phase);
   const isInSession = phase === "new-words" || phase === "review";
-  const typingMode = useVocabularySessionStore((s) => s.typingMode);
   const startTime = useVocabularySessionStore((s) => s.startTime);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
   const newWords = useVocabularySessionStore((s) => s.newWords);
@@ -353,7 +352,6 @@ export function ImmersiveLearnPage() {
             key={`${currentWord.id}-${currentLearnMode}`}
             word={currentWord}
             learnMode={currentLearnMode}
-            typingMode={typingMode}
             onComplete={recordModeComplete}
             onKeystroke={onKeystroke}
             onWrongChar={handleWrongChar}

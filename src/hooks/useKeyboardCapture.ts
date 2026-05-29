@@ -4,17 +4,14 @@ import { isLegal, isChineseSymbol } from "@/lib/keyboard-utils";
 /** 全局键盘事件捕获。enabled 为 true 时监听 window keydown。 */
 export function useKeyboardCapture(
   onChar: (char: string) => void,
-  onBackspace: () => void,
   enabled: boolean,
   onEnter?: () => void
 ): void {
   const onCharRef = useRef(onChar);
-  const onBackspaceRef = useRef(onBackspace);
   const onEnterRef = useRef(onEnter);
 
   useEffect(() => {
     onCharRef.current = onChar;
-    onBackspaceRef.current = onBackspace;
     onEnterRef.current = onEnter;
   });
 
@@ -28,12 +25,6 @@ export function useKeyboardCapture(
       if (e.key === "Enter") {
         e.preventDefault();
         onEnterRef.current?.();
-        return;
-      }
-
-      if (e.key === "Backspace") {
-        e.preventDefault();
-        onBackspaceRef.current();
         return;
       }
 

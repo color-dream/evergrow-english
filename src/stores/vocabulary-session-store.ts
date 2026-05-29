@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { Word } from "@/types/domain";
 import type {
-  TypingMode,
   SessionPhase,
   WordResult,
   WordBookId,
@@ -31,7 +30,6 @@ export interface ReviewWordMeta {
 interface VocabularySessionState {
   // ── 配置 ──
   selectedWordBook: WordBookId | null;
-  typingMode: TypingMode;
   wordsPerRound: number;
 
   // ── 阶段管理 ──
@@ -70,7 +68,6 @@ interface VocabularySessionState {
 
   // ── Actions ──
   setSelectedWordBook: (id: WordBookId) => void;
-  setTypingMode: (mode: TypingMode) => void;
   setWordsPerRound: (n: number) => void;
   setIsTyping: (val: boolean) => void;
 
@@ -91,7 +88,6 @@ interface VocabularySessionState {
   restoreSession: (data: {
     selectedWordBook: WordBookId | null;
     phase: SessionPhase;
-    typingMode: TypingMode;
     wordsPerRound: number;
     newWords: Word[];
     newWordCompletions: Record<string, WordCompletion>;
@@ -156,7 +152,6 @@ function aggregateWordResult(
 export const useVocabularySessionStore = create<VocabularySessionState>()(
   (set) => ({
     selectedWordBook: null,
-    typingMode: "strict",
     wordsPerRound: DEFAULT_WORDS_PER_ROUND,
 
     phase: "idle",
@@ -186,7 +181,6 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
     totalCorrectKeystrokes: 0,
 
     setSelectedWordBook: (id) => set({ selectedWordBook: id }),
-    setTypingMode: (mode) => set({ typingMode: mode }),
     setWordsPerRound: (n) =>
       set((s) => {
         const isActive = s.phase === "new-words" || s.phase === "review";

@@ -1,9 +1,6 @@
 /** 词库标识 */
 export type WordBookId = "cet4" | "cet6";
 
-/** 打字模式：严格 = 即时比对打错重置；宽松 = 退格修正，输完比对 */
-export type TypingMode = "strict" | "loose";
-
 /** 字母显示状态 */
 export type LetterState = "normal" | "correct" | "wrong";
 
@@ -88,11 +85,5 @@ export type WordTypingAction =
   | { type: "INIT"; displayWord: string; randomVisible: boolean[] }
   | { type: "ADD_CORRECT"; position: number; char: string }
   | { type: "ADD_WRONG"; position: number; char: string }
-  | { type: "ADD_CHAR"; position: number; char: string }
-  | { type: "DELETE_CHAR" }
-  | {
-      type: "COMPARE_ALL";
-      results: Array<{ position: number; correct: boolean }>;
-    }
   | { type: "RESET" }
   | { type: "FINISH" };

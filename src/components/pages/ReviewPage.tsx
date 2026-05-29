@@ -175,8 +175,7 @@ export function ReviewPage() {
           key={`${currentWord.id}-rating`}
           word={currentWord}
           learnMode="typeWithWord"
-          typingMode="strict"
-          onComplete={() => {}}
+onComplete={() => {}}
           onKeystroke={() => {}}
         />
         {/* 评分遮罩 — iOS 26 毛玻璃面板 */}
@@ -245,8 +244,7 @@ export function ReviewPage() {
             key={`${currentWord.id}-${currentIdx}`}
             word={currentWord}
             learnMode="typeWithWord"
-            typingMode="strict"
-            onComplete={onComplete}
+    onComplete={onComplete}
             onKeystroke={() => {}}
           />
         </div>

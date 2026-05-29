@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import type { Word } from "@/types/domain";
 import type {
-  TypingMode,
   WordLearnMode,
   WordModeResult,
 } from "@/types/vocabulary";
@@ -97,7 +96,6 @@ const POS_LABELS: Record<string, string> = {
 interface WordCardProps {
   word: Word;
   learnMode: WordLearnMode;
-  typingMode: TypingMode;
   onComplete: (result: WordModeResult) => void;
   onKeystroke: (correct: boolean) => void;
   onWrongChar?: () => void;
@@ -120,7 +118,6 @@ function getVisibility(learnMode: WordLearnMode) {
 export function WordCard({
   word,
   learnMode,
-  typingMode,
   onComplete,
   onKeystroke,
   onWrongChar,
@@ -132,8 +129,6 @@ export function WordCard({
   const {
     state,
     handleChar,
-    handleBackspace,
-    setMode,
     getLetterMistakes,
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
@@ -157,10 +152,6 @@ export function WordCard({
       ? word.ukphone || word.usphone || word.phonetic
       : word.usphone || word.ukphone || word.phonetic;
   const accentLabel = pronunciation === "uk" ? "英" : "美";
-
-  useEffect(() => {
-    setMode(typingMode);
-  }, [typingMode, setMode]);
 
   // 暂停时不播放发音，暂停恢复时播放一次
   useEffect(() => {
@@ -191,7 +182,7 @@ export function WordCard({
         setIsTyping(true);
         return;
       }
-      const result = handleChar(char, typingMode);
+      const result = handleChar(char);
       if (result.accepted) {
         if (result.correct) {
           playCorrectSound();
@@ -201,20 +192,14 @@ export function WordCard({
         onKeystroke(result.correct);
       }
     },
-    [handleChar, typingMode, onKeystroke, isTyping, setIsTyping]
+    [handleChar, onKeystroke, isTyping, setIsTyping]
   );
-
-  const onBackspace = useCallback(() => {
-    if (typingMode === "loose") {
-      handleBackspace();
-    }
-  }, [typingMode, handleBackspace]);
 
   const onEnter = useCallback(() => {
     setIsTyping(!isTyping);
   }, [isTyping, setIsTyping]);
 
-  useKeyboardCapture(onChar, onBackspace, isTyping && !state.isFinished && !showResult && !disabled, onEnter);
+  useKeyboardCapture(onChar, isTyping && !state.isFinished && !showResult && !disabled, onEnter);
 
   useEffect(() => {
     if (state.isFinished && !completedRef.current) {
