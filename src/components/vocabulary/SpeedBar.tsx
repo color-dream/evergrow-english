@@ -33,9 +33,9 @@ export function SpeedBar() {
         label="时间"
       />
       <InfoBox value={`${cpm}`} label="字母/分" />
+      <InfoBox value={`${correctWords}`} label="正确" />
+      <InfoBox value={`${wrongWords}`} label="错误" />
       <InfoBox value={`${wordAccuracy}%`} label="正确率" />
-      <InfoBox value={`${correctWords}`} label="正确词" />
-      <InfoBox value={`${wrongWords}`} label="错误词" />
     </div>
   );
 }
