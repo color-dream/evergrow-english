@@ -43,7 +43,7 @@ export function VocabularyPage() {
       useSettingsStore.getState().setBookWordsPerRound(bookId, wordsPerRoundValue);
 
       const win = window.open(
-        `${ROUTES.LEARN}?bookId=${bookId}&wordsPerRound=${wordsPerRoundValue}`,
+        `${ROUTES.LEARN}?bookId=${bookId}`,
         "_blank"
       );
 

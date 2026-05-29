@@ -20,7 +20,6 @@ import { WordCard } from "@/components/vocabulary/WordCard";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
-import { WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_MIN } from "@/lib/constants";
 import { List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -38,7 +37,6 @@ function deriveRatingFromFSRS(fsrs: FSRSState): number {
 export function ImmersiveLearnPage() {
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get("bookId") as WordBookId | null;
-  const wordsPerRoundParam = searchParams.get("wordsPerRound");
 
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
@@ -102,17 +100,8 @@ export function ImmersiveLearnPage() {
         return;
       }
 
-      // 解析 wordsPerRound
-      let wpr = useVocabularySessionStore.getState().wordsPerRound;
-      if (wordsPerRoundParam) {
-        const parsed = Number(wordsPerRoundParam);
-        if (parsed >= WORDS_PER_ROUND_MIN && parsed <= WORDS_PER_ROUND_MAX) {
-          wpr = parsed;
-        }
-      } else {
-        // 无 URL 参数时从缓存读取（进行中的书直接进入的场景）
-        wpr = await resolveWordsPerRound(bookId);
-      }
+      // 从缓存恢复每轮单词数
+      const wpr = await resolveWordsPerRound(bookId);
       useVocabularySessionStore.getState().setWordsPerRound(wpr);
 
       try {
@@ -129,7 +118,7 @@ export function ImmersiveLearnPage() {
     };
 
     init();
-  }, [bookId, wordsPerRoundParam, startNewWordsPhase]);
+  }, [bookId, startNewWordsPhase]);
 
   const loadReviewPhase = useCallback(async () => {
     if (!selectedBook) {
