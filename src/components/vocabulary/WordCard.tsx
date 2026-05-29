@@ -246,7 +246,7 @@ export function WordCard({
 
             {/* 释义 */}
             {showTranslation && (
-              <p className="-mt-4 select-none text-lg text-foreground/55">
+              <p className="-mt-4 select-none text-xl text-foreground/55">
                 {POS_LABELS[word.partOfSpeech] && (
                   <span className="mr-1.5 text-sm text-foreground/35">{POS_LABELS[word.partOfSpeech]}</span>
                 )}
