@@ -18,6 +18,7 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   const progressBarPosition = useSettingsStore(
     (s) => s.preferences.progressBarPosition ?? "top"
   );
+  const pronunciation = useSettingsStore((s) => s.preferences.pronunciation);
   const setPreferences = useSettingsStore((s) => s.setPreferences);
 
   const panelRef = useRef<HTMLDivElement>(null);
@@ -56,6 +57,12 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   const toggleProgressPosition = () => {
     setPreferences({
       progressBarPosition: progressBarPosition === "top" ? "bottom" : "top",
+    });
+  };
+
+  const togglePronunciation = () => {
+    setPreferences({
+      pronunciation: pronunciation === "us" ? "uk" : "us",
     });
   };
 
@@ -157,6 +164,17 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
           ) : (
             <ArrowDown className="h-4 w-4" />
           )}
+        </button>
+
+        {/* 英美音切换 */}
+        <button
+          onClick={togglePronunciation}
+          title={pronunciation === "us" ? "美式发音（点按切换）" : "英式发音（点按切换）"}
+          className="rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 text-foreground/60 hover:text-foreground"
+        >
+          <span className="flex h-4 w-4 items-center justify-center text-xs font-mono font-bold tabular-nums">
+            {pronunciation === "us" ? "美" : "英"}
+          </span>
         </button>
       </div>
 

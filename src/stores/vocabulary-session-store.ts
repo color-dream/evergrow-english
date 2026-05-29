@@ -126,6 +126,8 @@ function aggregateWordResult(
   wordId: string,
   wordText: string,
   definition: string,
+  usphone: string | undefined,
+  ukphone: string | undefined,
   allResults: WordModeResult[],
 ): WordResult {
   const worstWrongCount = Math.max(...allResults.map((r) => r.wrongCount));
@@ -143,6 +145,8 @@ function aggregateWordResult(
     wordId,
     wordText,
     definition,
+    usphone,
+    ukphone,
     wrongCount: worstWrongCount,
     isCorrect,
     letterMistakes: mergedMistakes,
@@ -329,6 +333,8 @@ export const useVocabularySessionStore = create<VocabularySessionState>()(
             currentWord.id,
             currentWord.text,
             currentWord.definition,
+            currentWord.usphone,
+            currentWord.ukphone,
             updatedModeResults,
           );
           newWordResults = [...newWordResults, finalResult];

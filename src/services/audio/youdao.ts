@@ -17,19 +17,22 @@ export class YoudaoAudioService implements IAudioService {
   private cleanupInteraction: (() => void) | null = null;
   private webSpeechTimer: ReturnType<typeof setTimeout> | null = null;
   private interactionTimer: ReturnType<typeof setTimeout> | null = null;
+  private pendingAccent: "us" | "uk" = "us";
 
   get supported(): boolean {
     return typeof window !== "undefined" && typeof Audio !== "undefined";
   }
 
-  async speak(text: string, _options?: SpeakOptions): Promise<void> {
+  async speak(text: string, options?: SpeakOptions): Promise<void> {
     if (!this.supported) {
       throw new Error("Audio element not supported");
     }
 
     this.stop();
 
-    const url = `${YOUDAO_BASE}?audio=${encodeURIComponent(text)}&type=2`;
+    this.pendingAccent = options?.accent ?? "us";
+    const type = this.pendingAccent === "uk" ? 1 : 0;
+    const url = `${YOUDAO_BASE}?audio=${encodeURIComponent(text)}&type=${type}`;
 
     return new Promise<void>((resolve, reject) => {
       const audio = new Audio(url);
@@ -123,8 +126,12 @@ export class YoudaoAudioService implements IAudioService {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.8;
     const voices = speechSynthesis.getVoices();
-    const en = voices.find((v) => v.lang.startsWith("en") && v.default);
-    if (en) utterance.voice = en;
+    // 按口音偏好选择语音：美音优先 en-US，英音优先 en-GB
+    const targetLang = this.pendingAccent === "uk" ? "en-GB" : "en-US";
+    const preferred = voices.find((v) => v.lang.startsWith(targetLang));
+    const fallback = voices.find((v) => v.lang.startsWith("en") && v.default);
+    if (preferred) utterance.voice = preferred;
+    else if (fallback) utterance.voice = fallback;
     speechSynthesis.speak(utterance);
   }
 

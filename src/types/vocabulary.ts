@@ -38,6 +38,8 @@ export interface WordResult {
   wordId: string;
   wordText: string;
   definition: string;
+  usphone?: string;
+  ukphone?: string;
   wrongCount: number;
   isCorrect: boolean;
   letterMistakes: Record<number, string[]>;

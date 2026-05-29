@@ -157,6 +157,8 @@ export function ImmersiveLearnPage() {
         difficulty: "B1" as const,
         tags: [],
         createdAt: card.createdAt,
+        usphone: card.usphone,
+        ukphone: card.ukphone,
       }));
 
       const meta: Record<string, ReviewWordMeta> = {};

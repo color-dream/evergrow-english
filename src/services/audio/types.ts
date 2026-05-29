@@ -1,6 +1,7 @@
 export interface SpeakOptions {
   rate?: number;
   voice?: string;
+  accent?: "us" | "uk";
 }
 
 export interface Voice {

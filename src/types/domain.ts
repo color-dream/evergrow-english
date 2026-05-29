@@ -44,6 +44,8 @@ export interface Word {
     | "interjection"
     | "other";
   phonetic?: string;
+  usphone?: string;
+  ukphone?: string;
   audioUrl?: string;
   difficulty: DifficultyLevel;
   tags: string[];
@@ -159,6 +161,8 @@ export interface UserPreferences {
   dailyReminderTime: string;
   /** 进度条位置：贴顶或贴底 */
   progressBarPosition: "top" | "bottom";
+  /** 发音偏好：美音或英音 */
+  pronunciation: "us" | "uk";
 }
 
 export interface User {

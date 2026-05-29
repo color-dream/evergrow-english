@@ -20,6 +20,8 @@ export function convertToWord(entry: QwertyLearnerEntry, bookId: string): Word {
     definition: entry.trans.join("；"),
     partOfSpeech: "other",
     phonetic: entry.usphone || entry.ukphone || undefined,
+    usphone: entry.usphone || undefined,
+    ukphone: entry.ukphone || undefined,
     difficulty: BOOK_DIFFICULTY[bookId] ?? "B1",
     tags: [],
     createdAt: Date.now(),

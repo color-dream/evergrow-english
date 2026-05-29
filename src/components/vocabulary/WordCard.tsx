@@ -9,6 +9,7 @@ import type { ReviewWordMeta } from "@/stores/vocabulary-session-store";
 import { useWordTyping } from "@/hooks/useWordTyping";
 import { useKeyboardCapture } from "@/hooks/useKeyboardCapture";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { useAudio } from "@/app/providers/AudioProvider";
 import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
@@ -58,6 +59,7 @@ export function WordCard({
     getLetterMistakes,
   } = useWordTyping(word.text, isIgnoreCase);
   const audio = useAudio();
+  const pronunciation = useSettingsStore((s) => s.preferences.pronunciation);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const completedRef = useRef(false);
@@ -70,6 +72,13 @@ export function WordCard({
   const showTranslation = showResult ? true : vis.showTranslation;
   const showPhonetic = showResult ? true : vis.showPhonetic;
 
+  // 按发音偏好选择音标：首选对应口音，缺省回退
+  const displayPhonetic =
+    pronunciation === "uk"
+      ? word.ukphone || word.usphone || word.phonetic
+      : word.usphone || word.ukphone || word.phonetic;
+  const accentLabel = pronunciation === "uk" ? "英" : "美";
+
   useEffect(() => {
     setMode(typingMode);
   }, [typingMode, setMode]);
@@ -77,9 +86,9 @@ export function WordCard({
   // 暂停时不播放发音，暂停恢复时播放一次
   useEffect(() => {
     if (isTyping) {
-      audio.speak(word.text, { rate: 0.8 }).catch(() => {});
+      audio.speak(word.text, { rate: 0.8, accent: pronunciation }).catch(() => {});
     }
-  }, [isTyping, word.text, audio]);
+  }, [isTyping, word.text, audio, pronunciation]);
 
   // 错误回退：检测 hasWrong 上跳沿 → 通知父组件回退模式
   useEffect(() => {
@@ -188,11 +197,12 @@ export function WordCard({
             </div>
 
             {/* 音标 & 播放按钮 */}
-            {showPhonetic && (word.phonetic || audio.supported) && (
+            {showPhonetic && (displayPhonetic || audio.supported) && (
               <div className="-mt-8 flex items-center gap-2">
-                {word.phonetic && (
+                {displayPhonetic && (
                   <span className="font-mono text-sm font-normal text-muted-foreground/50">
-                    {word.phonetic}
+                    {displayPhonetic}
+                    <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
                   </span>
                 )}
                 {audio.supported && (
@@ -201,7 +211,7 @@ export function WordCard({
                     onClick={() => {
                       setIsPlaying(true);
                       audio
-                        .speak(word.text, { rate: 0.8 })
+                        .speak(word.text, { rate: 0.8, accent: pronunciation })
                         .catch(() => {})
                         .finally(() => setIsPlaying(false));
                     }}

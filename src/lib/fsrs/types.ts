@@ -5,6 +5,8 @@ export interface LearningCard {
   id: string;
   wordText: string;
   definition: string;
+  usphone?: string;
+  ukphone?: string;
   bookId: string;
   cardType: "word";
   fsrs: FSRSState;

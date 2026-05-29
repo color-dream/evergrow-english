@@ -28,6 +28,8 @@ export function useFSRSSync() {
           const card: LearningCard = existing
             ? {
                 ...existing,
+                usphone: result.usphone ?? existing.usphone,
+                ukphone: result.ukphone ?? existing.ukphone,
                 fsrs: applyFSRS(existing.fsrs, rating, now),
                 updatedAt: now,
               }
@@ -35,6 +37,8 @@ export function useFSRSSync() {
                 id: cardId,
                 wordText: result.wordText,
                 definition: result.definition,
+                usphone: result.usphone,
+                ukphone: result.ukphone,
                 bookId,
                 cardType: "word",
                 fsrs: applyFSRS(createNewFSRSState(), rating, now),
