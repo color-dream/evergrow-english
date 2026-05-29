@@ -3,12 +3,15 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 export function SpeedBar() {
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
-  const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
   const wordResults = useVocabularySessionStore((s) => s.wordResults);
 
-  const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 0;
-  const wpm =
-    elapsed > 0 ? Math.round((wordResults.length / elapsed) * 60) : 0;
+  const correctWords = wordResults.filter((r) => r.isCorrect).length;
+  const wrongWords = wordResults.filter((r) => !r.isCorrect).length;
+  const wordAccuracy = wordResults.length > 0
+    ? Math.round((correctWords / wordResults.length) * 100)
+    : 0;
+  const cpm =
+    elapsed > 0 ? Math.round((totalK / elapsed) * 60) : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
@@ -29,10 +32,10 @@ export function SpeedBar() {
         value={`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
         label="时间"
       />
-      <InfoBox value={`${totalK}`} label="输入数" />
-      <InfoBox value={`${wpm}`} label="WPM" />
-      <InfoBox value={`${correctK}`} label="正确数" />
-      <InfoBox value={`${accuracy}%`} label="正确率" />
+      <InfoBox value={`${cpm}`} label="字母/分" />
+      <InfoBox value={`${wordAccuracy}%`} label="正确率" />
+      <InfoBox value={`${correctWords}`} label="正确词" />
+      <InfoBox value={`${wrongWords}`} label="错误词" />
     </div>
   );
 }

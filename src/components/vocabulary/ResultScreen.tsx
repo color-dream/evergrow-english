@@ -56,13 +56,15 @@ export function ResultScreen({
   const newCompletions = useVocabularySessionStore((s) => s.newWordCompletions);
   const reviewCompletions = useVocabularySessionStore((s) => s.reviewWordCompletions);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
-  const correctK = useVocabularySessionStore((s) => s.totalCorrectKeystrokes);
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
-  const accuracy = totalK > 0 ? Math.round((correctK / totalK) * 100) : 0;
-  const wpm = elapsed > 0 ? Math.round((wordResults.length / elapsed) * 60) : 0;
+  const correctWords = wordResults.filter((r) => r.isCorrect).length;
+  const accuracy = wordResults.length > 0
+    ? Math.round((correctWords / wordResults.length) * 100)
+    : 0;
+  const cpm = elapsed > 0 ? Math.round((totalK / elapsed) * 60) : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
@@ -164,7 +166,7 @@ export function ResultScreen({
                 value={`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
                 label="时间"
               />
-              <RemarkRing value={`${wpm}`} label="WPM" />
+              <RemarkRing value={`${cpm}`} label="字母/分" />
             </div>
 
             {/* 右侧：单词详细学习状况 */}
