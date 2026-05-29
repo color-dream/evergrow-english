@@ -198,7 +198,7 @@ export function WordCard({
 
             {/* 音标 & 播放按钮 */}
             {showPhonetic && (displayPhonetic || audio.supported) && (
-              <div className="-mt-8 flex items-center gap-2">
+              <div className="-mt-4 flex items-center gap-2">
                 {displayPhonetic && (
                   <span className="font-mono text-sm font-normal text-muted-foreground/50">
                     {displayPhonetic}
