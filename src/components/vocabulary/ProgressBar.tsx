@@ -14,9 +14,7 @@ export function ProgressBar({
   const progress =
     totalModes > 0 ? Math.floor((completedModes / totalModes) * 100) : 0;
 
-  const gradientColor = isReview
-    ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400"
-    : "bg-gradient-to-r from-primary via-cyan-400 to-primary";
+  const fillColor = isReview ? "bg-amber-400" : "bg-primary";
 
   return (
     <div
@@ -31,10 +29,10 @@ export function ProgressBar({
     >
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/50">
         <div
-          style={{ width: `${progress}%`, backgroundSize: "200% 100%" }}
+          style={{ width: `${progress}%` }}
           className={cn(
-            "h-full rounded-full transition-all duration-500 animate-shimmer",
-            gradientColor
+            "h-full rounded-full transition-all duration-500",
+            fillColor
           )}
         />
       </div>

@@ -127,9 +127,8 @@ export function ReviewPage() {
         </div>
         <button
           onClick={() => navigate(ROUTES.VOCABULARY)}
-          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
           style={{
-            background: "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
             boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
           }}
         >
@@ -154,9 +153,8 @@ export function ReviewPage() {
         </div>
         <button
           onClick={() => navigate(ROUTES.DASHBOARD)}
-          className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
           style={{
-            background: "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
             boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
           }}
         >

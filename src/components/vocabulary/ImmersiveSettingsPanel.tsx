@@ -1,14 +1,29 @@
 import { useEffect, useState, useRef } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useTheme } from "@/app/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import { Settings, X, Hash, ArrowUp, ArrowDown } from "lucide-react";
+import { Settings, X, Hash, ArrowUp, ArrowDown, Sun, Moon, SunMoon } from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
   onToggle: () => void;
 }
+
+const themeCycle = ["light", "dark", "system"] as const;
+
+const themeIcon = {
+  light: Sun,
+  dark: Moon,
+  system: SunMoon,
+} as const;
+
+const themeLabel = {
+  light: "亮色模式",
+  dark: "暗色模式",
+  system: "跟随系统",
+} as const;
 
 export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPanelProps) {
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
@@ -18,6 +33,8 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
   );
   const pronunciation = useSettingsStore((s) => s.preferences.pronunciation);
   const setPreferences = useSettingsStore((s) => s.setPreferences);
+
+  const { setting: theme, setTheme } = useTheme();
 
   const panelRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -78,6 +95,16 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
       pronunciation: pronunciation === "us" ? "uk" : "us",
     });
   };
+
+  const cycleTheme = () => {
+    const idx = themeCycle.indexOf(theme);
+    const next = themeCycle[(idx + 1) % themeCycle.length];
+    setTheme(next);
+    // 同步持久化到 settings store
+    setPreferences({ theme: next });
+  };
+
+  const ThemeIcon = themeIcon[theme];
 
   const springEasing = "cubic-bezier(0.34, 1.56, 0.64, 1)";
 
@@ -172,6 +199,15 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
           <span className="flex h-4 w-4 items-center justify-center text-xs font-mono font-bold tabular-nums">
             {pronunciation === "us" ? "美" : "英"}
           </span>
+        </button>
+
+        {/* 主题切换 */}
+        <button
+          onClick={cycleTheme}
+          title={`主题：${themeLabel[theme]}（点按切换）`}
+          className="rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 text-foreground/60 hover:text-foreground"
+        >
+          <ThemeIcon className="h-4 w-4" />
         </button>
       </div>
 

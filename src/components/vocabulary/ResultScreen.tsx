@@ -375,10 +375,8 @@ function PrimaryButton({
   return (
     <button
       onClick={onClick}
-      className="flex items-center justify-center rounded-full px-8 py-2.5 text-base font-medium text-white transition-all duration-300 hover:scale-105 active:scale-95"
+      className="flex items-center justify-center rounded-full px-8 py-2.5 text-base font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95 bg-primary"
       style={{
-        background:
-          "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
         boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
       }}
     >

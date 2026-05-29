@@ -122,13 +122,7 @@ export function HomePage() {
   }, []);
 
   return (
-    <div
-      className="flex min-h-full flex-col px-6 py-10"
-      style={{
-        background:
-          "radial-gradient(ellipse 60% 50% at 50% 40%, oklch(0.85 0.055 252 / 0.18), transparent 70%), linear-gradient(180deg, var(--color-background), oklch(0.96 0.008 275 / 0.5), var(--color-background))",
-      }}
-    >
+    <div className="flex min-h-full flex-col px-6 py-10">
       {/* ── 欢迎区 ── */}
       <div className="mb-10 animate-spring-in">
         <div className="mb-3 flex items-center gap-3">

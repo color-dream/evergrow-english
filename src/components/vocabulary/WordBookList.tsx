@@ -31,13 +31,7 @@ export function WordBookList({
   }, [stats]);
 
   return (
-    <div
-      className="flex min-h-full flex-col px-6 py-10"
-      style={{
-        background:
-          "radial-gradient(ellipse 60% 50% at 50% 40%, oklch(0.85 0.055 252 / 0.14), transparent 70%), linear-gradient(180deg, var(--color-background), oklch(0.96 0.008 275 / 0.4), var(--color-background))",
-      }}
-    >
+    <div className="flex min-h-full flex-col px-6 py-10">
       {/* 页头 */}
       <div className="mx-auto w-full max-w-3xl animate-spring-in">
         <div className="mb-2 flex items-center gap-3">

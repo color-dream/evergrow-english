@@ -85,9 +85,8 @@ export function PreSettingsDialog({
 
           <button
             onClick={() => onConfirm(selected)}
-            className="w-full rounded-full py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
+            className="w-full rounded-full bg-primary py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
             style={{
-              background: "linear-gradient(135deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265))",
               boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",
             }}
           >

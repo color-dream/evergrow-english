@@ -44,11 +44,9 @@ export function ProgressHeader() {
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
-            isReview
-              ? "bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400"
-              : "bg-gradient-to-r from-primary via-cyan-400 to-primary"
+            isReview ? "bg-amber-400" : "bg-primary"
           )}
-          style={{ width: `${progress}%`, backgroundSize: "200% 100%" }}
+          style={{ width: `${progress}%` }}
         />
       </div>
 

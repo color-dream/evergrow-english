@@ -5,19 +5,15 @@ import type { WordBookId } from "@/types/vocabulary";
 
 const bookTheme: Record<
   WordBookId,
-  { accent: string; bg: string; gradient: string }
+  { accent: string; bg: string }
 > = {
   cet4: {
     accent: "oklch(0.55 0.195 252)",
     bg: "oklch(0.55 0.195 252 / 0.08)",
-    gradient:
-      "linear-gradient(90deg, oklch(0.55 0.195 252), oklch(0.5 0.17 265), oklch(0.55 0.195 252))",
   },
   cet6: {
     accent: "oklch(0.52 0.16 285)",
     bg: "oklch(0.52 0.16 285 / 0.08)",
-    gradient:
-      "linear-gradient(90deg, oklch(0.52 0.16 285), oklch(0.48 0.14 300), oklch(0.52 0.16 285))",
   },
 };
 
@@ -102,11 +98,10 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/8">
                 <div
-                  className="h-full rounded-full animate-shimmer transition-all duration-500"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.max(learnedPercent, stats.totalCards > 0 ? 3 : 0)}%`,
-                    background: theme.gradient,
-                    backgroundSize: "200% 100%",
+                    background: theme.accent,
                   }}
                 />
               </div>
