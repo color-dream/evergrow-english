@@ -22,6 +22,7 @@ import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
 import { WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_MIN } from "@/lib/constants";
 import { List, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
@@ -326,11 +327,20 @@ export function ImmersiveLearnPage() {
           }}
           title={showWordList ? "关闭列表" : "单词列表"}
         >
-          {showWordList ? (
-            <X className="h-4 w-4" />
-          ) : (
-            <List className="h-4 w-4" />
-          )}
+          <span className="relative flex h-4 w-4">
+            <X
+              className={cn(
+                "absolute inset-0 h-4 w-4 transition-all duration-300",
+                showWordList ? "opacity-100 rotate-0" : "opacity-0 rotate-90"
+              )}
+            />
+            <List
+              className={cn(
+                "absolute inset-0 h-4 w-4 transition-all duration-300",
+                showWordList ? "opacity-0 -rotate-90" : "opacity-100 rotate-0"
+              )}
+            />
+          </span>
         </button>
       )}
 

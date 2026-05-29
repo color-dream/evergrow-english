@@ -166,11 +166,20 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
         className="rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 shrink-0 text-foreground/60 hover:text-foreground"
         title={open ? "关闭设置" : "设置"}
       >
-        {open ? (
-          <X className="h-4 w-4" />
-        ) : (
-          <Settings className="h-4 w-4" />
-        )}
+        <span className="relative flex h-4 w-4">
+          <X
+            className={cn(
+              "absolute inset-0 h-4 w-4 transition-all duration-300",
+              open ? "opacity-100 rotate-0" : "opacity-0 rotate-90"
+            )}
+          />
+          <Settings
+            className={cn(
+              "absolute inset-0 h-4 w-4 transition-all duration-300",
+              open ? "opacity-0 -rotate-90" : "opacity-100 rotate-0"
+            )}
+          />
+        </span>
       </button>
     </div>
   );
