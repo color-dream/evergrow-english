@@ -3,7 +3,7 @@ import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { cn } from "@/lib/utils";
 import { WORDS_PER_ROUND_MIN, WORDS_PER_ROUND_MAX, WORDS_PER_ROUND_STEP } from "@/lib/constants";
-import { Settings, X, Hash, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { Settings, X, Hash, ArrowUp, ArrowDown } from "lucide-react";
 
 interface ImmersiveSettingsPanelProps {
   open: boolean;
@@ -128,7 +128,7 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
                 WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
                 border: "1px solid var(--glass-sheet-border)",
                 boxShadow: "var(--shadow-lg)",
-                minWidth: "4rem",
+                minWidth: "3rem",
               }}
             >
               {wordOptions.map((n) => (
@@ -139,12 +139,11 @@ export function ImmersiveSettingsPanel({ open, onToggle }: ImmersiveSettingsPane
                     setShowWordDropdown(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 px-4 py-1.5 text-sm transition-colors duration-150 hover:bg-foreground/5",
+                    "w-full px-3 py-1.5 text-center text-sm font-mono tabular-nums transition-colors duration-150 hover:bg-foreground/5",
                     n === wordsPerRound ? "text-primary" : "text-foreground/60"
                   )}
                 >
-                  <span className="font-mono tabular-nums">{n}</span>
-                  {n === wordsPerRound && <Check className="h-3.5 w-3.5" />}
+                  {n}
                 </button>
               ))}
             </div>
