@@ -16,6 +16,18 @@ import { cn } from "@/lib/utils";
 import { Volume2 } from "lucide-react";
 import { FSRS_RATING_LABELS } from "@/lib/constants";
 
+const POS_LABELS: Record<string, string> = {
+  noun: "名",
+  verb: "动",
+  adjective: "形",
+  adverb: "副",
+  preposition: "介",
+  conjunction: "连",
+  pronoun: "代",
+  interjection: "叹",
+  other: "",
+};
+
 interface WordCardProps {
   word: Word;
   learnMode: WordLearnMode;
@@ -235,6 +247,9 @@ export function WordCard({
             {/* 释义 */}
             {showTranslation && (
               <p className="-mt-4 select-none text-lg text-foreground/55">
+                {POS_LABELS[word.partOfSpeech] && (
+                  <span className="mr-1.5 text-sm text-foreground/35">{POS_LABELS[word.partOfSpeech]}</span>
+                )}
                 {word.definition}
               </p>
             )}
