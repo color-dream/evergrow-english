@@ -120,6 +120,29 @@ export function ImmersiveLearnPage() {
     init();
   }, [bookId, startNewWordsPhase]);
 
+  // 学习中途修改每轮词数 → 重新洗牌并重启
+  const prevWprRef = useRef<number | null>(null);
+  useEffect(() => {
+    const prev = prevWprRef.current;
+    prevWprRef.current = wordsPerRound;
+    // 跳过初始挂载（prev 为 null 表示首次）
+    if (prev === null || prev === wordsPerRound) return;
+    if (!bookId || !selectedBook) return;
+    const phase = useVocabularySessionStore.getState().phase;
+    if (phase !== "new-words" && phase !== "review") return;
+
+    const restart = async () => {
+      try {
+        const words = await loadWordBook(bookId);
+        const selected = shuffleArray(words).slice(0, wordsPerRound);
+        startNewWordsPhase(selected);
+      } catch {
+        // 静默失败
+      }
+    };
+    restart();
+  }, [wordsPerRound]);
+
   const loadReviewPhase = useCallback(async () => {
     if (!selectedBook) {
       finishSession();
