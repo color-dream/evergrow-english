@@ -376,7 +376,7 @@ export function ImmersiveLearnPage() {
           }}
         >
           {!isTyping && !showWordList && !showSettings && (
-            <p className="select-none text-lg font-medium text-foreground/80 animate-spring-scale">
+            <p className="select-none text-2xl font-medium text-foreground/80 animate-spring-scale">
               {totalKeystrokes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
             </p>
           )}
