@@ -265,37 +265,9 @@ export function WordCard({
       <div className="container flex flex-grow flex-col items-center justify-center">
         <div className="relative flex w-full justify-center">
           <div className="relative flex flex-col items-center gap-10">
-            {/* 字母行 */}
-            <div
-              className={cn(
-                "flex items-center justify-center",
-                state.hasWrong && "animate-shake",
-                showCompleteAnim && "animate-word-success"
-              )}
-            >
-              {state.displayWord.split("").map((letter, index) => {
-                const hasTyped = index < state.inputWord.length;
-                return (
-                  <LetterBox
-                    key={`${index}-${letter}`}
-                    letter={letter}
-                    state={state.letterStates[index]}
-                    visible={showWord}
-                    userChar={hasTyped ? state.inputWord[index] : null}
-                  />
-                );
-              })}
-            </div>
-
-            {/* 音标 & 播放按钮 — 始终占位，避免布局跳动 */}
-            <div className={cn("-mt-4 flex items-center gap-2", !showPhonetic && "invisible")}>
-              {displayPhonetic && (
-                <span className="font-mono text-sm font-normal text-muted-foreground/50">
-                  [{displayPhonetic}]
-                  <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
-                </span>
-              )}
-              {audio.supported && (
+            {/* 发音按钮 — 始终可见，位于字母上方 */}
+            {audio.supported && (
+              <div className="-mb-4 flex items-center justify-center">
                 <button
                   type="button"
                   onClick={() => {
@@ -323,6 +295,38 @@ export function WordCard({
                     }
                   />
                 </button>
+              </div>
+            )}
+
+            {/* 字母行 */}
+            <div
+              className={cn(
+                "flex items-center justify-center",
+                state.hasWrong && "animate-shake",
+                showCompleteAnim && "animate-word-success"
+              )}
+            >
+              {state.displayWord.split("").map((letter, index) => {
+                const hasTyped = index < state.inputWord.length;
+                return (
+                  <LetterBox
+                    key={`${index}-${letter}`}
+                    letter={letter}
+                    state={state.letterStates[index]}
+                    visible={showWord}
+                    userChar={hasTyped ? state.inputWord[index] : null}
+                  />
+                );
+              })}
+            </div>
+
+            {/* 音标 — 始终占位，避免布局跳动 */}
+            <div className={cn("-mt-4 flex items-center gap-2", !showPhonetic && "invisible")}>
+              {displayPhonetic && (
+                <span className="font-mono text-sm font-normal text-muted-foreground/50">
+                  [{displayPhonetic}]
+                  <span className="ml-0.5 font-sans text-xs text-muted-foreground/35">{accentLabel}</span>
+                </span>
               )}
             </div>
 
