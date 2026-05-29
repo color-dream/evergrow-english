@@ -59,7 +59,7 @@ export function VocabularyPage() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col">
+    <>
       <WordBookList
         onSelectBook={handleSelectBook}
         onSelectInProgressBook={handleOpenInProgressBook}
@@ -74,6 +74,6 @@ export function VocabularyPage() {
           onCancel={handlePreSettingsCancel}
         />
       )}
-    </div>
+    </>
   );
 }
