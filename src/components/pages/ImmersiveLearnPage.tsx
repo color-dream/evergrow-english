@@ -296,7 +296,7 @@ export function ImmersiveLearnPage() {
 
   return (
     <div
-      className="relative flex h-screen flex-col"
+      className="learn-page relative flex h-screen flex-col"
       style={{
         background:
           "radial-gradient(ellipse 60% 50% at 50% 40%, oklch(0.85 0.055 252 / 0.18), transparent 70%), linear-gradient(180deg, var(--color-background), oklch(0.96 0.008 275 / 0.5), var(--color-background))",
