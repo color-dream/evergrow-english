@@ -1,14 +1,32 @@
+import { useMemo } from "react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
 
 export function SpeedBar() {
   const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
   const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
-  const wordResults = useVocabularySessionStore((s) => s.wordResults);
+  const newCompletions = useVocabularySessionStore((s) => s.newWordCompletions);
+  const reviewCompletions = useVocabularySessionStore((s) => s.reviewWordCompletions);
 
-  const correctWords = wordResults.filter((r) => r.isCorrect).length;
-  const wrongWords = wordResults.filter((r) => !r.isCorrect).length;
-  const wordAccuracy = wordResults.length > 0
-    ? Math.round((correctWords / wordResults.length) * 100)
+  // 按模式级别统计：每个模式 wrongCount===0 算正确，否则算错误
+  const { correctModes, wrongModes } = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    const allCompletions = { ...newCompletions, ...reviewCompletions };
+    for (const comp of Object.values(allCompletions)) {
+      for (const mr of comp.modeResults) {
+        if (mr.wrongCount === 0) {
+          correct++;
+        } else {
+          wrong++;
+        }
+      }
+    }
+    return { correctModes: correct, wrongModes: wrong };
+  }, [newCompletions, reviewCompletions]);
+
+  const totalModes = correctModes + wrongModes;
+  const accuracy = totalModes > 0
+    ? Math.round((correctModes / totalModes) * 100)
     : 0;
   const cpm =
     elapsed > 0 ? Math.round((totalK / elapsed) * 60) : 0;
@@ -33,9 +51,9 @@ export function SpeedBar() {
         label="时间"
       />
       <InfoBox value={`${cpm}`} label="字母/分" />
-      <InfoBox value={`${correctWords}`} label="正确" />
-      <InfoBox value={`${wrongWords}`} label="错误" />
-      <InfoBox value={`${wordAccuracy}%`} label="正确率" />
+      <InfoBox value={`${correctModes}`} label="正确" />
+      <InfoBox value={`${wrongModes}`} label="错误" />
+      <InfoBox value={`${accuracy}%`} label="正确率" />
     </div>
   );
 }

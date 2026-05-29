@@ -60,10 +60,23 @@ export function ResultScreen({
   const selectedBook = useVocabularySessionStore((s) => s.selectedWordBook);
   const setIsTyping = useVocabularySessionStore((s) => s.setIsTyping);
 
-  const correctWords = wordResults.filter((r) => r.isCorrect).length;
-  const accuracy = wordResults.length > 0
-    ? Math.round((correctWords / wordResults.length) * 100)
+  // 按模式级别统计正确/错误
+  const { correctModes, totalModes } = useMemo(() => {
+    let correct = 0;
+    let total = 0;
+    const allCompletions = { ...newCompletions, ...reviewCompletions };
+    for (const comp of Object.values(allCompletions)) {
+      for (const mr of comp.modeResults) {
+        total++;
+        if (mr.wrongCount === 0) correct++;
+      }
+    }
+    return { correctModes: correct, totalModes: total };
+  }, [newCompletions, reviewCompletions]);
+  const accuracy = totalModes > 0
+    ? Math.round((correctModes / totalModes) * 100)
     : 0;
+
   const cpm = elapsed > 0 ? Math.round((totalK / elapsed) * 60) : 0;
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
@@ -202,11 +215,11 @@ export function ResultScreen({
                 >
                   <ConclusionIcon
                     accuracy={accuracy}
-                    wrongCount={wrongWords.length}
+                    wrongCount={totalModes - correctModes}
                   />
                   <ConclusionMessage
                     accuracy={accuracy}
-                    wrongCount={wrongWords.length}
+                    wrongCount={totalModes - correctModes}
                   />
                 </div>
               </div>
@@ -347,7 +360,7 @@ function ConclusionMessage({
   wrongCount: number;
 }) {
   if (wrongCount === 0) return <span>全对了，完美！</span>;
-  if (accuracy >= 85) return <span>表现不错！只错了 {wrongCount} 个单词</span>;
+  if (accuracy >= 85) return <span>表现不错！只错了 {wrongCount} 次</span>;
   if (accuracy >= 70) return <span>有些小问题哦，下一次可以做得更好！</span>;
   return <span>错误太多，再来一次如何？</span>;
 }
