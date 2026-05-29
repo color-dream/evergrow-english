@@ -313,29 +313,60 @@
 }
 
 /* ═══════════════════════════════════════════
-   自定义滚动条 — iOS 玻璃风格
+   自定义滚动条 — iOS 26 玻璃风格
    ═══════════════════════════════════════════ */
 
 .glass-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: oklch(0.55 0.195 252 / 0.15) transparent;
+  scrollbar-color: oklch(0.55 0.195 252 / 0.2) transparent;
+  /* 上下边缘渐隐遮罩 */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
 }
 
 .glass-scrollbar::-webkit-scrollbar {
-  width: 5px;
+  width: 4px;
 }
 
 .glass-scrollbar::-webkit-scrollbar-track {
   background: transparent;
+  margin-block: 8px;
 }
 
 .glass-scrollbar::-webkit-scrollbar-thumb {
-  background: oklch(0.55 0.195 252 / 0.18);
+  background: oklch(0.55 0.195 252 / 0.25);
   border-radius: 9999px;
+  border: 1px solid oklch(0.55 0.195 252 / 0.08);
 }
 
 .glass-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.55 0.195 252 / 0.32);
+  background: oklch(0.55 0.195 252 / 0.45);
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb:active {
+  background: oklch(0.55 0.195 252 / 0.55);
+}
+
+/* 暗色模式微调 */
+.dark .glass-scrollbar {
+  scrollbar-color: oklch(0.68 0.195 252 / 0.25) transparent;
+}
+
+.dark .glass-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.68 0.195 252 / 0.3);
+  border-color: oklch(0.68 0.195 252 / 0.1);
 }
 
 /* ═══════════════════════════════════════════
