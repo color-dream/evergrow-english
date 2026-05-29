@@ -38,6 +38,27 @@ function playCorrectSound() {
   }
 }
 
+/** 播放错误输入提示音 */
+function playWrongSound() {
+  try {
+    if (!audioCtx) audioCtx = new AudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = "triangle";
+    // 低沉短促：低→更低，钝感反馈
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    osc.frequency.linearRampToValueAtTime(120, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.15);
+  } catch {
+    // 静默失败
+  }
+}
+
 /** 播放单词完美完成庆祝音效 */
 function playCompleteSound() {
   try {
@@ -172,7 +193,11 @@ export function WordCard({
       }
       const result = handleChar(char, typingMode);
       if (result.accepted) {
-        if (result.correct) playCorrectSound();
+        if (result.correct) {
+          playCorrectSound();
+        } else {
+          playWrongSound();
+        }
         onKeystroke(result.correct);
       }
     },
