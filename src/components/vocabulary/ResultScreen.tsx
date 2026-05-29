@@ -210,48 +210,40 @@ export function ResultScreen({
               </div>
 
               {/* 单词列表 */}
-              <div className="max-h-72 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-foreground/25">
-                      <th className="pb-2 pr-3 text-left font-normal">模式</th>
-                      <th className="pb-2 pr-3 text-left font-normal">单词</th>
-                      <th className="pb-2 text-left font-normal">释义</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {wordDetails.map((wd) => (
-                      <tr
-                        key={wd.wordId}
-                        className="border-t border-foreground/5"
-                      >
-                        <td className="py-1.5 pr-3">
-                          <span className="inline-flex gap-0.5">
-                            {wd.modes.map((status, i) => (
-                              <span
-                                key={i}
-                                className={`inline-block h-2 w-2 rounded-full ${DOT_COLORS[status]}`}
-                                title={`模式${i + 1}: ${
-                                  status === "perfect" ? "全对" :
-                                  status === "passed" ? "有错" :
-                                  status === "failed" ? "失败" : "未到达"
-                                }`}
-                              />
-                            ))}
-                          </span>
-                        </td>
-                        <td className="py-1.5 pr-3">
-                          <span className="font-mono text-sm text-foreground/80">
-                            {wd.wordText}
-                          </span>
-                        </td>
-                        <td className="py-1.5 text-xs text-foreground/45">
-                          {wd.definition}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="max-h-72 overflow-y-auto glass-scrollbar pr-1">
+                <div className="mb-1.5 flex items-center gap-4 px-1 text-[11px] text-foreground/20">
+                  <span className="w-10 shrink-0">模式</span>
+                  <span className="w-24 shrink-0">单词</span>
+                  <span>释义</span>
+                </div>
+                <div className="flex flex-col">
+                  {wordDetails.map((wd) => (
+                    <div
+                      key={wd.wordId}
+                      className="flex items-center gap-4 rounded-lg px-1 py-1 transition-colors duration-200 hover:bg-foreground/[0.03]"
+                    >
+                      <span className="inline-flex w-10 shrink-0 gap-0.5">
+                        {wd.modes.map((status, i) => (
+                          <span
+                            key={i}
+                            className={`inline-block h-2.5 w-2.5 rounded-full ${DOT_COLORS[status]}`}
+                            title={`模式${i + 1}: ${
+                              status === "perfect" ? "全对" :
+                              status === "passed" ? "有错" :
+                              status === "failed" ? "失败" : "未到达"
+                            }`}
+                          />
+                        ))}
+                      </span>
+                      <span className="w-24 shrink-0 font-mono text-[13px] text-foreground/75">
+                        {wd.wordText}
+                      </span>
+                      <span className="truncate text-[12px] text-foreground/40">
+                        {wd.definition}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

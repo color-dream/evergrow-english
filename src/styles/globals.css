@@ -313,6 +313,32 @@
 }
 
 /* ═══════════════════════════════════════════
+   自定义滚动条 — iOS 玻璃风格
+   ═══════════════════════════════════════════ */
+
+.glass-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.55 0.195 252 / 0.15) transparent;
+}
+
+.glass-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.55 0.195 252 / 0.18);
+  border-radius: 9999px;
+}
+
+.glass-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.55 0.195 252 / 0.32);
+}
+
+/* ═══════════════════════════════════════════
    暗色模式
    ═══════════════════════════════════════════ */
 
