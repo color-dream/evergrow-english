@@ -82,7 +82,6 @@ export function ResultScreen({
   const seconds = elapsed % 60;
 
   const bookMeta = selectedBook ? WORD_BOOK_META[selectedBook] : null;
-  const wrongWords = wordResults.filter((r) => !r.isCorrect);
 
   // 合并新词+复习的 completion，按 wordResults 顺序排列
   const wordDetails: WordDetail[] = useMemo(() => {

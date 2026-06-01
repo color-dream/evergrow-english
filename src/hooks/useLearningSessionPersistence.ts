@@ -46,29 +46,28 @@ export function useLearningSessionPersistence(bookId: WordBookId | null) {
 
   // completedModeCount 变化时自动保存（防抖 300ms）
   useEffect(() => {
-    const unsub = useVocabularySessionStore.subscribe(
-      (s) => s.completedModeCount,
-      () => {
-        const state = useVocabularySessionStore.getState();
-        if (state.phase !== "new-words" && state.phase !== "review") return;
-        if (!state.selectedWordBook) return;
+    let prevCount = useVocabularySessionStore.getState().completedModeCount;
+    const unsub = useVocabularySessionStore.subscribe((state) => {
+      if (state.completedModeCount === prevCount) return;
+      prevCount = state.completedModeCount;
 
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-          const current = useVocabularySessionStore.getState();
-          if (current.phase !== "new-words" && current.phase !== "review") return;
-          if (!current.selectedWordBook) return;
+      if (state.phase !== "new-words" && state.phase !== "review") return;
+      if (!state.selectedWordBook) return;
 
-          const payload = serializeState(current);
-          saveLearningSession({
-            bookId: current.selectedWordBook,
-            stateJson: JSON.stringify(payload),
-            updatedAt: Date.now(),
-          }).catch(() => {});
-        }, 300);
-      },
-      { fireImmediately: false }
-    );
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        const current = useVocabularySessionStore.getState();
+        if (current.phase !== "new-words" && current.phase !== "review") return;
+        if (!current.selectedWordBook) return;
+
+        const payload = serializeState(current);
+        saveLearningSession({
+          bookId: current.selectedWordBook,
+          stateJson: JSON.stringify(payload),
+          updatedAt: Date.now(),
+        }).catch(() => {});
+      }, 300);
+    });
 
     return () => {
       unsub();
