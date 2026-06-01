@@ -63,6 +63,7 @@ export const ROUTES = {
   VOCABULARY: "/center/vocabulary",
   SETTINGS: "/settings",
   LEARN: "/learn",
+  WELCOME: "/welcome",
 } as const;
 
 // ── 快捷入口（首页 + 学习中心共享） ──

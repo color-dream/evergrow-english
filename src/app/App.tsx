@@ -6,8 +6,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { CenterLayout } from "@/components/layout/CenterLayout";
 import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 import { LandingPage } from "@/components/pages/LandingPage";
+import { WelcomePage } from "@/components/pages/WelcomePage";
 import { LearningCenterHub } from "@/components/pages/LearningCenterHub";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
+import { WelcomeGuard } from "@/components/shared/WelcomeGuard";
 import { ImmersiveLearnPage } from "@/components/pages/ImmersiveLearnPage";
 import { ROUTES } from "@/lib/constants";
 import { Settings } from "lucide-react";
@@ -24,11 +26,16 @@ export function App() {
               {/* 官网首页 — 全屏，无 AppShell */}
               <Route path={ROUTES.HOME} element={<LandingPage />} />
 
+              {/* 欢迎页面 — 全屏，无 AppShell */}
+              <Route path={ROUTES.WELCOME} element={<WelcomePage />} />
+
               <Route element={<AppShell />}>
-                {/* 学习中心 — 嵌套布局 */}
-                <Route path={ROUTES.CENTER} element={<CenterLayout />}>
-                  <Route index element={<LearningCenterHub />} />
-                  <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
+                {/* 学习中心 — 嵌套布局，有昵称守卫 */}
+                <Route element={<WelcomeGuard />}>
+                  <Route path={ROUTES.CENTER} element={<CenterLayout />}>
+                    <Route index element={<LearningCenterHub />} />
+                    <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
+                  </Route>
                 </Route>
 
                 {/* 设置 */}
