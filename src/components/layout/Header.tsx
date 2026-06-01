@@ -1,57 +1,103 @@
-import { Moon, Sun, Monitor } from "lucide-react";
+import { NavLink, Link, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  BookMarked,
+  Repeat,
+  BookOpen,
+  Headphones,
+  Mic,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/app/providers/ThemeProvider";
-import { useUIStore } from "@/stores/ui-store";
+import { ROUTES, APP_NAME } from "@/lib/constants";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+
+const glassHeader = {
+  background: "var(--glass-sheet-bg)",
+  backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+  WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+  borderBottom: "1px solid var(--glass-sheet-border)",
+} as const;
+
+const centerTabs = [
+  { to: ROUTES.CENTER, end: true, label: "概览", icon: LayoutDashboard },
+  { to: ROUTES.VOCABULARY, label: "词汇", icon: BookMarked },
+  { to: ROUTES.REVIEW, label: "复习", icon: Repeat },
+  { to: ROUTES.READING, label: "阅读", icon: BookOpen },
+  { to: ROUTES.LISTENING, label: "听力", icon: Headphones },
+  { to: ROUTES.SPEAKING, label: "口语", icon: Mic },
+];
 
 export function Header() {
-  const { setting, setTheme } = useTheme();
-  const sidebarOpen = useUIStore((s) => s.sidebarOpen);
+  const location = useLocation();
+  const inCenter = location.pathname.startsWith(ROUTES.CENTER);
 
   return (
     <header
-      className="flex h-14 items-center justify-between px-6"
-      style={{
-        background: "var(--glass-sheet-bg)",
-        backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-        WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-        borderBottom: "1px solid var(--glass-sheet-border)",
-      }}
+      className="flex h-14 shrink-0 items-center justify-between gap-4 px-4 lg:px-6"
+      style={glassHeader}
     >
-      <div className="flex items-center gap-2">
-        {!sidebarOpen && (
-          <span className="font-bold text-primary text-lg">EG</span>
-        )}
-      </div>
-
-      <div className="flex items-center gap-1">
+      {/* ── 左侧：品牌 ── */}
+      <Link
+        to={ROUTES.HOME}
+        className="flex shrink-0 items-center gap-2 transition-all duration-300 hover:scale-[1.02]"
+      >
         <div
-          className="flex rounded-full p-0.5"
-          style={{
-            background: "var(--glass-pill-bg)",
-            backdropFilter: "blur(var(--glass-pill-blur))",
-            WebkitBackdropFilter: "blur(var(--glass-pill-blur))",
-            border: "1px solid var(--glass-pill-border)",
-          }}
+          className="flex h-8 w-8 items-center justify-center rounded-lg"
+          style={{ background: "oklch(0.55 0.195 252 / 0.12)" }}
         >
-          {(["light", "system", "dark"] as const).map((t) => {
-            const Icon = t === "light" ? Sun : t === "system" ? Monitor : Moon;
-            return (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className={cn(
-                  "rounded-full p-1.5 transition-all duration-300 cursor-pointer hover:scale-105 active:scale-95",
-                  setting === t
-                    ? "bg-primary/15 text-primary"
-                    : "text-foreground/40 hover:text-foreground"
-                )}
-                aria-label={`${t === "light" ? "亮色" : t === "system" ? "跟随系统" : "暗色"}模式`}
-              >
-                <Icon className="h-4 w-4" />
-              </button>
-            );
-          })}
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
+        <span className="hidden text-base font-bold tracking-tight text-foreground sm:inline">
+          {APP_NAME}
+        </span>
+      </Link>
+
+      {/* ── 中间：学习中心 Tab 导航 ── */}
+      {inCenter && (
+        <nav className="flex flex-1 items-center justify-center gap-0.5 overflow-x-auto">
+          {centerTabs.map(({ to, end, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 hover:scale-[1.02] active:scale-[0.97] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground/50 hover:text-foreground hover:bg-foreground/5"
+                )
+              }
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">{label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
+
+      {/* ── 右侧：设置 + 主题切换 ── */}
+      <div className="flex shrink-0 items-center gap-1">
+        {/* 设置按钮 */}
+        <NavLink
+          to={ROUTES.SETTINGS}
+          className={({ isActive }) =>
+            cn(
+              "rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95",
+              isActive
+                ? "bg-primary/10 text-primary"
+                : "text-foreground/40 hover:text-foreground hover:bg-foreground/5"
+            )
+          }
+          aria-label="设置"
+        >
+          <Settings className="h-4 w-4" />
+        </NavLink>
+
+        {/* 主题切换 */}
+        <ThemeToggle />
       </div>
     </header>
   );
