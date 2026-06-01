@@ -13,11 +13,13 @@ import { ROUTES } from "@/lib/constants";
 import { Settings } from "lucide-react";
 
 export function App() {
+  const basename = import.meta.env.VITE_BASE || "/";
+
   return (
     <QueryProvider>
       <ThemeProvider>
         <AudioProvider>
-          <BrowserRouter basename="/evergrow-english">
+          <BrowserRouter basename={basename}>
             <Routes>
               {/* 官网首页 — 全屏，无 AppShell */}
               <Route path={ROUTES.HOME} element={<LandingPage />} />

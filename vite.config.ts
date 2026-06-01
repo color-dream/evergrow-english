@@ -6,7 +6,7 @@ import path from "node:path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: "/evergrow-english/",
+  base: process.env.VITE_BASE || "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
