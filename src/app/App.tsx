@@ -17,7 +17,7 @@ export function App() {
     <QueryProvider>
       <ThemeProvider>
         <AudioProvider>
-          <BrowserRouter>
+          <BrowserRouter basename="/evergrow-english">
             <Routes>
               {/* 官网首页 — 全屏，无 AppShell */}
               <Route path={ROUTES.HOME} element={<LandingPage />} />
