@@ -30,10 +30,14 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
     ? Math.round((stats.totalCards / meta.wordCount) * 100)
     : 0;
 
+  const mastered = stats?.masteredCount ?? 0;
+  const learning = stats ? stats.totalCards - mastered : 0;
+  const remaining = Math.max(0, meta.wordCount - (stats?.totalCards ?? 0));
+
   return (
     <button
       onClick={onSelect}
-      className="group flex items-start gap-4 rounded-2xl p-5 text-left transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+      className="group flex w-full max-w-[260px] flex-col rounded-2xl p-5 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
       style={{
         background: "var(--glass-card-bg)",
         backdropFilter:
@@ -44,105 +48,88 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      {/* 图标区 */}
-      <div
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
-        style={{ background: theme.bg }}
-      >
-        <BookMarked
-          className="h-5 w-5"
-          style={{ color: theme.accent }}
-        />
+      {/* 图标 + 难度标签 */}
+      <div className="mb-3 flex items-center justify-between">
+        <div
+          className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+          style={{ background: theme.bg }}
+        >
+          <BookMarked className="h-5 w-5" style={{ color: theme.accent }} />
+        </div>
+        <span
+          className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap"
+          style={{ background: theme.bg, color: theme.accent }}
+        >
+          {meta.difficulty}
+        </span>
       </div>
 
-      {/* 内容区 */}
-      <div className="min-w-0 flex-1">
-        {/* 标题行 */}
-        <div className="flex items-center gap-2">
-          <p className="font-semibold text-foreground">{meta.label}</p>
-          <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{
-              background: theme.bg,
-              color: theme.accent,
-            }}
-          >
-            {meta.difficulty}
-          </span>
-          {inProgress && (
-            <span className="shrink-0 ml-auto flex items-center gap-1 text-[11px] text-foreground/40">
+      {/* 标题 */}
+      <h3 className="truncate text-[15px] font-bold text-foreground leading-snug">
+        {meta.label}
+      </h3>
+
+      {/* 描述 */}
+      <p className="mt-0.5 truncate text-xs text-foreground/45">
+        {meta.description}
+      </p>
+
+      {/* 词数 */}
+      <p className="mt-0.5 font-mono text-xs text-foreground/30 tabular-nums whitespace-nowrap">
+        {meta.wordCount.toLocaleString()} 词
+      </p>
+
+      {/* 进度区（仅进行中显示） */}
+      {inProgress && (
+        <div className="mt-4 space-y-3">
+          {/* 进度条 */}
+          <div>
+            <div className="mb-1 flex items-center justify-between text-[11px] whitespace-nowrap">
+              <span className="text-foreground/40">进度</span>
               <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ background: theme.accent }}
-              />
-              进行中
-            </span>
-          )}
-        </div>
-
-        {/* 描述 */}
-        <p className="mt-0.5 text-xs text-foreground/45">
-          {meta.description} · {meta.wordCount.toLocaleString()} 词
-        </p>
-
-        {/* 进度区（仅进行中显示） */}
-        {inProgress && (
-          <div className="mt-4 space-y-3">
-            {/* 进度条 */}
-            <div>
-              <div className="mb-1.5 flex items-center justify-between text-[11px]">
-                <span className="text-foreground/45">学习进度</span>
-                <span className="font-mono font-medium tabular-nums text-foreground/70">
-                  {learnedPercent}%
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/8">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.max(learnedPercent, stats.totalCards > 0 ? 3 : 0)}%`,
-                    background: theme.accent,
-                  }}
-                />
-              </div>
+                className="font-mono font-semibold tabular-nums"
+                style={{ color: theme.accent }}
+              >
+                {learnedPercent}%
+              </span>
             </div>
-
-            {/* 统计指标 */}
-            <div className="flex items-center gap-4 text-[11px]">
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: "oklch(0.56 0.19 148)" }}
-                />
-                <span className="text-foreground/45">已掌握</span>
-                <span className="font-mono font-medium tabular-nums text-foreground">
-                  {stats.masteredCount}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: "oklch(0.72 0.18 85)" }}
-                />
-                <span className="text-foreground/45">学习中</span>
-                <span className="font-mono font-medium tabular-nums text-foreground">
-                  {stats.totalCards - stats.masteredCount}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ background: "oklch(0.6 0.01 260 / 0.25)" }}
-                />
-                <span className="text-foreground/45">未学习</span>
-                <span className="font-mono font-medium tabular-nums text-foreground">
-                  {Math.max(0, meta.wordCount - stats.totalCards)}
-                </span>
-              </span>
+            <div
+              className="h-1.5 w-full overflow-hidden rounded-full"
+              style={{ background: theme.bg }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.max(learnedPercent, stats.totalCards > 0 ? 2 : 0)}%`,
+                  background: theme.accent,
+                }}
+              />
             </div>
           </div>
-        )}
-      </div>
+
+          {/* 统计 — 三列等宽 */}
+          <div className="grid grid-cols-3 text-center">
+            {[
+              { label: "掌握", value: mastered, color: "oklch(0.56 0.19 148)" },
+              { label: "学习", value: learning, color: "oklch(0.72 0.18 85)" },
+              { label: "未学", value: remaining, color: "oklch(0.6 0.01 260 / 0.35)" },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="whitespace-nowrap">
+                <div className="font-mono text-lg font-bold tabular-nums text-foreground">
+                  {value}
+                </div>
+                <div className="mt-0.5 flex items-center justify-center gap-1 text-[10px] text-foreground/40">
+                  <span
+                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                    style={{ background: color }}
+                  />
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </button>
   );
 }

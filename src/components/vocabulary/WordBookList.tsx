@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { BookMarked } from "lucide-react";
 import { WORD_BOOK_OPTIONS } from "@/lib/word-book-registry";
 import { useWordBookStats } from "@/hooks/useWordBookStats";
 import { WordBookCard } from "./WordBookCard";
@@ -31,40 +30,15 @@ export function WordBookList({
   }, [stats]);
 
   return (
-    <div className="flex min-h-full flex-col px-6 py-10">
-      {/* 页头 */}
-      <div className="mx-auto w-full max-w-3xl animate-spring-in">
-        <div className="mb-2 flex items-center gap-3">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl shadow-sm"
-            style={{
-              background: "var(--glass-card-bg)",
-              backdropFilter:
-                "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-              WebkitBackdropFilter:
-                "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
-              border: "1px solid var(--glass-card-border)",
-            }}
-          >
-            <BookMarked className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">词汇打字</h1>
-            <p className="mt-0.5 text-sm text-foreground/55">
-              选择单词本开始学习
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex min-h-full flex-col px-6 py-6">
       {/* 卡片区 */}
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-5xl">
         {isLoading ? (
-          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {WORD_BOOK_OPTIONS.map((book) => (
               <div
                 key={book.id}
-                className="h-36 animate-pulse rounded-2xl"
+                className="h-52 w-full max-w-[260px] animate-pulse rounded-2xl"
                 style={{
                   background: "var(--glass-card-bg)",
                   border: "1px solid var(--glass-card-border)",
@@ -79,7 +53,7 @@ export function WordBookList({
                 <h2 className="mb-3 text-sm font-semibold text-foreground/50">
                   进行中
                 </h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3 justify-items-center">
                   {inProgress.map((book) => (
                     <WordBookCard
                       key={book.id}
@@ -104,7 +78,7 @@ export function WordBookList({
                 <h2 className="mb-3 text-sm font-semibold text-foreground/50">
                   未开始
                 </h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3 justify-items-center">
                   {notStarted.map((book) => (
                     <WordBookCard
                       key={book.id}
