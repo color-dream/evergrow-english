@@ -1,5 +1,8 @@
 import type { DifficultyLevel, UserPreferences } from "@/types/domain";
 
+/** 部署路径，由 VITE_BASE 环境变量决定，默认 "/" */
+export const BASE_PATH = (import.meta.env.VITE_BASE as string) || "/";
+
 export const APP_NAME = "Evergrow English";
 
 export const DIFFICULTY_LABELS: Record<DifficultyLevel, string> = {

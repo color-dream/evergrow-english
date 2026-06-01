@@ -5,7 +5,7 @@ import { WordBookList } from "./WordBookList";
 import { PreSettingsDialog } from "./PreSettingsDialog";
 import type { WordBookId } from "@/types/vocabulary";
 import { WORD_BOOK_META } from "@/lib/word-book-registry";
-import { ROUTES } from "@/lib/constants";
+import { BASE_PATH } from "@/lib/constants";
 
 export function VocabularyPage() {
   const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
@@ -20,7 +20,7 @@ export function VocabularyPage() {
   const handleOpenInProgressBook = useCallback(
     (id: WordBookId) => {
       const win = window.open(
-        `${ROUTES.LEARN}?bookId=${id}`,
+        `${BASE_PATH}learn?bookId=${id}`,
         "_blank"
       );
 
@@ -43,7 +43,7 @@ export function VocabularyPage() {
       useSettingsStore.getState().setBookWordsPerRound(bookId, wordsPerRoundValue);
 
       const win = window.open(
-        `${ROUTES.LEARN}?bookId=${bookId}`,
+        `${BASE_PATH}learn?bookId=${bookId}`,
         "_blank"
       );
 
