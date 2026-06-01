@@ -7,7 +7,7 @@ import {
   Gamepad2,
   BarChart3,
 } from "lucide-react";
-import { ROUTES, QUICK_ACTIONS, APP_NAME } from "@/lib/constants";
+import { ROUTES, APP_NAME } from "@/lib/constants";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 // ── 玻璃样式 ──
@@ -165,42 +165,60 @@ function HeroSection() {
   );
 }
 
-/** 功能介绍 */
-function FeaturesSection() {
-  // 第 6 张卡片：科学记忆
-  const memoryCard = {
+const landingFeatures = [
+  {
     icon: Brain,
     label: "科学记忆",
-    desc: "FSRS 间隔重复算法，在遗忘临界点精准复习",
+    desc: "FSRS 间隔重复算法，在遗忘临界点精准复习，最大化记忆效率",
     color: "oklch(0.56 0.17 230 / 0.1)",
     iconColor: "text-primary",
-    shadow: "0 4px 16px oklch(0.56 0.17 230 / 0.12)",
-  };
+  },
+  {
+    icon: BarChart3,
+    label: "进度追踪",
+    desc: "实时统计掌握单词数、连续学习天数，见证每一步成长",
+    color: "oklch(0.62 0.18 158 / 0.1)",
+    iconColor: "text-accent",
+  },
+  {
+    icon: Gamepad2,
+    label: "沉浸练习",
+    desc: "全屏逐字母打字输入，配合语音朗读，专注高效学习体验",
+    color: "oklch(0.72 0.18 85 / 0.1)",
+    iconColor: "text-warning",
+  },
+  {
+    icon: Library,
+    label: "精选词库",
+    desc: "覆盖 A1 入门到 C2 精通六个等级，按需选择学习内容",
+    color: "oklch(0.52 0.2 18 / 0.08)",
+    iconColor: "text-destructive",
+  },
+];
 
-  const allFeatures = [...QUICK_ACTIONS, memoryCard];
-
+/** 功能介绍 */
+function FeaturesSection() {
   return (
-    <section id="features" className="mx-auto max-w-6xl px-6 py-24">
+    <section id="features" className="mx-auto max-w-5xl px-6 py-24">
       {/* 标题 */}
       <div className="mb-14 text-center animate-fade-in">
         <h2 className="mb-3 text-3xl font-bold text-foreground sm:text-4xl">
-          全方位学习体验
+          为什么选择 {APP_NAME}
         </h2>
         <p className="text-foreground/50">
-          五种学习模式，覆盖听、说、读、写，真正提升英语能力
+          科学方法 + 沉浸体验，让每一次练习都高效且愉快
         </p>
       </div>
 
       {/* 卡片网格 */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {allFeatures.map(({ label, desc, icon: Icon, color, iconColor, shadow }, i) => (
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        {landingFeatures.map(({ label, desc, icon: Icon, color, iconColor }, i) => (
           <div
             key={label}
             className="rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] animate-spring-up"
             style={{
               ...glassCard,
-              boxShadow: `var(--shadow-sm), ${"shadow" in { shadow } ? shadow : ""}`,
-              animationDelay: `${i * 80}ms`,
+              animationDelay: `${i * 100}ms`,
             }}
           >
             <div

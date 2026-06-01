@@ -6,12 +6,11 @@ import { AppShell } from "@/components/layout/AppShell";
 import { CenterLayout } from "@/components/layout/CenterLayout";
 import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 import { LandingPage } from "@/components/pages/LandingPage";
-import { ReviewPage } from "@/components/pages/ReviewPage";
 import { LearningCenterHub } from "@/components/pages/LearningCenterHub";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
 import { ImmersiveLearnPage } from "@/components/pages/ImmersiveLearnPage";
 import { ROUTES } from "@/lib/constants";
-import { BookOpen, Headphones, Mic, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 
 export function App() {
   return (
@@ -28,37 +27,6 @@ export function App() {
                 <Route path={ROUTES.CENTER} element={<CenterLayout />}>
                   <Route index element={<LearningCenterHub />} />
                   <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
-                  <Route path={ROUTES.REVIEW} element={<ReviewPage />} />
-                  <Route
-                    path={ROUTES.READING}
-                    element={
-                      <PagePlaceholder
-                        title="阅读理解"
-                        description="精读文章，在语境中积累词汇"
-                        icon={<BookOpen className="h-7 w-7" />}
-                      />
-                    }
-                  />
-                  <Route
-                    path={ROUTES.LISTENING}
-                    element={
-                      <PagePlaceholder
-                        title="听力训练"
-                        description="盲听 + 听写双重练习，提升听力理解"
-                        icon={<Headphones className="h-7 w-7" />}
-                      />
-                    }
-                  />
-                  <Route
-                    path={ROUTES.SPEAKING}
-                    element={
-                      <PagePlaceholder
-                        title="口语练习"
-                        description="跟读模仿，改善发音与流利度"
-                        icon={<Mic className="h-7 w-7" />}
-                      />
-                    }
-                  />
                 </Route>
 
                 {/* 设置 */}

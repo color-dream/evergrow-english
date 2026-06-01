@@ -58,17 +58,13 @@ export const ROUTES = {
   HOME: "/",
   CENTER: "/center",
   VOCABULARY: "/center/vocabulary",
-  REVIEW: "/center/review",
-  READING: "/center/reading",
-  LISTENING: "/center/listening",
-  SPEAKING: "/center/speaking",
   SETTINGS: "/settings",
   LEARN: "/learn",
 } as const;
 
 // ── 快捷入口（首页 + 学习中心共享） ──
 
-import { BookMarked, Repeat, BookOpen, Headphones, Mic } from "lucide-react";
+import { BookMarked } from "lucide-react";
 
 export const QUICK_ACTIONS = [
   {
@@ -79,41 +75,5 @@ export const QUICK_ACTIONS = [
     color: "oklch(0.55 0.195 252 / 0.1)",
     iconColor: "text-primary",
     shadow: "0 4px 16px oklch(0.55 0.195 252 / 0.15)",
-  },
-  {
-    to: ROUTES.REVIEW,
-    label: "今日复习",
-    desc: "基于遗忘曲线智能调度",
-    icon: Repeat,
-    color: "oklch(0.62 0.18 158 / 0.1)",
-    iconColor: "text-accent",
-    shadow: "0 4px 16px oklch(0.62 0.18 158 / 0.15)",
-  },
-  {
-    to: ROUTES.READING,
-    label: "阅读理解",
-    desc: "精读文章，积累词汇",
-    icon: BookOpen,
-    color: "oklch(0.72 0.18 85 / 0.12)",
-    iconColor: "text-warning",
-    shadow: "0 4px 16px oklch(0.72 0.18 85 / 0.15)",
-  },
-  {
-    to: ROUTES.LISTENING,
-    label: "听力训练",
-    desc: "盲听 + 听写双重练习",
-    icon: Headphones,
-    color: "oklch(0.56 0.19 148 / 0.1)",
-    iconColor: "text-success",
-    shadow: "0 4px 16px oklch(0.56 0.19 148 / 0.15)",
-  },
-  {
-    to: ROUTES.SPEAKING,
-    label: "口语练习",
-    desc: "跟读模仿，改善发音",
-    icon: Mic,
-    color: "oklch(0.52 0.2 18 / 0.1)",
-    iconColor: "text-destructive",
-    shadow: "0 4px 16px oklch(0.52 0.2 18 / 0.15)",
   },
 ];

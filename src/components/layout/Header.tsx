@@ -2,10 +2,6 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   BookMarked,
-  Repeat,
-  BookOpen,
-  Headphones,
-  Mic,
   Settings,
   Sparkles,
 } from "lucide-react";
@@ -23,10 +19,6 @@ const glassHeader = {
 const centerTabs = [
   { to: ROUTES.CENTER, end: true, label: "概览", icon: LayoutDashboard },
   { to: ROUTES.VOCABULARY, label: "词汇", icon: BookMarked },
-  { to: ROUTES.REVIEW, label: "复习", icon: Repeat },
-  { to: ROUTES.READING, label: "阅读", icon: BookOpen },
-  { to: ROUTES.LISTENING, label: "听力", icon: Headphones },
-  { to: ROUTES.SPEAKING, label: "口语", icon: Mic },
 ];
 
 export function Header() {
