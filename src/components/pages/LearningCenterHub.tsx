@@ -16,15 +16,18 @@ function StatCard({
   icon,
   label,
   value,
+  title,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
+  title?: string;
 }) {
   return (
     <div
       className="rounded-2xl p-4 text-center shadow-sm transition-all duration-300 hover:scale-[1.02]"
       style={glassCardStyle}
+      title={title}
     >
       <div className="mb-2 flex justify-center">{icon}</div>
       <p className="font-mono text-2xl font-bold tabular-nums text-foreground">
@@ -79,6 +82,7 @@ export function LearningCenterHub() {
           }
           label="已掌握"
           value={stats.mastered}
+          title="FSRS 判定：记忆稳定性 > 5 天即视为已掌握"
         />
         <StatCard
           icon={

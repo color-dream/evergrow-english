@@ -110,11 +110,11 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
           {/* 统计 — 三列等宽 */}
           <div className="grid grid-cols-3 text-center">
             {[
-              { label: "掌握", value: mastered, color: "oklch(0.56 0.19 148)" },
+              { label: "掌握", value: mastered, color: "oklch(0.56 0.19 148)", title: "FSRS 判定：记忆稳定性 > 5 天即视为已掌握" },
               { label: "学习", value: learning, color: "oklch(0.72 0.18 85)" },
               { label: "未学", value: remaining, color: "oklch(0.6 0.01 260 / 0.35)" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="whitespace-nowrap">
+            ].map(({ label, value, color, title }) => (
+              <div key={label} className="whitespace-nowrap" title={title}>
                 <div className="font-mono text-lg font-bold tabular-nums text-foreground">
                   {value}
                 </div>
