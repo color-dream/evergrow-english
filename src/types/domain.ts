@@ -33,16 +33,7 @@ export interface Word {
   lemma: string;
   definition: string;
   definitionEn?: string;
-  partOfSpeech:
-    | "noun"
-    | "verb"
-    | "adjective"
-    | "adverb"
-    | "preposition"
-    | "conjunction"
-    | "pronoun"
-    | "interjection"
-    | "other";
+  partOfSpeech: string;
   phonetic?: string;
   usphone?: string;
   ukphone?: string;

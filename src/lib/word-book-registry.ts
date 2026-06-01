@@ -39,7 +39,7 @@ export async function loadWordBook(id: WordBookId): Promise<Word[]> {
       convertToWord(
         {
           name: String(entry.name),
-          trans: entry.trans as string[],
+          trans: entry.trans as { text: string; pos: string }[],
           usphone: String(entry.usphone ?? ""),
           ukphone: String(entry.ukphone ?? ""),
         },
@@ -53,7 +53,7 @@ export async function loadWordBook(id: WordBookId): Promise<Word[]> {
       convertToWord(
         {
           name: String(entry.name),
-          trans: entry.trans as string[],
+          trans: entry.trans as { text: string; pos: string }[],
           usphone: String(entry.usphone ?? ""),
           ukphone: String(entry.ukphone ?? ""),
         },
