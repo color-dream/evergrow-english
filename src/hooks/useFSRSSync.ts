@@ -8,6 +8,19 @@ import type { LearningCard } from "@/lib/fsrs/types";
 const pendingSaves = new Set<Promise<void>>();
 
 /**
+ * 等待所有飞行中的 FSRS 保存完成，带超时保护。
+ * 独立导出，供 beforeunload 等非 React 上下文调用。
+ */
+export async function flushPendingSaves(timeoutMs = 3000): Promise<void> {
+  if (pendingSaves.size === 0) return;
+  const pending = [...pendingSaves];
+  await Promise.race([
+    Promise.allSettled(pending),
+    new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
+  ]);
+}
+
+/**
  * 将打字结果同步为 FSRS 学习卡片。
  * fire-and-forget，不阻塞 UI。
  */
@@ -59,18 +72,13 @@ export function useFSRSSync() {
     []
   );
 
-  /** 等待所有飞行中的保存完成，带超时保护 */
-  const flushPendingSaves = useCallback(
+  /** 等待所有飞行中的保存完成，带超时保护（hook 封装） */
+  const flushPendingSavesFromHook = useCallback(
     async (timeoutMs = 3000): Promise<void> => {
-      if (pendingSaves.size === 0) return;
-      const pending = [...pendingSaves];
-      await Promise.race([
-        Promise.allSettled(pending),
-        new Promise<void>((resolve) => setTimeout(resolve, timeoutMs)),
-      ]);
+      await flushPendingSaves(timeoutMs);
     },
     []
   );
 
-  return { saveWordResult, flushPendingSaves };
+  return { saveWordResult, flushPendingSaves: flushPendingSavesFromHook };
 }

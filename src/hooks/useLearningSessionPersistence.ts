@@ -6,6 +6,7 @@ import {
   deleteLearningSession,
 } from "@/lib/db";
 import { addStudySession } from "@/lib/db";
+import { flushPendingSaves } from "@/hooks/useFSRSSync";
 import type { WordBookId } from "@/types/vocabulary";
 
 /**
@@ -75,12 +76,15 @@ export function useLearningSessionPersistence(bookId: WordBookId | null) {
     };
   }, []);
 
-  // beforeunload 最终保存
+  // beforeunload 最终保存（含 FSRS 写入 flush）
   useEffect(() => {
     const handler = () => {
       const state = useVocabularySessionStore.getState();
       if (state.phase !== "new-words" && state.phase !== "review") return;
       if (!state.selectedWordBook) return;
+
+      // 先 flush 飞行中的 FSRS 卡片写入，确保学习进度不丢失
+      flushPendingSaves(3000).catch(() => {});
 
       const payload = serializeState(state);
       // 同步保存，不保证一定完成但尽力
