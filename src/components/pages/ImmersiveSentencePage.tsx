@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   useSentenceSessionStore,
@@ -9,14 +9,19 @@ import { useSentenceFSRSSync } from "@/hooks/useSentenceFSRSSync";
 import { loadSentenceBook } from "@/lib/sentence-book-registry";
 import type { SentenceBookId } from "@/types/sentence";
 import { SentenceCard } from "@/components/vocabulary/SentenceCard";
+import { SentenceListDrawer } from "@/components/vocabulary/SentenceListDrawer";
+import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
-import { X } from "lucide-react";
+import { List, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ImmersiveSentencePage() {
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get("bookId") as SentenceBookId | null;
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
+  const [showSentenceList, setShowSentenceList] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const phase = useSentenceSessionStore((s) => s.phase);
   const isInSession = phase === "learning";
@@ -73,17 +78,30 @@ export function ImmersiveSentencePage() {
     init();
   }, [bookId, startSession]);
 
+  // 面板关闭后进入暂停
+  const prevShowList = useRef(showSentenceList);
+  useEffect(() => {
+    if (prevShowList.current && !showSentenceList) setIsTyping(false);
+    prevShowList.current = showSentenceList;
+  }, [showSentenceList, setIsTyping]);
+  const prevShowSettings = useRef(showSettings);
+  useEffect(() => {
+    if (prevShowSettings.current && !showSettings) setIsTyping(false);
+    prevShowSettings.current = showSettings;
+  }, [showSettings, setIsTyping]);
+
   // 键盘监听：按任意键开始 / 恢复打字
   useEffect(() => {
     if (!isInSession || isTyping) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (showSentenceList || showSettings) return;
       e.preventDefault();
       setIsTyping(true);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isInSession, isTyping, setIsTyping]);
+  }, [isInSession, isTyping, setIsTyping, showSentenceList, showSettings]);
 
   const handleClose = useCallback(() => { resetSession(); window.close(); }, [resetSession]);
   const handleRepeat = useCallback(async () => {
@@ -130,12 +148,44 @@ export function ImmersiveSentencePage() {
   return (
     <div className="learn-page relative flex h-screen flex-col bg-background">
       {isInSession && <ProgressBar completedModes={completedModes} totalModes={totalModes} isReview={false} />}
+
+      {/* ── 浮动按钮 ── */}
       {isInSession && (
-        <div className="flex items-center justify-between px-4 py-2">
-          <p className="text-xs text-foreground/40">第 {currentSentenceIndex + 1} / {sentences.length} 句</p>
-          <button onClick={handleClose} className="rounded-full p-1.5 text-foreground/40 hover:text-foreground transition-all duration-300 hover:scale-105 active:scale-95" title="关闭"><X className="h-4 w-4" /></button>
-        </div>
+        <>
+          <button
+            onClick={() => setShowSentenceList((v) => !v)}
+            className="absolute top-4 left-4 z-40 rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground/60 hover:text-foreground"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+            title={showSentenceList ? "关闭列表" : "句子列表"}
+          >
+            <span className="relative flex h-4 w-4">
+              <X className={cn("absolute inset-0 h-4 w-4 transition-all duration-300", showSentenceList ? "opacity-100 rotate-0" : "opacity-0 rotate-90")} />
+              <List className={cn("absolute inset-0 h-4 w-4 transition-all duration-300", showSentenceList ? "opacity-0 -rotate-90" : "opacity-100 rotate-0")} />
+            </span>
+          </button>
+          <button
+            onClick={handleClose}
+            className="absolute top-4 right-4 z-40 rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground/60 hover:text-foreground"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+            title="关闭"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </>
       )}
+
       {isInSession && currentSentence && (
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           <SentenceCard
@@ -145,7 +195,6 @@ export function ImmersiveSentencePage() {
             isTyping={isTyping}
             onComplete={(wrongWordIndices) => {
               completeMode(wrongWordIndices);
-              // 检查是否 3 种模式全部完成 → 推进到下一句
               const updated = useSentenceSessionStore.getState();
               const comp = updated.completions[currentSentence.id];
               if (comp?.isFullyCompleted) {
@@ -158,14 +207,21 @@ export function ImmersiveSentencePage() {
           />
         </div>
       )}
-      {/* 暂停蒙层 */}
-      {isInSession && !isTyping && (
+
+      {/* ── 暂停蒙层 ── */}
+      {isInSession && (showSentenceList || showSettings || !isTyping) && (
         <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "oklch(0 0 0 / 0.12)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
-          <p className="select-none text-2xl font-medium text-foreground/80 animate-spring-scale">
-            {currentSentenceIndex > 0 || completedModes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
-          </p>
+          {!isTyping && !showSentenceList && !showSettings && (
+            <p className="select-none text-2xl font-medium text-foreground/80 animate-spring-scale">
+              {currentSentenceIndex > 0 || completedModes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
+            </p>
+          )}
         </div>
       )}
+
+      {/* ── 覆盖面板 ── */}
+      <SentenceListDrawer open={showSentenceList} onClose={() => setShowSentenceList(false)} />
+      <ImmersiveSettingsPanel open={showSettings} onToggle={() => setShowSettings((v) => !v)} />
     </div>
   );
 }
