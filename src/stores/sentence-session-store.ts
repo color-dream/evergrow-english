@@ -113,7 +113,7 @@ export const useSentenceSessionStore = create<SentenceSessionState>()((set) => (
         return {
           completions: { ...s.completions, [sentence.id]: { ...completion, modeResults: newModeResults, currentModeIndex: 3, isFullyCompleted: true } },
           sentenceResults: [...s.sentenceResults, finalResult],
-          isTyping: false,
+          // 不设 isTyping = false — 由 advanceSentence 控制，避免结果页被蒙层遮挡
         };
       }
 

@@ -1,10 +1,63 @@
-import { useEffect, useRef, useCallback, useState, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import type { Sentence } from "@/types/domain";
 import type { SentenceLearnMode } from "@/types/sentence";
 import { useSentenceTyping } from "@/hooks/useSentenceTyping";
 import { useKeyboardCapture } from "@/hooks/useKeyboardCapture";
 import LetterBox from "./LetterBox";
 import type { LetterState } from "@/types/vocabulary";
+import { cn } from "@/lib/utils";
+
+// ── 音效（与 WordCard 保持一致） ──
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext {
+  if (!_audioCtx) _audioCtx = new AudioContext();
+  return _audioCtx;
+}
+function playCorrectSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(1760, ctx.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
+  } catch { /* 静默 */ }
+}
+function playWrongSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.linearRampToValueAtTime(120, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+  } catch { /* 静默 */ }
+}
+function playCompleteSound() {
+  try {
+    const ctx = getAudioCtx();
+    const t = ctx.currentTime;
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine";
+      const start = t + i * 0.08;
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.07, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+      osc.start(start); osc.stop(start + 0.18);
+    });
+  } catch { /* 静默 */ }
+}
 
 // ── 语法角色中文缩写 ──
 const ROLE_ABBR: Record<string, string> = {
@@ -73,76 +126,53 @@ export function SentenceCard({
   onComplete,
 }: SentenceCardProps) {
   const { state, handleChar } = useSentenceTyping(sentence.text);
-  const [showResult, setShowResult] = useState(false);
   const completedRef = useRef(false);
 
   useEffect(() => {
     completedRef.current = false;
-    setShowResult(false);
   }, [sentence.id, learnMode]);
 
   const onChar = useCallback(
     (char: string) => {
       if (state.isSentenceFinished) return;
-      handleChar(char);
+      const result = handleChar(char);
+      if (result.accepted) {
+        if (result.correct) playCorrectSound();
+        else playWrongSound();
+      }
     },
     [handleChar, state.isSentenceFinished],
   );
 
-  useKeyboardCapture(onChar, isTyping && !state.isSentenceFinished && !showResult);
+  useKeyboardCapture(onChar, isTyping && !state.isSentenceFinished);
 
   useEffect(() => {
     if (state.isSentenceFinished && !completedRef.current) {
       completedRef.current = true;
-      setShowResult(true);
-      const timer = setTimeout(() => onComplete([...state.wrongWordIndices]), 1000);
-      return () => clearTimeout(timer);
+      if (state.wrongWordIndices.length === 0) playCompleteSound();
+      onComplete([...state.wrongWordIndices]);
     }
   }, [state.isSentenceFinished, onComplete, state.wrongWordIndices]);
+
+  // 按 segment 分组（用于判断缩写标签显示位置）— 必须在所有条件渲染之前
+  const wordGroups = useMemo(
+    () => groupWordsBySegment(state.words, sentence.segments),
+    [state.words, sentence.segments],
+  );
+  const wordSegmentMap = useMemo(() => {
+    const map = new Map<number, (typeof sentence.segments extends (infer U)[] | undefined ? U : never) | null>();
+    for (const group of wordGroups) {
+      if (group.wordIndices.length > 0) map.set(group.wordIndices[0], group.seg);
+    }
+    return map;
+  }, [wordGroups, sentence.segments]);
 
   const vis = {
     showText: learnMode === "sentenceWithText",
     showTranslation: learnMode !== "sentenceFullBlind",
   };
 
-  // 按 segment 分组（用于判断缩写标签显示位置）
-  const wordGroups = useMemo(
-    () => groupWordsBySegment(state.words, sentence.segments),
-    [state.words, sentence.segments],
-  );
-  // 首个词在组内的索引 → 该词的 segment
-  const wordSegmentMap = useMemo(() => {
-    const map = new Map<number, (typeof sentence.segments extends (infer U)[] | undefined ? U : never) | null>();
-    for (const group of wordGroups) {
-      if (group.wordIndices.length > 0) {
-        map.set(group.wordIndices[0], group.seg);
-      }
-    }
-    return map;
-  }, [wordGroups, sentence.segments]);
-
-  // ── 渲染 ──
-
-  if (showResult) {
-    const wrongCount = state.wrongWordIndices.length;
-    const allCorrect = wrongCount === 0;
-    return (
-      <div className="flex flex-col items-center gap-6 animate-spring-scale">
-        <div
-          className="rounded-2xl p-6 text-center shadow-sm"
-          style={{ background: allCorrect ? "oklch(0.56 0.19 148 / 0.1)" : "oklch(0.55 0.22 20 / 0.1)" }}
-        >
-          <p className="text-lg font-bold" style={{ color: allCorrect ? "oklch(0.56 0.19 148)" : "oklch(0.55 0.22 20)" }}>
-            {allCorrect ? "全部正确！" : `${wrongCount} 个词有误`}
-          </p>
-          {!allCorrect && <p className="mt-2 max-w-md text-sm text-foreground/60">{sentence.text}</p>}
-        </div>
-        <p className="text-xs text-foreground/35">即将进入下一模式...</p>
-      </div>
-    );
-  }
-
-  // 将句子 token 化：词 + 标点交替
+  // 将句子 token 化：词 + 标点交替（在所有条件渲染之前计算）
   const tokens = useMemo(() => {
     const result: { text: string; wordIdx: number | null }[] = [];
     const src = sentence.text;
@@ -150,40 +180,41 @@ export function SentenceCard({
     for (let wi = 0; wi < state.words.length; wi++) {
       const w = state.words[wi];
       const idx = src.indexOf(w, pos);
-      // 前面的标点
       if (idx > pos) result.push({ text: src.slice(pos, idx), wordIdx: null });
-      // 词本身
       result.push({ text: w, wordIdx: wi });
       pos = idx + w.length;
     }
-    // 末尾标点
     if (pos < src.length) result.push({ text: src.slice(pos), wordIdx: null });
     return result;
   }, [sentence.text, state.words]);
 
-  // 将 tokens 按 segment 分组后渲染
   const tokenSegments = useMemo(() => {
     const result: { seg: (typeof sentence.segments extends (infer U)[] | undefined ? U : never) | null; tokens: typeof tokens }[] = [];
     let currentGroupTokens: typeof tokens = [];
     let currentSeg: typeof result[number]["seg"] = null;
-
     for (const token of tokens) {
       if (token.wordIdx !== null && wordSegmentMap.has(token.wordIdx)) {
-        // 新 segment 开始 → 提交上一组
-        if (currentGroupTokens.length > 0) {
-          result.push({ seg: currentSeg, tokens: currentGroupTokens });
-        }
+        if (currentGroupTokens.length > 0) result.push({ seg: currentSeg, tokens: currentGroupTokens });
         currentGroupTokens = [token];
         currentSeg = wordSegmentMap.get(token.wordIdx) ?? null;
       } else {
         currentGroupTokens.push(token);
       }
     }
-    if (currentGroupTokens.length > 0) {
-      result.push({ seg: currentSeg, tokens: currentGroupTokens });
-    }
+    if (currentGroupTokens.length > 0) result.push({ seg: currentSeg, tokens: currentGroupTokens });
     return result;
   }, [tokens, wordSegmentMap, sentence.segments]);
+
+  // 防御：words 为空时渲染占位（所有 hooks 已在此之前调用）
+  if (!state.words.length) {
+    return (
+      <div className="flex w-full max-w-3xl flex-col items-center gap-5 px-4">
+        <p className="text-sm text-foreground/40">加载中...</p>
+      </div>
+    );
+  }
+
+  // ── 渲染 ──
 
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-5 px-4">
@@ -230,10 +261,12 @@ export function SentenceCard({
                   return (
                     <span
                       key={wordIdx}
-                      className="inline-flex items-center rounded-lg px-1 py-0.5 transition-all duration-200"
+                      className={cn(
+                        "inline-flex items-center rounded-lg px-1 py-0.5 transition-all duration-200",
+                        wordIdx === state.currentWordIndex && state.hasWrong && "animate-shake",
+                      )}
                       style={{
                         color: isPast ? pastColor : undefined,
-                        // 覆盖 LetterBox 的绿色 CSS 变量，使 correct 态也显示角色颜色
                         ...(isPast && !isWrongWord && roleColor
                           ? { ["--color-letter-correct" as string]: roleColor }
                           : {}),

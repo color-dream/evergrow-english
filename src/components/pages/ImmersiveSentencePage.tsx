@@ -111,9 +111,24 @@ export function ImmersiveSentencePage() {
 
   const currentSentence = useSentenceSessionStore(getCurrentSentence);
 
+  // 当前句是否 3 种模式全部完成（作为 effect 触发源）
+  const isCurrentFullyCompleted = useSentenceSessionStore((s) => {
+    const idx = s.currentSentenceIndex;
+    const sen = s.sentences[idx];
+    if (!sen) return false;
+    return s.completions[sen.id]?.isFullyCompleted ?? false;
+  });
+
   const totalModes = sentences.length * 3;
   const completedModes = currentSentenceIndex * 3 +
     (currentSentence ? (useSentenceSessionStore.getState().completions[currentSentence.id]?.modeResults.length ?? 0) : 0);
+
+  // 当前句全部完成 → 自动推进到下一句
+  useEffect(() => {
+    if (!isInSession || !isCurrentFullyCompleted) return;
+    const isLast = advanceSentence();
+    if (isLast) finishSession();
+  }, [isCurrentFullyCompleted, isInSession, advanceSentence, finishSession]);
 
   // ═══ 条件渲染 ═══
 
@@ -195,14 +210,6 @@ export function ImmersiveSentencePage() {
             isTyping={isTyping}
             onComplete={(wrongWordIndices) => {
               completeMode(wrongWordIndices);
-              const updated = useSentenceSessionStore.getState();
-              const comp = updated.completions[currentSentence.id];
-              if (comp?.isFullyCompleted) {
-                setTimeout(() => {
-                  const isLast = advanceSentence();
-                  if (isLast) finishSession();
-                }, 1500);
-              }
             }}
           />
         </div>
