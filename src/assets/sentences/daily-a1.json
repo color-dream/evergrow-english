@@ -1,0 +1,350 @@
+{
+  "meta": {
+    "id": "daily-a1",
+    "label": "日常口语 A1",
+    "description": "入门级日常生活短句，涵盖问候、介绍、时间、购物等基础场景",
+    "level": "A1",
+    "topic": "daily",
+    "version": "2.0",
+    "language": "en-US"
+  },
+  "lessons": [
+    {
+      "id": "greetings",
+      "title": "问候与介绍",
+      "description": "基本的问候、自我介绍和告别用语",
+      "sentences": [
+        {
+          "id": "greetings-001",
+          "uuid": "cd8ab143-e9d9-4198-b66e-3e2f53258e53",
+          "text": "Hello, how are you?",
+          "translation": "你好，你怎么样？",
+          "phonetic": "həˈloʊ haʊ ɑːr juː",
+          "segments": [
+            { "text": "Hello", "role": "interjection" },
+            { "text": "how", "role": "predicative" },
+            { "text": "are", "role": "linking-verb" },
+            { "text": "you", "role": "subject" }
+          ],
+          "order": 1,
+          "tags": ["greeting"]
+        },
+        {
+          "id": "greetings-002",
+          "uuid": "7cb55d43-a589-4dbe-b2d0-3f70d6170ad3",
+          "text": "My name is Sarah.",
+          "translation": "我的名字是 Sarah。",
+          "phonetic": "maɪ neɪm ɪz ˈsɛrə",
+          "segments": [
+            { "text": "My name", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "Sarah", "role": "predicative" }
+          ],
+          "order": 2,
+          "tags": ["introduction"]
+        },
+        {
+          "id": "greetings-003",
+          "uuid": "a602ddf1-fe47-4d50-8f9d-69196e8b67ed",
+          "text": "I am from China.",
+          "translation": "我来自中国。",
+          "phonetic": "aɪ æm frʌm ˈtʃaɪnə",
+          "segments": [
+            { "text": "I", "role": "subject" },
+            { "text": "am", "role": "linking-verb" },
+            { "text": "from China", "role": "predicative" }
+          ],
+          "order": 3,
+          "tags": ["introduction"]
+        },
+        {
+          "id": "greetings-004",
+          "uuid": "01bcc929-27f0-49f1-a261-ea63db9dc313",
+          "text": "See you tomorrow morning!",
+          "translation": "明天早上见！",
+          "phonetic": "siː juː təˈmɔroʊ ˈmɔrnɪŋ",
+          "segments": [
+            { "text": "See", "role": "predicate" },
+            { "text": "you", "role": "object" },
+            { "text": "tomorrow morning", "role": "adverbial" }
+          ],
+          "order": 4,
+          "tags": ["farewell"]
+        },
+        {
+          "id": "greetings-005",
+          "uuid": "7d9e0d93-8eab-4bc9-afa1-2d273ed2afc0",
+          "text": "I have a big family.",
+          "translation": "我有一个大家庭。",
+          "phonetic": "aɪ hæv ə bɪɡ ˈfæməli",
+          "segments": [
+            { "text": "I", "role": "subject" },
+            { "text": "have", "role": "predicate" },
+            { "text": "a big family", "role": "object" }
+          ],
+          "order": 5,
+          "tags": ["family"]
+        },
+        {
+          "id": "greetings-006",
+          "uuid": "72cfbe27-5445-4b0d-92ef-e47f45f22769",
+          "text": "I love my family very much.",
+          "translation": "我非常爱我的家人。",
+          "phonetic": "aɪ lʌv maɪ ˈfæməli ˈvɛri mʌtʃ",
+          "segments": [
+            { "text": "I", "role": "subject" },
+            { "text": "love", "role": "predicate" },
+            { "text": "my family", "role": "object" },
+            { "text": "very much", "role": "adverbial" }
+          ],
+          "order": 6,
+          "tags": ["family"]
+        },
+        {
+          "id": "greetings-007",
+          "uuid": "318237fe-a112-4ce7-bf39-57c58c093b68",
+          "text": "He is a good teacher.",
+          "translation": "他是一位好老师。",
+          "phonetic": "hiː ɪz ə ɡʊd ˈtiːtʃər",
+          "segments": [
+            { "text": "He", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "a good teacher", "role": "predicative" }
+          ],
+          "order": 7,
+          "tags": ["people"]
+        },
+        {
+          "id": "greetings-008",
+          "uuid": "79607415-cae7-42a6-8bff-db1cd56e291c",
+          "text": "Nice to meet you.",
+          "translation": "很高兴认识你。",
+          "phonetic": "naɪs tuː miːt juː",
+          "segments": [
+            { "text": "Nice", "role": "predicative" },
+            { "text": "to meet", "role": "subject" },
+            { "text": "you", "role": "object" }
+          ],
+          "order": 8,
+          "tags": ["greeting"]
+        }
+      ]
+    },
+    {
+      "id": "daily-life",
+      "title": "日常生活",
+      "description": "关于日常活动、饮食和物品的句子",
+      "sentences": [
+        {
+          "id": "daily-001",
+          "uuid": "b2f4e753-52d0-48cb-8eea-5cb7f2bdb7b5",
+          "text": "I like coffee and tea.",
+          "translation": "我喜欢咖啡和茶。",
+          "phonetic": "aɪ laɪk ˈkɔfi ænd tiː",
+          "segments": [
+            { "text": "I", "role": "subject" },
+            { "text": "like", "role": "predicate" },
+            { "text": "coffee and tea", "role": "object" }
+          ],
+          "order": 1,
+          "tags": ["food"]
+        },
+        {
+          "id": "daily-002",
+          "uuid": "7e8285e2-83e3-43f4-89a2-ad2a7d8a04c3",
+          "text": "She has two cats.",
+          "translation": "她有两只猫。",
+          "phonetic": "ʃiː hæz tuː kæts",
+          "segments": [
+            { "text": "She", "role": "subject" },
+            { "text": "has", "role": "predicate" },
+            { "text": "two cats", "role": "object" }
+          ],
+          "order": 2,
+          "tags": ["animals"]
+        },
+        {
+          "id": "daily-003",
+          "uuid": "001936f2-8a4f-4bdb-b22c-5ba323e2429c",
+          "text": "The book is on the table.",
+          "translation": "书在桌子上。",
+          "phonetic": "ðə bʊk ɪz ɑːn ðə ˈteɪbəl",
+          "segments": [
+            { "text": "The book", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "on the table", "role": "predicative" }
+          ],
+          "order": 3,
+          "tags": ["objects"]
+        },
+        {
+          "id": "daily-004",
+          "uuid": "769edae9-3013-4d3b-9101-968b35000361",
+          "text": "We go to school every day.",
+          "translation": "我们每天去学校。",
+          "phonetic": "wiː ɡoʊ tuː skuːl ˈɛvri deɪ",
+          "segments": [
+            { "text": "We", "role": "subject" },
+            { "text": "go", "role": "predicate" },
+            { "text": "to school", "role": "adverbial" },
+            { "text": "every day", "role": "adverbial" }
+          ],
+          "order": 4,
+          "tags": ["daily-life"]
+        },
+        {
+          "id": "daily-005",
+          "uuid": "30f8e1d9-10f8-4a55-bd55-f99b956d2b3e",
+          "text": "Can you help me please?",
+          "translation": "请问你能帮我吗？",
+          "phonetic": "kæn juː hɛlp miː pliːz",
+          "segments": [
+            { "text": "Can", "role": "predicate" },
+            { "text": "you", "role": "subject" },
+            { "text": "help", "role": "predicate" },
+            { "text": "me", "role": "object" },
+            { "text": "please", "role": "adverbial" }
+          ],
+          "order": 5,
+          "tags": ["request"]
+        },
+        {
+          "id": "daily-006",
+          "uuid": "b8a22bab-c8d8-4ce6-9965-7949887fdb2b",
+          "text": "I want a glass of water.",
+          "translation": "我想要一杯水。",
+          "phonetic": "aɪ wɑːnt ə ɡlæs ʌv ˈwɔtər",
+          "segments": [
+            { "text": "I", "role": "subject" },
+            { "text": "want", "role": "predicate" },
+            { "text": "a glass of water", "role": "object" }
+          ],
+          "order": 6,
+          "tags": ["food"]
+        },
+        {
+          "id": "daily-007",
+          "uuid": "9735f9e9-58e4-47e2-9145-7a4435ed55f7",
+          "text": "Please sit down and relax.",
+          "translation": "请坐下休息。",
+          "phonetic": "pliːz sɪt daʊn ænd rɪˈlæks",
+          "segments": [
+            { "text": "Please", "role": "adverbial" },
+            { "text": "sit down", "role": "predicate" },
+            { "text": "and", "role": "conjunction" },
+            { "text": "relax", "role": "predicate" }
+          ],
+          "order": 7,
+          "tags": ["instruction"]
+        },
+        {
+          "id": "daily-008",
+          "uuid": "d782306f-4ce9-4d5f-a7b3-847b9bfaec0b",
+          "text": "How much is this?",
+          "translation": "这个多少钱？",
+          "phonetic": "haʊ mʌtʃ ɪz ðɪs",
+          "segments": [
+            { "text": "How much", "role": "predicative" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "this", "role": "subject" }
+          ],
+          "order": 8,
+          "tags": ["shopping"]
+        }
+      ]
+    },
+    {
+      "id": "time",
+      "title": "时间与天气",
+      "description": "询问时间、谈论天气的常用句",
+      "sentences": [
+        {
+          "id": "time-001",
+          "uuid": "2dc7198c-164a-4c14-8495-fa224beea0e4",
+          "text": "What time is it?",
+          "translation": "现在几点了？",
+          "phonetic": "wɑːt taɪm ɪz ɪt",
+          "segments": [
+            { "text": "What time", "role": "predicative" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "it", "role": "subject" }
+          ],
+          "order": 1,
+          "tags": ["time"]
+        },
+        {
+          "id": "time-002",
+          "uuid": "e30699b7-f969-41a4-b698-38c119198126",
+          "text": "It is three o'clock.",
+          "translation": "现在三点钟。",
+          "phonetic": "ɪt ɪz θriː əˈklɑːk",
+          "segments": [
+            { "text": "It", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "three o'clock", "role": "predicative" }
+          ],
+          "order": 2,
+          "tags": ["time"]
+        },
+        {
+          "id": "time-003",
+          "uuid": "42ee084b-7d2a-4771-af2a-4f03bae61de1",
+          "text": "Today is Monday.",
+          "translation": "今天是星期一。",
+          "phonetic": "təˈdeɪ ɪz ˈmʌndeɪ",
+          "segments": [
+            { "text": "Today", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "Monday", "role": "predicative" }
+          ],
+          "order": 3,
+          "tags": ["time"]
+        },
+        {
+          "id": "time-004",
+          "uuid": "2b3f9fb9-4e0d-4b02-8866-61e42d570519",
+          "text": "There are seven days in a week.",
+          "translation": "一周有七天。",
+          "phonetic": "ðɛr ɑːr ˈsɛvən deɪz ɪn ə wiːk",
+          "segments": [
+            { "text": "There", "role": "predicative" },
+            { "text": "are", "role": "linking-verb" },
+            { "text": "seven days", "role": "subject" },
+            { "text": "in a week", "role": "adverbial" }
+          ],
+          "order": 4,
+          "tags": ["time"]
+        },
+        {
+          "id": "time-005",
+          "uuid": "2b9293de-92af-482f-a350-03ca3b8dffc6",
+          "text": "The weather is nice today.",
+          "translation": "今天天气很好。",
+          "phonetic": "ðə ˈwɛðər ɪz naɪs təˈdeɪ",
+          "segments": [
+            { "text": "The weather", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "nice", "role": "predicative" },
+            { "text": "today", "role": "adverbial" }
+          ],
+          "order": 5,
+          "tags": ["weather"]
+        },
+        {
+          "id": "time-006",
+          "uuid": "d0a71791-0825-486e-b82e-2053017ab5d7",
+          "text": "It is a sunny day.",
+          "translation": "今天是晴天。",
+          "phonetic": "ɪt ɪz ə ˈsʌni deɪ",
+          "segments": [
+            { "text": "It", "role": "subject" },
+            { "text": "is", "role": "linking-verb" },
+            { "text": "a sunny day", "role": "predicative" }
+          ],
+          "order": 6,
+          "tags": ["weather"]
+        }
+      ]
+    }
+  ]
+}

@@ -61,14 +61,16 @@ export const ROUTES = {
   HOME: "/",
   CENTER: "/center",
   VOCABULARY: "/center/vocabulary",
+  SENTENCE: "/center/sentence",
   SETTINGS: "/settings",
   LEARN: "/learn",
+  LEARN_SENTENCE: "/learn-sentence",
   WELCOME: "/welcome",
 } as const;
 
 // ── 快捷入口（首页 + 学习中心共享） ──
 
-import { BookMarked } from "lucide-react";
+import { BookMarked, MessageSquareText } from "lucide-react";
 
 export const QUICK_ACTIONS = [
   {
@@ -79,5 +81,14 @@ export const QUICK_ACTIONS = [
     color: "oklch(0.55 0.195 252 / 0.1)",
     iconColor: "text-primary",
     shadow: "0 4px 16px oklch(0.55 0.195 252 / 0.15)",
+  },
+  {
+    to: ROUTES.SENTENCE,
+    label: "句子打字",
+    desc: "逐词输入整句，理解语法结构",
+    icon: MessageSquareText,
+    color: "oklch(0.62 0.18 158 / 0.1)",
+    iconColor: "oklch(0.62 0.18 158)",
+    shadow: "0 4px 16px oklch(0.62 0.18 158 / 0.15)",
   },
 ];

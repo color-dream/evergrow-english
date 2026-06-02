@@ -1,14 +1,25 @@
-import type { FSRSState } from "@/types/domain";
+import type { FSRSState, SyntaxSegment } from "@/types/domain";
 
 /** Dexie 持久化的学习卡片记录 */
 export interface LearningCard {
   id: string;
+  bookId: string;
+  cardType: "word" | "sentence";
+
+  // 单词卡片字段（cardType === "word" 时使用）
   wordText: string;
   definition: string;
   usphone?: string;
   ukphone?: string;
-  bookId: string;
-  cardType: "word";
+
+  // 句子卡片字段（cardType === "sentence" 时使用）
+  sentenceText?: string;
+  sentenceTranslation?: string;
+  sentencePhonetic?: string;
+  sentenceSegments?: SyntaxSegment[];
+  sentenceUuid?: string;
+
+  // FSRS 记忆状态
   fsrs: FSRSState;
   notes: string;
   createdAt: number;

@@ -1,0 +1,29 @@
+{
+  "meta": { "id": "quotes-b2", "label": "经典名言 B2", "description": "经典英语名言警句，提升语感和文化理解", "level": "B2", "topic": "quote", "version": "2.0", "language": "en-US" },
+  "lessons": [
+    {
+      "id": "wisdom", "title": "人生智慧", "description": "关于人生、成长和智慧的经典名言",
+      "sentences": [
+        { "id": "wisdom-001", "uuid": "70de5fe0-eeee-6001-8001-6da6d361a001", "text": "The only way to do great work is to love what you do.", "translation": "做出伟大成就的唯一方式就是热爱你所做的事情。", "order": 1, "tags": ["quote", "wisdom"] },
+        { "id": "wisdom-002", "uuid": "70de5fe0-eeee-6001-8002-6da6d361a002", "text": "In the middle of difficulty lies opportunity.", "translation": "困难之中蕴含着机遇。", "order": 2, "tags": ["quote", "wisdom"] },
+        { "id": "wisdom-003", "uuid": "70de5fe0-eeee-6001-8003-6da6d361a003", "text": "It does not matter how slowly you go as long as you do not stop.", "translation": "重要的不是你走得多慢，而是你不要停下脚步。", "order": 3, "tags": ["quote", "perseverance"] },
+        { "id": "wisdom-004", "uuid": "70de5fe0-eeee-6001-8004-6da6d361a004", "text": "What we think we become, so choose your thoughts wisely.", "translation": "我们想什么就会成为什么，所以要明智地选择你的想法。", "order": 4, "tags": ["quote", "mindset"] },
+        { "id": "wisdom-005", "uuid": "70de5fe0-eeee-6001-8005-6da6d361a005", "text": "The best time to plant a tree was twenty years ago.", "translation": "种一棵树最好的时间是二十年前。", "order": 5, "tags": ["quote", "action"] },
+        { "id": "wisdom-006", "uuid": "70de5fe0-eeee-6001-8006-6da6d361a006", "text": "The second best time is now so start today without hesitation.", "translation": "其次是现在，所以毫不犹豫地从今天开始吧。", "order": 6, "tags": ["quote", "action"] },
+        { "id": "wisdom-007", "uuid": "70de5fe0-eeee-6001-8007-6da6d361a007", "text": "We cannot solve our problems with the same thinking we used when we created them.", "translation": "我们不能用制造问题时的思维方式来解决问题。", "order": 7, "tags": ["quote", "wisdom"] }
+      ]
+    },
+    {
+      "id": "inspiration", "title": "激励与勇气", "description": "鼓舞人心、激励前行的名言警句",
+      "sentences": [
+        { "id": "inspiration-001", "uuid": "70de5fe0-eeee-6002-8001-6da6d361a001", "text": "Success is not final and failure is not fatal.", "translation": "成功不是终点，失败也不是末日。", "order": 1, "tags": ["quote", "inspiration"] },
+        { "id": "inspiration-002", "uuid": "70de5fe0-eeee-6002-8002-6da6d361a002", "text": "It is the courage to continue that counts in the end.", "translation": "真正重要的是继续前行的勇气。", "order": 2, "tags": ["quote", "courage"] },
+        { "id": "inspiration-003", "uuid": "70de5fe0-eeee-6002-8003-6da6d361a003", "text": "Believe you can and you are already halfway there.", "translation": "相信你能行，你就已经成功了一半。", "order": 3, "tags": ["quote", "confidence"] },
+        { "id": "inspiration-004", "uuid": "70de5fe0-eeee-6002-8004-6da6d361a004", "text": "Do not wait for the perfect moment because it will never arrive.", "translation": "不要等待完美的时刻，因为它永远不会来。", "order": 4, "tags": ["quote", "action"] },
+        { "id": "inspiration-005", "uuid": "70de5fe0-eeee-6002-8005-6da6d361a005", "text": "Take the moment and make it perfect instead of waiting around.", "translation": "把握当下，把它变得完美，而不是空等。", "order": 5, "tags": ["quote", "action"] },
+        { "id": "inspiration-006", "uuid": "70de5fe0-eeee-6002-8006-6da6d361a006", "text": "Your future is created by what you do today not tomorrow.", "translation": "你的未来是由你今天而不是明天所做的创造的。", "order": 6, "tags": ["quote", "future"] },
+        { "id": "inspiration-007", "uuid": "70de5fe0-eeee-6002-8007-6da6d361a007", "text": "Every accomplishment starts with the decision to try something new.", "translation": "每一项成就都始于尝试新事物的决定。", "order": 7, "tags": ["quote", "motivation"] }
+      ]
+    }
+  ]
+}

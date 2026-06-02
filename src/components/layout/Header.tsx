@@ -2,6 +2,7 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   BookMarked,
+  MessageSquareText,
   Settings,
   Sparkles,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const glassHeader = {
 const centerTabs = [
   { to: ROUTES.CENTER, end: true, label: "概览", icon: LayoutDashboard },
   { to: ROUTES.VOCABULARY, label: "词汇", icon: BookMarked },
+  { to: ROUTES.SENTENCE, label: "句子", icon: MessageSquareText },
 ];
 
 export function Header() {

@@ -1,1 +1,0 @@
-export { seedSentences } from "./sentences";

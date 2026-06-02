@@ -5,12 +5,14 @@ import { AudioProvider } from "./providers/AudioProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { CenterLayout } from "@/components/layout/CenterLayout";
 import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
+import { SentencePage } from "@/components/vocabulary/SentencePage";
 import { LandingPage } from "@/components/pages/LandingPage";
 import { WelcomePage } from "@/components/pages/WelcomePage";
 import { LearningCenterHub } from "@/components/pages/LearningCenterHub";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
 import { WelcomeGuard } from "@/components/shared/WelcomeGuard";
 import { ImmersiveLearnPage } from "@/components/pages/ImmersiveLearnPage";
+import { ImmersiveSentencePage } from "@/components/pages/ImmersiveSentencePage";
 import { ROUTES } from "@/lib/constants";
 import { Settings } from "lucide-react";
 
@@ -35,6 +37,7 @@ export function App() {
                   <Route path={ROUTES.CENTER} element={<CenterLayout />}>
                     <Route index element={<LearningCenterHub />} />
                     <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
+                    <Route path={ROUTES.SENTENCE} element={<SentencePage />} />
                   </Route>
                 </Route>
 
@@ -59,6 +62,7 @@ export function App() {
 
               {/* 全屏沉浸学习（无 AppShell） */}
               <Route path={ROUTES.LEARN} element={<ImmersiveLearnPage />} />
+              <Route path={ROUTES.LEARN_SENTENCE} element={<ImmersiveSentencePage />} />
 
               {/* 404 */}
               <Route
