@@ -233,6 +233,10 @@ export function SentenceCard({
                       className="inline-flex items-center rounded-lg px-1 py-0.5 transition-all duration-200"
                       style={{
                         color: isPast ? pastColor : undefined,
+                        // 覆盖 LetterBox 的绿色 CSS 变量，使 correct 态也显示角色颜色
+                        ...(isPast && !isWrongWord && roleColor
+                          ? { ["--color-letter-correct" as string]: roleColor }
+                          : {}),
                       }}
                     >
                       {word.split("").map((letter, letterIdx) => {
@@ -271,11 +275,6 @@ export function SentenceCard({
         <p className="text-base text-foreground/50 animate-spring-up">{sentence.translation}</p>
       )}
 
-      {/* 进度指示 */}
-      <p className="text-xs text-foreground/35">
-        词 {state.currentWordIndex + 1}/{state.words.length}
-        {state.hasWrong && <span className="ml-2 text-amber-500">输入有误，重新输入...</span>}
-      </p>
     </div>
   );
 }
