@@ -285,7 +285,7 @@ export function SentenceCard({
                             key={`${wordIdx}-${letterIdx}`}
                             letter={letter}
                             state={letterState}
-                            visible={vis.showText || wordIdx <= state.currentWordIndex}
+                            visible={vis.showText || wordIdx < state.currentWordIndex || (wordIdx === state.currentWordIndex && letterIdx < state.inputWord.length)}
                             userChar={
                               wordIdx === state.currentWordIndex && letterIdx < state.inputWord.length
                                 ? state.inputWord[letterIdx] ?? null
