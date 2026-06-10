@@ -69,6 +69,9 @@ export function SentenceCard({
   const audio = useAudio();
   const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const canFixRef = useRef(false);
 
   // 新句子自动播放发音（首次渲染时）
   useEffect(() => {
@@ -86,6 +89,13 @@ export function SentenceCard({
       inputRef.current.focus();
     }
   }, [isTyping]);
+
+  // fix-input 模式下自动聚焦
+  useEffect(() => {
+    if (state.mode === "fix-input") {
+      inputRef.current?.focus();
+    }
+  }, [state.mode]);
 
   // 暂停/恢复：失焦时自动重新聚焦
   useEffect(() => {
@@ -107,28 +117,44 @@ export function SentenceCard({
       onComplete([]);
     } else {
       playWrongSound();
-      // 显示错误状态后自动进入 fix 模式
-      const timer = setTimeout(() => startFix(), 800);
-      return () => clearTimeout(timer);
+      // 显示错误状态，等待用户按任意键进入修正
     }
   }, [state.submitted, checkAllCorrect, onComplete, startFix]);
 
-  // fix-input 模式下：按键处理
+  // fix 模式：显示红色 400ms → 自动清空进入输入状态；也可按任意键提前触发
   useEffect(() => {
-    if (state.mode !== "fix-input") return;
-    const onFixInputKey = (e: KeyboardEvent) => {
-      if (e.key === " " || e.code === "Space") {
-        e.preventDefault();
-        fixNext();
+    if (state.mode !== "fix") {
+      canFixRef.current = false;
+      return;
+    }
+    canFixRef.current = false;
+    // 400ms 后自动清空并进入输入状态
+    const autoTimer = setTimeout(() => {
+      startFix();
+      inputRef.current?.focus();
+    }, 400);
+
+    // 按任意键可提前触发
+    const onFixKey = (e: KeyboardEvent) => {
+      if (canFixRef.current) return; // 已自动触发过
+      if (["Alt", "Control", "Meta", "Shift"].some((k) => e.key === k)) return;
+      if (e.key === " " || e.code === "Space") return;
+      canFixRef.current = true;
+      clearTimeout(autoTimer);
+      e.preventDefault();
+      if (e.key.length === 1) {
+        dispatch({ type: "START_FIX", firstChar: e.key });
+      } else {
+        startFix();
       }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        fixDone();
-      }
+      inputRef.current?.focus();
     };
-    window.addEventListener("keydown", onFixInputKey);
-    return () => window.removeEventListener("keydown", onFixInputKey);
-  }, [state.mode, fixNext, fixDone]);
+    window.addEventListener("keydown", onFixKey);
+    return () => {
+      clearTimeout(autoTimer);
+      window.removeEventListener("keydown", onFixKey);
+    };
+  }, [state.mode, startFix, dispatch]);
 
   const handleInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +178,17 @@ export function SentenceCard({
         return;
       }
 
+      // 空格在最后一个单词时 = 提交（对标 earthworm）
+      if ((e.key === " " || e.code === "Space") && stateRef.current.mode === "input") {
+        const s = stateRef.current;
+        const filledCount = s.userWords.filter((w) => w.userInput.length > 0).length;
+        if (filledCount === s.targetWords.length) {
+          e.preventDefault();
+          submit();
+          return;
+        }
+      }
+
       // Enter 提交
       if (e.key === "Enter" && state.mode === "input") {
         e.preventDefault();
@@ -166,10 +203,18 @@ export function SentenceCard({
         return;
       }
 
-      // fix-input 模式下空格 → 修正下一个错误词
+      // fix-input 模式下空格 → 修正下一个错误词；若是最后一个错误词则提交
       if ((e.key === " " || e.code === "Space") && state.mode === "fix-input") {
         e.preventDefault();
-        fixNext();
+        const s = stateRef.current;
+        const hasNext = s.userWords.some(
+          (w, i) => i > s.fixWordIndex && w.incorrect,
+        );
+        if (hasNext) {
+          fixNext();
+        } else {
+          fixDone();
+        }
         return;
       }
 

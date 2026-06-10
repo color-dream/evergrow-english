@@ -30,7 +30,7 @@ export type SentenceTypingAction =
   | { type: "INIT"; targetWords: string[] }
   | { type: "SET_INPUT"; value: string }
   | { type: "SUBMIT" }
-  | { type: "START_FIX" }
+  | { type: "START_FIX"; firstChar?: string }
   | { type: "FIX_NEXT" }
   | { type: "FIX_DONE" };
 
@@ -128,10 +128,11 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
     case "START_FIX": {
       const firstWrong = findFirstWrongIndex(state.userWords);
       if (firstWrong === -1) return { ...state, mode: "input", fixWordIndex: -1 };
+      const firstChar = action.firstChar ?? "";
       const words = state.userWords.map((w, i) =>
-        i === firstWrong ? { ...w, userInput: "", incorrect: false, isActive: true } : { ...w, isActive: false },
+        i === firstWrong ? { ...w, userInput: firstChar, incorrect: false, isActive: true } : { ...w, isActive: false },
       );
-      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: "", submitted: false };
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: firstChar, submitted: false };
     }
 
     case "FIX_NEXT": {
