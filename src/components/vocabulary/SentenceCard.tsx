@@ -3,7 +3,7 @@ import type { Sentence } from "@/types/domain";
 import { useSentenceTyping } from "@/hooks/useSentenceTyping";
 import { useAudio } from "@/app/providers/AudioProvider";
 import { cn } from "@/lib/utils";
-import { playCorrectSound, playWrongSound } from "@/lib/sounds";
+import { playCorrectSound, playWrongSound, playCompleteSound } from "@/lib/sounds";
 
 // ── 字符视觉宽度表（ch 单位）──
 const CHAR_WIDTH: Record<string, number> = {
@@ -93,7 +93,7 @@ export function SentenceCard({
     if (!state.submitted) return;
     const allCorrect = checkAllCorrect();
     if (allCorrect) {
-      playCorrectSound();
+      playCompleteSound();
       completedRef.current = true;
       onComplete([]);
     } else {
