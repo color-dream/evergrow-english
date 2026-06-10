@@ -273,10 +273,10 @@ export function ImmersiveSentencePage() {
             <div className="flex items-center gap-3">
               <kbd
                 className="flex cursor-pointer flex-col items-center rounded-lg border border-b-[3px] px-3 py-1 transition-all duration-200 hover:scale-105 active:scale-95"
-                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                style={{ background: "var(--glass-pill-bg)", borderColor: "var(--glass-pill-border)", boxShadow: "var(--shadow-sm)" }}
                 onClick={handlePlaySound}
               >
-                <span className="text-[10px] font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Ctrl J</span>
+                <span className="text-[10px] font-mono font-medium" style={{ color: "var(--color-foreground)" }}>Ctrl J</span>
                 <span className="text-[10px] text-foreground/40">朗读</span>
               </kbd>
             </div>
@@ -284,25 +284,25 @@ export function ImmersiveSentencePage() {
             {/* 快捷键提示 */}
             <div className="flex items-center gap-3">
               <kbd className="flex flex-col items-center rounded-lg border border-b-[3px] px-3 py-1"
-                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                style={{ background: "var(--glass-pill-bg)", borderColor: "var(--glass-pill-border)", boxShadow: "var(--shadow-sm)" }}
               >
-                <span className="text-xs font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Enter</span>
+                <span className="text-xs font-mono font-medium" style={{ color: "var(--color-foreground)" }}>Enter</span>
                 <span className="text-[10px] text-foreground/40">提交</span>
               </kbd>
               <kbd className="flex flex-col items-center rounded-lg border border-b-[3px] px-3 py-1"
-                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                style={{ background: "var(--glass-pill-bg)", borderColor: "var(--glass-pill-border)", boxShadow: "var(--shadow-sm)" }}
               >
-                <span className="text-xs font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Space</span>
+                <span className="text-xs font-mono font-medium" style={{ color: "var(--color-foreground)" }}>Space</span>
                 <span className="text-[10px] text-foreground/40">修正</span>
               </kbd>
               {/* 分隔 */}
               <span className="h-7 w-px rounded-full bg-foreground/8" />
               <kbd
                 className="flex cursor-pointer flex-col items-center rounded-lg border border-b-[3px] px-3 py-1 transition-all duration-200 hover:scale-105 active:scale-95"
-                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                style={{ background: "var(--glass-pill-bg)", borderColor: "var(--glass-pill-border)", boxShadow: "var(--shadow-sm)" }}
                 onClick={() => setShowAnswer((v) => !v)}
               >
-                <span className="text-[10px] font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Ctrl H</span>
+                <span className="text-[10px] font-mono font-medium" style={{ color: "var(--color-foreground)" }}>Ctrl H</span>
                 <span className="text-[10px] text-foreground/40">{showAnswer ? "隐藏" : "显示"}</span>
               </kbd>
             </div>
