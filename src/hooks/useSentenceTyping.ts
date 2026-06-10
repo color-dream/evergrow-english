@@ -74,9 +74,9 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
     case "INIT":
       return {
         targetWords: action.targetWords,
-        userWords: action.targetWords.map((text) => ({
+        userWords: action.targetWords.map((text, i) => ({
           text,
-          isActive: false,
+          isActive: i === 0,
           userInput: "",
           incorrect: false,
         })),
@@ -131,7 +131,7 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       const words = state.userWords.map((w, i) =>
         i === firstWrong ? { ...w, userInput: "", incorrect: false, isActive: true } : { ...w, isActive: false },
       );
-      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: "" };
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: "", submitted: false };
     }
 
     case "FIX_NEXT": {
@@ -154,7 +154,7 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       });
       const allCorrect = words.every((w) => !w.incorrect);
       if (allCorrect) {
-        return { ...state, userWords: words, mode: "input", fixWordIndex: -1, submitted: false };
+        return { ...state, userWords: words, mode: "input", fixWordIndex: -1, submitted: true };
       }
       // 还有错误，继续 fix
       return { ...state, userWords: words, mode: "fix", fixWordIndex: -1 };

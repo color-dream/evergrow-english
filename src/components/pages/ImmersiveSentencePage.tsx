@@ -92,6 +92,19 @@ export function ImmersiveSentencePage() {
     prevShowSettings.current = showSettings;
   }, [showSettings, setIsTyping]);
 
+  // 键盘监听：按任意键开始 / 恢复打字
+  useEffect(() => {
+    if (!isInSession || isTyping) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      if (showSentenceList || showSettings) return;
+      e.preventDefault();
+      setIsTyping(true);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isInSession, isTyping, setIsTyping, showSentenceList, showSettings]);
+
   // Ctrl+H 切换答案显示
   useEffect(() => {
     if (!isInSession) return;
@@ -264,9 +277,15 @@ export function ImmersiveSentencePage() {
         </div>
       )}
 
-      {/* ── 暂停蒙层（仅在抽屉/设置打开时） ── */}
-      {(showSentenceList || showSettings) && (
-        <div className="absolute inset-0 z-20" style={{ background: "oklch(0 0 0 / 0.12)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }} />
+      {/* ── 暂停蒙层 ── */}
+      {(showSentenceList || showSettings || !isTyping) && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "oklch(0 0 0 / 0.12)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
+          {!isTyping && !showSentenceList && !showSettings && (
+            <p className="select-none text-2xl font-medium text-foreground/80 animate-spring-scale">
+              按任意键开始学习
+            </p>
+          )}
+        </div>
       )}
 
       {/* ── 覆盖面板 ── */}

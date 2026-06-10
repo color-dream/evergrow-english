@@ -100,36 +100,28 @@ export function SentenceCard({
       onComplete([]);
     } else {
       playWrongSound();
+      // 显示错误状态后自动进入 fix 模式
+      const timer = setTimeout(() => startFix(), 800);
+      return () => clearTimeout(timer);
     }
-  }, [state.submitted, checkAllCorrect, onComplete]);
+  }, [state.submitted, checkAllCorrect, onComplete, startFix]);
 
-  // fix 模式下监听任意键 → startFix, space → fixNext
+  // fix-input 模式下：按键处理
   useEffect(() => {
-    if (state.mode !== "fix") return;
-
-    const onFixKey = (e: KeyboardEvent) => {
-      if (["Alt", "Control", "Meta", "Shift"].some((k) => e.key === k)) return;
-
+    if (state.mode !== "fix-input") return;
+    const onFixInputKey = (e: KeyboardEvent) => {
       if (e.key === " " || e.code === "Space") {
         e.preventDefault();
         fixNext();
-        return;
       }
-
-      // 任意其他字符 → 进入 fix-input
-      e.preventDefault();
-      startFix();
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.value = "";
-          inputRef.current.focus();
-        }
-      }, 10);
+      if (e.key === "Enter") {
+        e.preventDefault();
+        fixDone();
+      }
     };
-
-    window.addEventListener("keydown", onFixKey);
-    return () => window.removeEventListener("keydown", onFixKey);
-  }, [state.mode, startFix, fixNext]);
+    window.addEventListener("keydown", onFixInputKey);
+    return () => window.removeEventListener("keydown", onFixInputKey);
+  }, [state.mode, fixNext, fixDone]);
 
   const handleInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,19 +177,6 @@ export function SentenceCard({
     [state.mode, submit, fixDone, fixNext, dispatch],
   );
 
-  // fix-input 模式下 空格 在 input 处理之外也监听
-  useEffect(() => {
-    if (state.mode !== "fix-input") return;
-    const onSpace = (e: KeyboardEvent) => {
-      if (e.key === " " || e.code === "Space") {
-        e.preventDefault();
-        fixNext();
-      }
-    };
-    window.addEventListener("keydown", onSpace);
-    return () => window.removeEventListener("keydown", onSpace);
-  }, [state.mode, fixNext]);
-
   // 点击容器聚焦
   const handleContainerClick = useCallback(() => {
     inputRef.current?.focus();
@@ -224,11 +203,11 @@ export function SentenceCard({
       {/* 词盒区 — 与 LetterBox 风格一致 */}
       <div className="relative flex flex-wrap justify-center gap-x-3 gap-y-2 animate-spring-up">
         {state.userWords.map((word, i) => {
-          const isActive = state.mode === "input" && word.isActive;
-
           const isFixTarget =
             (state.mode === "fix" || state.mode === "fix-input") &&
             i === state.fixWordIndex;
+
+          const isActive = (state.mode === "input" && word.isActive) || (state.mode === "fix-input" && isFixTarget);
 
           const isWrong = word.incorrect && state.submitted;
           const isCorrect = word.userInput && !word.incorrect && state.submitted;
@@ -236,7 +215,8 @@ export function SentenceCard({
           let color = "var(--color-letter-normal)";
           let borderColor = "oklch(0.60 0.01 260 / 0.2)";
           let bg = "transparent";
-          if (isFixTarget) { color = "oklch(0.58 0.2 22)"; borderColor = "oklch(0.58 0.2 22 / 0.4)"; }
+          if (isFixTarget && state.mode === "fix") { color = "oklch(0.58 0.2 22)"; borderColor = "oklch(0.58 0.2 22 / 0.4)"; }
+          else if (isFixTarget && state.mode === "fix-input") { color = "oklch(0.55 0.195 252)"; borderColor = "oklch(0.55 0.195 252)"; bg = "oklch(0.55 0.195 252 / 0.06)"; }
           else if (isWrong) { color = "var(--color-letter-wrong)"; borderColor = "oklch(0.58 0.2 22 / 0.4)"; }
           else if (isCorrect) { color = "var(--color-letter-correct)"; borderColor = "oklch(0.68 0.19 155 / 0.4)"; }
           else if (isActive) { color = "oklch(0.55 0.195 252)"; borderColor = "oklch(0.55 0.195 252)"; bg = "oklch(0.55 0.195 252 / 0.06)"; }
