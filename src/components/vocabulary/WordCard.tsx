@@ -14,72 +14,7 @@ import LetterBox from "./LetterBox";
 import { cn } from "@/lib/utils";
 import { Volume2 } from "lucide-react";
 import { FSRS_RATING_LABELS } from "@/lib/constants";
-
-/** 播放正确输入提示音 */
-let audioCtx: AudioContext | null = null;
-function playCorrectSound() {
-  try {
-    if (!audioCtx) audioCtx = new AudioContext();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = "sine";
-    // 快速滑音：低→高，清脆短促
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.linearRampToValueAtTime(1760, audioCtx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.12);
-  } catch {
-    // 静默失败
-  }
-}
-
-/** 播放错误输入提示音 */
-function playWrongSound() {
-  try {
-    if (!audioCtx) audioCtx = new AudioContext();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = "triangle";
-    // 低沉短促：低→更低，钝感反馈
-    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-    osc.frequency.linearRampToValueAtTime(120, audioCtx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.15);
-  } catch {
-    // 静默失败
-  }
-}
-
-/** 播放单词完美完成庆祝音效 */
-function playCompleteSound() {
-  try {
-    if (!audioCtx) audioCtx = new AudioContext();
-    const t = audioCtx.currentTime;
-    [523, 659, 784].forEach((freq, i) => {
-      const osc = audioCtx!.createOscillator();
-      const gain = audioCtx!.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx!.destination);
-      osc.type = "sine";
-      const start = t + i * 0.08;
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0.07, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
-      osc.start(start);
-      osc.stop(start + 0.18);
-    });
-  } catch {
-    // 静默失败
-  }
-}
+import { playCorrectSound, playWrongSound, playCompleteSound } from "@/lib/sounds";
 
 const POS_LABELS: Record<string, string> = {
   noun: "名",

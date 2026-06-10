@@ -3,43 +3,7 @@ import type { Sentence } from "@/types/domain";
 import { useSentenceTyping } from "@/hooks/useSentenceTyping";
 import { useAudio } from "@/app/providers/AudioProvider";
 import { cn } from "@/lib/utils";
-
-// ── 音效 ──
-let _audioCtx: AudioContext | null = null;
-function getAudioCtx(): AudioContext {
-  if (!_audioCtx) _audioCtx = new AudioContext();
-  return _audioCtx;
-}
-function playCorrectSound() {
-  try {
-    const ctx = getAudioCtx();
-    const t = ctx.currentTime;
-    [523, 659, 784].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, t + i * 0.08);
-      gain.gain.setValueAtTime(0.07, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-      osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.2);
-    });
-  } catch { /* 静默 */ }
-}
-function playWrongSound() {
-  try {
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(200, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(120, ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
-  } catch { /* 静默 */ }
-}
+import { playCorrectSound, playWrongSound } from "@/lib/sounds";
 
 // ── 字符视觉宽度表（ch 单位）──
 const CHAR_WIDTH: Record<string, number> = {
@@ -250,6 +214,11 @@ export function SentenceCard({
           setInput(iv.slice(0, -1));
         }
         return;
+      }
+
+      // 可打字字符：播放提示音（与单词学习一致）
+      if (/^[a-zA-Z0-9']$/.test(e.key)) {
+        playCorrectSound();
       }
     },
     [state.mode, submit, fixDone, fixNext, fixPrev, dispatch],
