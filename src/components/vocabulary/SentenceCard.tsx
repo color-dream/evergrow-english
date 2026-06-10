@@ -263,7 +263,7 @@ export function SentenceCard({
       </p>
 
       {/* 词盒区 — 与 LetterBox 风格一致 */}
-      <div className="relative flex flex-wrap justify-center gap-x-3 gap-y-2 animate-spring-up">
+      <div className="relative flex flex-wrap justify-center gap-x-1.5 gap-y-1.5 animate-spring-up">
         {state.userWords.map((word, i) => {
           const isFixTarget =
             (state.mode === "fix" || state.mode === "fix-input") &&
@@ -287,10 +287,10 @@ export function SentenceCard({
             <span
               key={i}
               className={cn(
-                "inline-flex flex-col items-center gap-1 shrink-0 font-mono text-5xl md:text-6xl font-medium tracking-tight leading-normal transition-all duration-200",
+                "inline-flex flex-col items-center gap-1 shrink-0 font-mono text-4xl md:text-5xl font-medium tracking-tight leading-normal transition-all duration-200",
                 isWrong && "animate-shake",
               )}
-              style={{ width: `${word.text.length + 0.8}ch` }}
+              style={{ width: `${word.text.length + 0.4}ch` }}
             >
               <span
                 className="w-full rounded-lg text-center"
