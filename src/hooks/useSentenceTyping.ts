@@ -102,8 +102,9 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
 
       // input 模式：正常分词同步
       const words = syncWords(action.value, state.targetWords);
-      // 激活最后一个有输入的位置
-      const activeIdx = state.targetWords.findIndex((_, i) => !words[i]?.userInput);
+      // 按空格后才跳到下个单词；当前活跃词 = 最后一个被分词到的位置
+      const parts = action.value.split(" ");
+      const activeIdx = Math.min(parts.length - 1, state.targetWords.length - 1);
       const finalWords = words.map((w, i) => ({
         ...w,
         isActive: i === (activeIdx === -1 ? state.targetWords.length - 1 : activeIdx),

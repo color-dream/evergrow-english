@@ -224,16 +224,14 @@ export function SentenceCard({
       {/* 词盒区 — 与 LetterBox 风格一致 */}
       <div className="relative flex flex-wrap justify-center gap-x-3 gap-y-2 animate-spring-up">
         {state.userWords.map((word, i) => {
-          const isActive =
-            state.mode === "input" &&
-            i === state.userWords.findIndex((w) => !w.userInput);
+          const isActive = state.mode === "input" && word.isActive;
 
           const isFixTarget =
             (state.mode === "fix" || state.mode === "fix-input") &&
             i === state.fixWordIndex;
 
-          const isWrong = word.incorrect && state.submitted && !isActive;
-          const isCorrect = word.userInput && !word.incorrect && state.submitted && !isActive;
+          const isWrong = word.incorrect && state.submitted;
+          const isCorrect = word.userInput && !word.incorrect && state.submitted;
 
           let color = "var(--color-letter-normal)";
           let borderColor = "oklch(0.60 0.01 260 / 0.2)";
@@ -247,18 +245,18 @@ export function SentenceCard({
             <span
               key={i}
               className={cn(
-                "inline-block shrink-0 rounded-lg border-b-[3px] text-center font-mono text-5xl md:text-6xl font-medium tracking-tight leading-normal transition-all duration-200",
+                "inline-flex flex-col items-center gap-1 shrink-0 font-mono text-5xl md:text-6xl font-medium tracking-tight leading-normal transition-all duration-200",
                 isWrong && "animate-shake",
               )}
-              style={{
-                width: `${word.text.length + 0.8}ch`,
-                color,
-                borderColor,
-                background: bg,
-                textShadow: "0 1px 0 oklch(0 0 0 / 0.04)",
-              }}
+              style={{ width: `${word.text.length + 0.8}ch` }}
             >
-              {isFixTarget ? "" : word.userInput || " "}
+              <span
+                className="w-full rounded-lg text-center"
+                style={{ background: bg, color, textShadow: "0 1px 0 oklch(0 0 0 / 0.04)" }}
+              >
+                {isFixTarget ? "" : word.userInput || " "}
+              </span>
+              <span className="block w-full border-b-[3px]" style={{ borderColor }} />
             </span>
           );
         })}
