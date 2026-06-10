@@ -42,9 +42,6 @@ export function SentenceCard({
     fixPrev,
     fixDone,
     checkAllCorrect,
-    getWrongIndices,
-    isFixPending,
-    isFixInput,
   } = useSentenceTyping(sentence.english);
 
   const audio = useAudio();
