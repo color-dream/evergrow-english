@@ -122,4 +122,5 @@
 ## 约定
 
 - **包管理器**: 始终使用 `bun` — `bun install`、`bun run dev`、`bun run build` 等。不要使用 npm/yarn/pnpm。
+- **开发端口**: 固定 `10011`，配置在 `vite.config.ts` 中 `server.port: 10011` + `strictPort: true`。端口被占用时不会降级到其他端口，需手动杀掉旧进程后重试。启动时自动检测：`Get-NetTCPConnection -LocalPort 10011` 有结果则 `Stop-Process`。
 - 代码注释和文档使用中文。

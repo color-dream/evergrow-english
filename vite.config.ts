@@ -7,6 +7,10 @@ import path from "node:path";
 // https://vite.dev/config/
 export default defineConfig({
   base: process.env.VITE_BASE || "/",
+  server: {
+    port: 10011,
+    strictPort: true,
+  },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

@@ -56,10 +56,10 @@ export function ImmersiveSentencePage() {
     if (phase !== "finished" || !bookId) return;
     const results = useSentenceSessionStore.getState().sentenceResults;
     const allSentences = useSentenceSessionStore.getState().sentences;
-    const sentenceMap = new Map(allSentences.map((s) => [s.uuid, s]));
+    const sentenceMap = new Map(allSentences.map((s) => [s.english, s]));
     for (const r of results) {
-      const s = sentenceMap.get(r.sentenceUuid);
-      saveSentenceResult({ result: r, bookId, segments: s?.segments, phonetic: s?.phonetic });
+      const s = sentenceMap.get(r.sentenceEnglish);
+      saveSentenceResult({ result: r, bookId, soundmark: s?.soundmark });
     }
   }, [phase, bookId, saveSentenceResult]);
 

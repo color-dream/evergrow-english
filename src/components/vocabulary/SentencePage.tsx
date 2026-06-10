@@ -4,12 +4,11 @@ import { MessageSquareText } from "lucide-react";
 import { DIFFICULTY_LABELS, BASE_PATH } from "@/lib/constants";
 
 const bookAccent: Record<string, { accent: string; bg: string }> = {
-  "daily-a1": { accent: "oklch(0.55 0.195 252)", bg: "oklch(0.55 0.195 252 / 0.08)" },
-  "daily-a2": { accent: "oklch(0.52 0.16 285)", bg: "oklch(0.52 0.16 285 / 0.08)" },
-  "daily-b1": { accent: "oklch(0.56 0.19 148)", bg: "oklch(0.56 0.19 148 / 0.08)" },
-  "travel-b1": { accent: "oklch(0.72 0.18 85)", bg: "oklch(0.72 0.18 85 / 0.08)" },
-  "work-b2": { accent: "oklch(0.58 0.17 30)", bg: "oklch(0.58 0.17 30 / 0.08)" },
-  "quotes-b2": { accent: "oklch(0.52 0.18 325)", bg: "oklch(0.52 0.18 325 / 0.08)" },
+  "xingrong-1": { accent: "oklch(0.55 0.195 252)", bg: "oklch(0.55 0.195 252 / 0.08)" },
+  "xingrong-2": { accent: "oklch(0.52 0.16 285)", bg: "oklch(0.52 0.16 285 / 0.08)" },
+  "xingrong-3": { accent: "oklch(0.56 0.19 148)", bg: "oklch(0.56 0.19 148 / 0.08)" },
+  "xingrong-4": { accent: "oklch(0.72 0.18 85)", bg: "oklch(0.72 0.18 85 / 0.08)" },
+  "xingrong-5": { accent: "oklch(0.52 0.18 325)", bg: "oklch(0.52 0.18 325 / 0.08)" },
 };
 
 const glassCardStyle = {
@@ -80,7 +79,7 @@ export function SentencePage() {
 
               {/* 统计 */}
               <p className="mt-0.5 font-mono text-xs text-foreground/30 tabular-nums whitespace-nowrap">
-                {book.lessonCount} 课 · {book.sentenceCount} 句
+                {book.courseCount} 课
               </p>
 
               {/* 主题标签 */}
@@ -89,7 +88,7 @@ export function SentencePage() {
                   className="rounded-full px-2 py-0.5 text-[10px] font-medium"
                   style={{ background: theme.bg, color: theme.accent }}
                 >
-                  {book.topic === "daily" ? "日常" : book.topic === "travel" ? "旅行" : book.topic === "work" ? "职场" : "名言"}
+                  {book.level}
                 </span>
               </div>
             </button>

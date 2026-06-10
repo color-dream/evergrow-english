@@ -13,63 +13,25 @@ export interface FSRSState {
   state: "new" | "learning" | "review" | "relearning";
 }
 
-// ── 语法成分 ──
+// ── 句子（Earthworm 风格）──
 
-/** 语法成分角色 — 标注句子中每个词组充当什么成分 */
-export type SyntaxRole =
-  | "subject"           // 主语
-  | "predicate"         // 谓语（实义动词）
-  | "linking-verb"      // 系动词（be/look/seem…）
-  | "object"            // 宾语
-  | "indirect-object"   // 间接宾语
-  | "direct-object"     // 直接宾语
-  | "predicative"       // 表语
-  | "object-complement" // 宾语补足语
-  | "attributive"       // 定语
-  | "adverbial"         // 状语
-  | "conjunction"       // 连词
-  | "interjection";     // 感叹/呼语
-
-/** 语法成分角色的中文名称 */
-export const SYNTAX_ROLE_LABELS: Record<SyntaxRole, string> = {
-  subject: "主语",
-  predicate: "谓语",
-  "linking-verb": "系动词",
-  object: "宾语",
-  "indirect-object": "间宾",
-  "direct-object": "直宾",
-  predicative: "表语",
-  "object-complement": "宾补",
-  attributive: "定语",
-  adverbial: "状语",
-  conjunction: "连词",
-  interjection: "感叹",
-};
-
-/** 单个语法成分段 */
-export interface SyntaxSegment {
-  text: string;         // 该成分的原文文本
-  role: SyntaxRole;     // 该成分的语法角色
-}
-
-// ── 句子 ──
-
+/** 运行时句子 — 由 JSON → converter 生成 */
 export interface Sentence {
   id: string;
-  uuid: string;
-  text: string;
-  translation: string;
-  phonetic?: string;
-  segments?: SyntaxSegment[];
+  /** 中文翻译 — 用户看到的提示 */
+  chinese: string;
+  /** 英文句子 — 用户打字的目标 */
+  english: string;
+  /** 音标 — 逐词格式，如 "/aɪ/ /laɪk/ /ðə/ /fud/" */
+  soundmark?: string;
   audioUrl?: string;
   audioDuration?: number;
   difficulty: DifficultyLevel;
   source: "builtin" | "article" | "ai-generated" | "user-imported";
-  tags: string[];
   wordCount: number;
   order: number;
-  lessonId: string;
-  lessonTitle: string;
+  courseId: string;
+  courseTitle: string;
   bookId: string;
   createdAt: number;
   updatedAt: number;

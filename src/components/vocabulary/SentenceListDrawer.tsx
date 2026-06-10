@@ -72,7 +72,7 @@ export function SentenceListDrawer({ open, onClose }: SentenceListDrawerProps) {
                       opacity: isPast ? 0.6 : isCurrent ? 1 : 0.35,
                     }}
                   >
-                    {s.text.length > 30 ? s.text.slice(0, 30) + "..." : s.text}
+                    {s.english.length > 30 ? s.english.slice(0, 30) + "..." : s.english}
                   </span>
                   {/* 进度圆点 */}
                   <span className="flex shrink-0 gap-0.5">
@@ -94,7 +94,7 @@ export function SentenceListDrawer({ open, onClose }: SentenceListDrawerProps) {
                 </div>
                 {/* 翻译 */}
                 <p className="mt-0.5 truncate pl-7 text-[10px] text-foreground/30">
-                  {s.translation}
+                  {s.chinese}
                 </p>
               </div>
             );

@@ -1,4 +1,4 @@
-import type { FSRSState, SyntaxSegment } from "@/types/domain";
+import type { FSRSState } from "@/types/domain";
 
 /** Dexie 持久化的学习卡片记录 */
 export interface LearningCard {
@@ -15,9 +15,7 @@ export interface LearningCard {
   // 句子卡片字段（cardType === "sentence" 时使用）
   sentenceText?: string;
   sentenceTranslation?: string;
-  sentencePhonetic?: string;
-  sentenceSegments?: SyntaxSegment[];
-  sentenceUuid?: string;
+  sentenceSoundmark?: string;
 
   // FSRS 记忆状态
   fsrs: FSRSState;

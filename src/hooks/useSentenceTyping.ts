@@ -120,8 +120,8 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
 
 // ── Hook ──
 
-export function useSentenceTyping(sentenceText: string) {
-  const words = sentenceText.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
+export function useSentenceTyping(sentenceEnglish: string) {
+  const words = sentenceEnglish.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
 
   const [state, dispatch] = useReducer(reducer, {
     words,
@@ -140,9 +140,9 @@ export function useSentenceTyping(sentenceText: string) {
 
   // 句子文本变了 → 重新初始化（去除标点）
   useEffect(() => {
-    const rawWords = sentenceText.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
+    const rawWords = sentenceEnglish.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
     dispatch({ type: "INIT_SENTENCE", words: rawWords });
-  }, [sentenceText]);
+  }, [sentenceEnglish]);
 
   // 错字后定时重置
   useEffect(() => {

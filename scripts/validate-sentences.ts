@@ -1,64 +1,71 @@
 /**
- * 校验所有句子本 JSON 的格式和内容完整性。
+ * 校验所有课程 JSON 文件的格式和内容完整性。
  *
  * 用法：bun run scripts/validate-sentences.ts
  */
 
 import fs from "node:fs";
 import path from "node:path";
-import { validateSentenceBook } from "../src/lib/sentence-validator";
-import type { SentenceBookJSON } from "../src/types/sentence";
+import { validateCourseFile } from "../src/lib/sentence-validator";
+import type { StatementEntry } from "../src/types/sentence";
 
 const SENTENCES_DIR = path.resolve(__dirname, "../src/assets/sentences");
 
+/** 递归收集所有 JSON 文件（返回相对于 SENTENCES_DIR 的路径） */
+function collectJsonFiles(dir: string): string[] {
+  const result: string[] = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...collectJsonFiles(full));
+    } else if (entry.name.endsWith(".json")) {
+      result.push(path.relative(SENTENCES_DIR, full));
+    }
+  }
+  return result;
+}
+
 function main() {
-  const files = fs.readdirSync(SENTENCES_DIR).filter((f) => f.endsWith(".json"));
+  const files = collectJsonFiles(SENTENCES_DIR).sort();
 
   if (files.length === 0) {
-    console.log("⚠️  未找到句子本 JSON 文件");
+    console.log("⚠️  未找到课程 JSON 文件");
     return;
   }
 
   let totalErrors = 0;
-  let totalSentences = 0;
-  let totalLessons = 0;
+  let totalStatements = 0;
 
   for (const file of files) {
     const filePath = path.join(SENTENCES_DIR, file);
     const raw = fs.readFileSync(filePath, "utf-8");
 
-    let json: SentenceBookJSON;
+    let statements: StatementEntry[];
     try {
-      json = JSON.parse(raw);
+      statements = JSON.parse(raw);
     } catch (e) {
       console.error(`❌ ${file}: JSON 解析失败 — ${(e as Error).message}`);
       totalErrors++;
       continue;
     }
 
-    const errors = validateSentenceBook(json, file);
-    const sentenceCount = json.lessons?.reduce(
-      (sum, l) => sum + (l.sentences?.length ?? 0),
-      0,
-    ) ?? 0;
-    const lessonCount = json.lessons?.length ?? 0;
+    const errors = validateCourseFile(statements, file);
 
-    totalSentences += sentenceCount;
-    totalLessons += lessonCount;
+    totalStatements += statements.length;
 
     if (errors.length === 0) {
-      console.log(`✅ ${file}: ${lessonCount} 课, ${sentenceCount} 句 — 全部通过`);
+      console.log(`✅ ${file}: ${statements.length} 条语句 — 全部通过`);
     } else {
       console.error(`❌ ${file}: ${errors.length} 个错误`);
       for (const err of errors) {
-        const loc = [err.lessonId, err.sentenceId].filter(Boolean).join(" → ");
-        console.error(`   - ${loc ? loc + ": " : ""}${err.field}: ${err.message}`);
+        const loc = err.index !== undefined ? `[${err.index}] ` : "";
+        console.error(`   - ${loc}${err.field}: ${err.message}`);
       }
       totalErrors += errors.length;
     }
   }
 
-  console.log(`\n📊 总计: ${files.length} 个文件, ${totalLessons} 课, ${totalSentences} 句`);
+  console.log(`\n📊 总计: ${files.length} 个课程文件, ${totalStatements} 条语句`);
   if (totalErrors > 0) {
     console.error(`❌ 共 ${totalErrors} 个错误`);
     process.exit(1);

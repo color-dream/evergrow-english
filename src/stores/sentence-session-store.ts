@@ -13,9 +13,8 @@ export interface SentenceModeResult {
 
 export interface SentenceResult {
   sentenceId: string;
-  sentenceUuid: string;
-  sentenceText: string;
-  translation: string;
+  sentenceEnglish: string;
+  chinese: string;
   wrongWordCount: number;
   isCorrect: boolean;
   modeResults: SentenceModeResult[];
@@ -104,8 +103,8 @@ export const useSentenceSessionStore = create<SentenceSessionState>()((set) => (
 
       if (newModeIdx >= 3) {
         const finalResult: SentenceResult = {
-          sentenceId: sentence.id, sentenceUuid: sentence.uuid,
-          sentenceText: sentence.text, translation: sentence.translation,
+          sentenceId: sentence.id,
+          sentenceEnglish: sentence.english, chinese: sentence.chinese,
           wrongWordCount: Math.max(...newModeResults.map((r) => r.wrongWordIndices.length), 0),
           isCorrect: newModeResults.every((r) => r.isCorrect),
           modeResults: newModeResults,

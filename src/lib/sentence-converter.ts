@@ -1,40 +1,33 @@
 import type { Sentence } from "@/types/domain";
-import type {
-  SentenceEntry,
-  SentenceBookJSONMeta,
-  LessonEntry,
-} from "@/types/sentence";
-import { BASE_PATH } from "./constants";
+import type { DifficultyLevel } from "@/types/domain";
+import type { StatementEntry } from "@/types/sentence";
 
 /**
- * 将 JSON 源数据中的单条句子转换为运行时 Sentence 对象。
+ * 将 JSON 源数据中的单条语句转换为运行时 Sentence 对象。
  *
- * - wordCount 从 text 自动计算
- * - difficulty 继承 meta.level
- * - audioUrl 从 uuid 自动构造
+ * - wordCount 从 english 自动计算
  * - createdAt/updatedAt 静态数据统一设为 0
  */
 export function convertToSentence(
-  entry: SentenceEntry,
-  meta: SentenceBookJSONMeta,
-  lesson: LessonEntry,
+  entry: StatementEntry,
+  index: number,
+  courseFileName: string,
+  courseTitle: string,
+  bookId: string,
+  level: DifficultyLevel,
 ): Sentence {
   return {
-    id: entry.id,
-    uuid: entry.uuid,
-    text: entry.text,
-    translation: entry.translation,
-    phonetic: entry.phonetic,
-    segments: entry.segments,
-    audioUrl: `${BASE_PATH}audio/sentences/${entry.uuid}.mp3`,
-    difficulty: meta.level,
+    id: `${courseFileName}-${index}`,
+    chinese: entry.chinese,
+    english: entry.english,
+    soundmark: entry.soundmark,
+    difficulty: level,
     source: "builtin",
-    tags: entry.tags ?? [],
-    wordCount: entry.text.split(/\s+/).length,
-    order: entry.order,
-    lessonId: lesson.id,
-    lessonTitle: lesson.title,
-    bookId: meta.id,
+    wordCount: entry.english.split(/\s+/).length,
+    order: index + 1,
+    courseId: courseFileName,
+    courseTitle,
+    bookId,
     createdAt: 0,
     updatedAt: 0,
   };

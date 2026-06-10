@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import type { SentenceResult } from "@/stores/sentence-session-store";
-import type { SyntaxSegment } from "@/types/domain";
 import { deriveFSRSRating, applyFSRS, createNewFSRSState } from "@/lib/fsrs";
 import { getCardById, upsertCard } from "@/lib/db";
 import type { LearningCard } from "@/lib/fsrs/types";
@@ -8,8 +7,7 @@ import type { LearningCard } from "@/lib/fsrs/types";
 export interface SentenceSyncPayload {
   result: SentenceResult;
   bookId: string;
-  segments?: SyntaxSegment[];
-  phonetic?: string;
+  soundmark?: string;
 }
 
 /**
@@ -18,10 +16,11 @@ export interface SentenceSyncPayload {
 export function useSentenceFSRSSync() {
   const saveSentenceResult = useCallback(
     (payload: SentenceSyncPayload): void => {
-      const { result, bookId, segments, phonetic } = payload;
+      const { result, bookId, soundmark } = payload;
       (async () => {
         try {
-          const cardId = result.sentenceUuid;
+          // 用 sentenceId 作为卡片 ID
+          const cardId = result.sentenceId;
           const existing = await getCardById(cardId);
 
           const wrongCount = result.wrongWordCount;
@@ -32,11 +31,9 @@ export function useSentenceFSRSSync() {
           const card: LearningCard = existing
             ? {
                 ...existing,
-                sentenceText: result.sentenceText,
-                sentenceTranslation: result.translation,
-                sentencePhonetic: phonetic ?? existing.sentencePhonetic,
-                sentenceSegments: segments ?? existing.sentenceSegments,
-                sentenceUuid: result.sentenceUuid,
+                sentenceText: result.sentenceEnglish,
+                sentenceTranslation: result.chinese,
+                sentenceSoundmark: soundmark ?? existing.sentenceSoundmark,
                 fsrs: applyFSRS(existing.fsrs, rating, now),
                 updatedAt: now,
               }
@@ -46,11 +43,9 @@ export function useSentenceFSRSSync() {
                 definition: "",
                 bookId,
                 cardType: "sentence",
-                sentenceText: result.sentenceText,
-                sentenceTranslation: result.translation,
-                sentencePhonetic: phonetic,
-                sentenceSegments: segments,
-                sentenceUuid: result.sentenceUuid,
+                sentenceText: result.sentenceEnglish,
+                sentenceTranslation: result.chinese,
+                sentenceSoundmark: soundmark,
                 fsrs: applyFSRS(createNewFSRSState(), rating, now),
                 notes: "",
                 createdAt: now,
