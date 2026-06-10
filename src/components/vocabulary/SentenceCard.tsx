@@ -41,6 +41,22 @@ function playWrongSound() {
   } catch { /* 静默 */ }
 }
 
+// ── 字符视觉宽度表（ch 单位）──
+const CHAR_WIDTH: Record<string, number> = {
+  f: 0.6, j: 0.6, i: 0.6, l: 0.6, r: 0.6, t: 0.6,
+  w: 1.2, m: 1.2,
+};
+/** 单词左右内边距（ch） */
+const WORD_PADDING = 0.6;
+
+function wordChWidth(text: string): number {
+  let w = 0;
+  for (const ch of text.toLowerCase()) {
+    w += CHAR_WIDTH[ch] ?? 1;
+  }
+  return w + WORD_PADDING;
+}
+
 interface SentenceCardProps {
   sentence: Sentence;
   isTyping: boolean;
@@ -290,7 +306,7 @@ export function SentenceCard({
                 "inline-flex flex-col items-center gap-1 shrink-0 font-mono text-4xl md:text-5xl font-medium tracking-tight leading-normal transition-all duration-200",
                 isWrong && "animate-shake",
               )}
-              style={{ width: `${word.text.length + 0.8}ch` }}
+              style={{ width: `${wordChWidth(word.text)}ch` }}
             >
               <span
                 className="w-full rounded-lg text-center"
