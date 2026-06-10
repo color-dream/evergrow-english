@@ -163,11 +163,12 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
         prevWrong = state.userWords.findIndex((w) => w.incorrect);
       }
       if (prevWrong === -1) return { ...state, mode: "input", fixWordIndex: -1, submitted: false };
-      // 保留 incorrect 标记
+      // 保留 incorrect 标记和已有输入
       const words = state.userWords.map((w, i) =>
-        i === prevWrong ? { ...w, userInput: "", isActive: true } : { ...w, isActive: false },
+        i === prevWrong ? { ...w, isActive: true } : { ...w, isActive: false },
       );
-      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: prevWrong, inputValue: "" };
+      const prevInput = state.userWords[prevWrong]?.userInput ?? "";
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: prevWrong, inputValue: prevInput };
     }
 
     case "FIX_DONE": {
