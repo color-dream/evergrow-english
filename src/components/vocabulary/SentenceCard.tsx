@@ -290,15 +290,22 @@ export function SentenceCard({
                 "inline-flex flex-col items-center gap-1 shrink-0 font-mono text-4xl md:text-5xl font-medium tracking-tight leading-normal transition-all duration-200",
                 isWrong && "animate-shake",
               )}
-              style={{ width: `${word.text.length + 0.4}ch` }}
+              style={{ width: `${word.text.length + 0.8}ch` }}
             >
               <span
                 className="w-full rounded-lg text-center"
-                style={{ background: bg, color, textShadow: "0 1px 0 oklch(0 0 0 / 0.04)" }}
+                style={{
+                  background: bg,
+                  color,
+                  textShadow: "0 1px 0 oklch(0 0 0 / 0.04)",
+                }}
               >
                 {word.userInput || " "}
               </span>
-              <span className="block w-full border-b-[3px]" style={{ borderColor }} />
+              <span
+                className="block w-full border-b-[3px]"
+                style={{ borderColor }}
+              />
             </span>
           );
         })}
