@@ -13,7 +13,7 @@ import { SentenceListDrawer } from "@/components/vocabulary/SentenceListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { useAudio } from "@/app/providers/AudioProvider";
-import { List, X, Volume2 } from "lucide-react";
+import { List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ImmersiveSentencePage() {
@@ -139,6 +139,19 @@ export function ImmersiveSentencePage() {
     }
   }, [currentSentence, audio]);
 
+  // Ctrl+J 朗读句子
+  useEffect(() => {
+    if (!isInSession) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        handlePlaySound();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isInSession, handlePlaySound]);
+
   const totalSentences = sentences.length;
   const progress = currentSentenceIndex;
 
@@ -256,14 +269,17 @@ export function ImmersiveSentencePage() {
           )}
 
           <div className="flex items-center gap-6">
-            {/* 播放按钮 */}
-            <button
-              onClick={handlePlaySound}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all duration-200 hover:bg-foreground/5"
-            >
-              <Volume2 className="h-4 w-4 text-foreground/45" />
-              <span className="text-[11px] text-foreground/45">朗读</span>
-            </button>
+            {/* 快捷键提示 */}
+            <div className="flex items-center gap-3">
+              <kbd
+                className="flex cursor-pointer flex-col items-center rounded-lg border border-b-[3px] px-3 py-1 transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                onClick={handlePlaySound}
+              >
+                <span className="text-[10px] font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Ctrl J</span>
+                <span className="text-[10px] text-foreground/40">朗读</span>
+              </kbd>
+            </div>
             <span className="h-7 w-px rounded-full bg-foreground/8" />
             {/* 快捷键提示 */}
             <div className="flex items-center gap-3">
