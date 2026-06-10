@@ -47,50 +47,74 @@ function courseFileRange(start: number, end: number): string[] {
 }
 
 export const SENTENCE_BOOK_META: Record<SentenceBookId, SentenceBookInfo> = {
-  "xingrong-1": {
-    id: "xingrong-1",
-    title: "星荣零基础英语 ①",
-    description: "基础入门：第1-10课，从单词到简单句，适合零基础学习者",
-    courseCount: 10,
-    level: "A1",
-    courseFiles: courseFileRange(1, 10),
-  },
-  "xingrong-2": {
-    id: "xingrong-2",
-    title: "星荣零基础英语 ②",
-    description: "基础进阶：第11-20课，复合句与时态变化，逐步提升",
-    courseCount: 10,
-    level: "A2",
-    courseFiles: courseFileRange(11, 20),
-  },
-  "xingrong-3": {
-    id: "xingrong-3",
-    title: "星荣零基础英语 ③",
-    description: "中级巩固：第21-30课，复合从句与多样表达",
-    courseCount: 10,
+  xingrong: {
+    id: "xingrong",
+    title: "星荣零基础英语",
+    description: "从单词到复杂句，55 课渐进式构建英语语感，适合零基础到中高级学习者",
+    courseCount: 55,
     level: "B1",
-    courseFiles: courseFileRange(21, 30),
-  },
-  "xingrong-4": {
-    id: "xingrong-4",
-    title: "星荣零基础英语 ④",
-    description: "中高级：第31-40课，长难句与地道表达",
-    courseCount: 10,
-    level: "B1",
-    courseFiles: courseFileRange(31, 40),
-  },
-  "xingrong-5": {
-    id: "xingrong-5",
-    title: "星荣零基础英语 ⑤",
-    description: "高级：第41-55课，被动语态、虚拟语气等复杂语法",
-    courseCount: 15,
-    level: "B2",
-    courseFiles: courseFileRange(41, 55),
+    courseFiles: courseFileRange(1, 55),
   },
 };
 
 export const SENTENCE_BOOK_OPTIONS: SentenceBookInfo[] =
   Object.values(SENTENCE_BOOK_META);
+
+// ===== 课程元信息 =====
+
+/** 单门课程的元信息（不含语句数据，用于课程列表展示） */
+export interface CourseInfo {
+  /** JSON 文件名（如 "01"） */
+  fileName: string;
+  /** 课程序号（1-55） */
+  courseNum: number;
+  /** 中文课名（如 "第一课"） */
+  title: string;
+  /** 该课语句数（近似值，精确值需加载后计算） */
+  statementCount: number;
+  /** CEFR 等级 */
+  level: DifficultyLevel;
+  /** 所属分册 */
+  bookId: SentenceBookId;
+}
+
+/** 每个课程文件的近似语句数（基于 earthworm 源数据统计） */
+const COURSE_STATEMENT_COUNTS: Record<string, number> = {
+  "01": 99, "02": 85, "03": 97, "04": 97, "05": 117,
+  "06": 121, "07": 121, "08": 127, "09": 135, "10": 127,
+  "11": 147, "12": 129, "13": 141, "14": 139, "15": 127,
+  "16": 133, "17": 135, "18": 139, "19": 141, "20": 133,
+  "21": 131, "22": 133, "23": 137, "24": 137, "25": 121,
+  "26": 137, "27": 137, "28": 153, "29": 147, "30": 139,
+  "31": 165, "32": 167, "33": 167, "34": 173, "35": 157,
+  "36": 149, "37": 165, "38": 173, "39": 173, "40": 165,
+  "41": 155, "42": 157, "43": 155, "44": 169, "45": 147,
+  "46": 149, "47": 145, "48": 141, "49": 155, "50": 167,
+  "51": 141, "52": 143, "53": 155, "54": 156, "55": 127,
+};
+
+/** 获取某个书本下全部课程的元信息 */
+export function getCourseInfosForBook(bookId: SentenceBookId): CourseInfo[] {
+  const meta = SENTENCE_BOOK_META[bookId];
+  return meta.courseFiles.map((fileName) => ({
+    fileName,
+    courseNum: parseInt(fileName, 10),
+    title: toChineseNumber(parseInt(fileName, 10)),
+    statementCount: COURSE_STATEMENT_COUNTS[fileName] ?? 150,
+    level: courseLevel(parseInt(fileName, 10)),
+    bookId,
+  }));
+}
+
+/** 根据 course fileName 反查所属 bookId */
+export function getBookIdForCourse(courseFileName: string): SentenceBookId | null {
+  for (const [bookId, meta] of Object.entries(SENTENCE_BOOK_META)) {
+    if (meta.courseFiles.includes(courseFileName)) {
+      return bookId as SentenceBookId;
+    }
+  }
+  return null;
+}
 
 // ===== 动态加载 =====
 
@@ -143,4 +167,23 @@ export async function loadSentenceBook(
   }
 
   return sentences;
+}
+
+/**
+ * 动态 import 单个 JSON 文件 → 转换为 Sentence[]
+ * 用于单课学习模式。
+ */
+export async function loadSingleCourse(
+  courseFileName: string,
+  bookId: SentenceBookId,
+): Promise<Sentence[]> {
+  const module = (await import(
+    `@/assets/sentences/xingrong-courses/${courseFileName}.json`
+  )) as { default: StatementEntry[] };
+  const statements = module.default;
+  const courseNum = parseInt(courseFileName, 10);
+
+  return statements.map((stmt, i) =>
+    convertStatement(stmt, i, courseFileName, courseNum, bookId),
+  );
 }

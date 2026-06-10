@@ -1,12 +1,7 @@
 // ===== 句子本标识 =====
 
 /** 句子本标识 — 每新增一个本子加一项 */
-export type SentenceBookId =
-  | "xingrong-1"
-  | "xingrong-2"
-  | "xingrong-3"
-  | "xingrong-4"
-  | "xingrong-5";
+export type SentenceBookId = "xingrong";
 
 // ===== 句子学习模式 =====
 

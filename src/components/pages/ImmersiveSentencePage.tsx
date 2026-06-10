@@ -6,7 +6,7 @@ import {
 } from "@/stores/sentence-session-store";
 import { useTimer } from "@/hooks/useTimer";
 import { useSentenceFSRSSync } from "@/hooks/useSentenceFSRSSync";
-import { loadSentenceBook } from "@/lib/sentence-book-registry";
+import { loadSingleCourse } from "@/lib/sentence-book-registry";
 import type { SentenceBookId } from "@/types/sentence";
 import { SentenceCard } from "@/components/vocabulary/SentenceCard";
 import { SentenceListDrawer } from "@/components/vocabulary/SentenceListDrawer";
@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 export function ImmersiveSentencePage() {
   const [searchParams] = useSearchParams();
+  const courseId = searchParams.get("courseId");
   const bookId = searchParams.get("bookId") as SentenceBookId | null;
   const [isInitializing, setIsInitializing] = useState(true);
   const [initError, setInitError] = useState<string | null>(null);
@@ -65,18 +66,19 @@ export function ImmersiveSentencePage() {
 
   // 初始化
   useEffect(() => {
-    if (!bookId) { setInitError("缺少句子本参数"); setIsInitializing(false); return; }
+    if (!courseId) { setInitError("缺少课程参数"); setIsInitializing(false); return; }
+    if (!bookId) { setInitError("缺少分册参数"); setIsInitializing(false); return; }
     const init = async () => {
       if (useSentenceSessionStore.getState().phase !== "idle") { setIsInitializing(false); return; }
       try {
-        const allSentences = await loadSentenceBook(bookId);
-        if (allSentences.length === 0) { setInitError("该句子本暂未添加内容"); setIsInitializing(false); return; }
+        const allSentences = await loadSingleCourse(courseId, bookId);
+        if (allSentences.length === 0) { setInitError("该课程暂未添加内容"); setIsInitializing(false); return; }
         startSession(allSentences, bookId);
-      } catch { setInitError("句子本加载失败"); }
+      } catch { setInitError("课程加载失败"); }
       finally { setIsInitializing(false); }
     };
     init();
-  }, [bookId, startSession]);
+  }, [courseId, bookId, startSession]);
 
   // 面板关闭后进入暂停
   const prevShowList = useRef(showSentenceList);

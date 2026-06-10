@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { CenterLayout } from "@/components/layout/CenterLayout";
 import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
 import { SentencePage } from "@/components/vocabulary/SentencePage";
+import { SentenceCourseListPage } from "@/components/vocabulary/SentenceCourseListPage";
 import { LandingPage } from "@/components/pages/LandingPage";
 import { WelcomePage } from "@/components/pages/WelcomePage";
 import { LearningCenterHub } from "@/components/pages/LearningCenterHub";
@@ -38,6 +39,7 @@ export function App() {
                     <Route index element={<LearningCenterHub />} />
                     <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
                     <Route path={ROUTES.SENTENCE} element={<SentencePage />} />
+                    <Route path={ROUTES.SENTENCE_COURSES} element={<SentenceCourseListPage />} />
                   </Route>
                 </Route>
 

@@ -62,6 +62,7 @@ export const ROUTES = {
   CENTER: "/center",
   VOCABULARY: "/center/vocabulary",
   SENTENCE: "/center/sentence",
+  SENTENCE_COURSES: "/center/sentence/:bookId",
   SETTINGS: "/settings",
   LEARN: "/learn",
   LEARN_SENTENCE: "/learn-sentence",
