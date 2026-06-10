@@ -218,11 +218,20 @@ export function SentenceCard({
         return;
       }
 
-      // fix-input 模式下退格 清空当前词 → 回到上一个错误词
-      if (e.key === "Backspace" && state.mode === "fix-input" && state.inputValue === "") {
+      // fix-input 模式下退格且输入为空 → 回到上一个错误词
+      if (e.key === "Backspace" && state.mode === "fix-input" && stateRef.current.inputValue === "") {
         e.preventDefault();
-        // 简单处理：重新进入 fix 模式
         dispatch({ type: "FIX_DONE" });
+        return;
+      }
+
+      // input/fix-input 模式下退格：手动删除最后一个字符
+      if (e.key === "Backspace" && (state.mode === "input" || state.mode === "fix-input")) {
+        const iv = stateRef.current.inputValue;
+        if (iv.length > 0) {
+          e.preventDefault();
+          setInput(iv.slice(0, -1));
+        }
         return;
       }
     },

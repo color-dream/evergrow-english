@@ -129,10 +129,10 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       const firstWrong = findFirstWrongIndex(state.userWords);
       if (firstWrong === -1) return { ...state, mode: "input", fixWordIndex: -1 };
       const firstChar = action.firstChar ?? "";
-      // 清空所有错误词，保留正确词，第一个错误词变为输入状态
+      // 清空所有错误词，保留正确词；第一个错误词变为输入状态；其他错误词保留 incorrect 标记便于 fixNext 跳转
       const words = state.userWords.map((w, i) =>
         w.incorrect
-          ? { ...w, userInput: i === firstWrong ? firstChar : "", incorrect: false, isActive: i === firstWrong }
+          ? { ...w, userInput: i === firstWrong ? firstChar : "", incorrect: i !== firstWrong, isActive: i === firstWrong }
           : { ...w, isActive: false },
       );
       return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: firstChar, submitted: false };
