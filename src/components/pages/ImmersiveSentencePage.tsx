@@ -125,10 +125,10 @@ export function ImmersiveSentencePage() {
   }, [currentSentenceIndex]);
 
   const handleClose = useCallback(() => { resetSession(); window.close(); }, [resetSession]);
-  const handleRepeat = useCallback(async () => {
-    if (!courseId || !bookId) return;
-    try { const sents = await loadSingleCourse(courseId, bookId); startSession(sents, bookId); } catch { /* */ }
-  }, [courseId, bookId, startSession]);
+  const handleNextCourse = useCallback(() => {
+    resetSession();
+    window.location.href = `${import.meta.env.VITE_BASE || ""}/center/sentence/${bookId ?? "xingrong"}`;
+  }, [resetSession, bookId]);
 
   const audio = useAudio();
   const currentSentence = useSentenceSessionStore(getCurrentSentence);
@@ -192,7 +192,7 @@ export function ImmersiveSentencePage() {
         ))}
       </div>
       <div className="flex gap-3">
-        <button onClick={handleRepeat} className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 active:scale-95">再来一轮</button>
+        <button onClick={handleNextCourse} className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:scale-105 active:scale-95">再来一课</button>
         <button onClick={handleClose} className="rounded-full px-6 py-2.5 text-sm font-medium text-foreground/60 transition-all duration-300 hover:scale-105 active:scale-95" style={{ background: "var(--glass-card-bg)", border: "1px solid var(--glass-card-border)" }}>关闭</button>
       </div>
     </div>;
