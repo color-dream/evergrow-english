@@ -1,117 +1,163 @@
 import { useReducer, useRef, useCallback, useEffect } from "react";
-import type { LetterState } from "@/types/vocabulary";
-import { WRONG_RESET_DELAY_MS } from "@/lib/constants";
-
-/** 去除词首尾标点（保留 don't 等缩写中的撇号） */
-function cleanWord(w: string): string {
-  return w.replace(/^[.,!?;:"]+|[.,!?;:"]+$/g, "");
-}
 
 // ── 类型 ──
 
+export interface SentenceWord {
+  text: string;
+  isActive: boolean;
+  userInput: string;
+  incorrect: boolean;
+}
+
+export type InputMode = "input" | "fix" | "fix-input";
+
 export interface SentenceTypingState {
-  /** 句子的所有词 */
-  words: string[];
-  /** 当前正在输入第几个词 */
-  currentWordIndex: number;
-  /** 当前词的每个字母状态 */
-  letterStates: LetterState[];
-  /** 当前词已输入的字母 */
-  inputWord: string;
-  /** 当前词是否全部正确输入完成 */
-  isWordFinished: boolean;
-  /** 整句所有词是否完成 */
-  isSentenceFinished: boolean;
-  /** 当前词是否有过错误 */
-  hasWrong: boolean;
-  /** 当前词累计错误次数 */
-  wrongCount: number;
-  /** 已完成的词中打错的索引列表 */
-  wrongWordIndices: number[];
+  /** 目标单词列表 */
+  targetWords: string[];
+  /** 对应用户输入（与 targetWords 对齐） */
+  userWords: SentenceWord[];
+  /** 原始输入值 */
+  inputValue: string;
+  /** 当前输入模式 */
+  mode: InputMode;
+  /** Fix 模式下正在修正的词在 userWords 中的索引 */
+  fixWordIndex: number;
+  /** 本轮是否已提交过（用于判断是否进入 fix 模式） */
+  submitted: boolean;
 }
 
 export type SentenceTypingAction =
-  | { type: "INIT_SENTENCE"; words: string[] }
-  | { type: "ADD_CORRECT"; position: number; char: string }
-  | { type: "ADD_WRONG"; position: number; char: string }
-  | { type: "ADVANCE_WORD" }
-  | { type: "RESET_CURRENT_WORD" }
-  | { type: "FINISH_SENTENCE" };
+  | { type: "INIT"; targetWords: string[] }
+  | { type: "SET_INPUT"; value: string }
+  | { type: "SUBMIT" }
+  | { type: "START_FIX" }
+  | { type: "FIX_NEXT" }
+  | { type: "FIX_DONE" };
+
+// ── 工具函数 ──
+
+/** 去除标点噪声（earthworm 的 formatInputText） */
+function normalizeWord(w: string): string {
+  return w
+    .toLowerCase()
+    .replace(/[.,!?;:'"()]+/g, "")
+    .replace(/['‘’“”]/g, "'")
+    .trim();
+}
+
+/** 将原始 input 按空格分词并与 targetWords 对齐 */
+function syncWords(inputValue: string, targetWords: string[]): SentenceWord[] {
+  const parts = inputValue.split(" ");
+  return targetWords.map((target, i) => {
+    const userInput = parts[i] ?? "";
+    return {
+      text: target,
+      isActive: i === parts.length - 1 || (i < parts.length && parts[i + 1] === undefined && i === targetWords.length - 1),
+      userInput,
+      incorrect: false,
+    };
+  });
+}
+
+function findFirstWrongIndex(words: SentenceWord[]): number {
+  return words.findIndex((w) => {
+    const formatted = normalizeWord(w.userInput);
+    const target = normalizeWord(w.text);
+    return formatted !== target;
+  });
+}
 
 // ── Reducer ──
 
 function reducer(state: SentenceTypingState, action: SentenceTypingAction): SentenceTypingState {
   switch (action.type) {
-    case "INIT_SENTENCE":
+    case "INIT":
       return {
-        words: action.words,
-        currentWordIndex: 0,
-        letterStates: new Array(action.words[0]?.length ?? 0).fill("normal"),
-        inputWord: "",
-        isWordFinished: false,
-        isSentenceFinished: false,
-        hasWrong: false,
-        wrongCount: 0,
-        wrongWordIndices: [],
+        targetWords: action.targetWords,
+        userWords: action.targetWords.map((text) => ({
+          text,
+          isActive: false,
+          userInput: "",
+          incorrect: false,
+        })),
+        inputValue: "",
+        mode: "input",
+        fixWordIndex: -1,
+        submitted: false,
       };
 
-    case "ADD_CORRECT": {
-      const next = [...state.letterStates];
-      next[action.position] = "correct";
-      const newInput = state.inputWord + action.char;
-      const wordFinished = newInput.length >= (state.words[state.currentWordIndex]?.length ?? 0);
-      return {
-        ...state,
-        inputWord: newInput,
-        letterStates: next,
-        isWordFinished: wordFinished,
-      };
+    case "SET_INPUT": {
+      if (state.mode === "fix") return state; // fix 模式下等待任意键清除
+      // 在 fix-input 模式下，inputValue 由外部特殊处理
+      if (state.mode === "fix-input") {
+        const words = state.userWords.map((w, i) =>
+          i === state.fixWordIndex ? { ...w, userInput: action.value, incorrect: false } : w,
+        );
+        const liveWords = state.targetWords.map((text, i) => {
+          const w = words[i];
+          return w ?? { text, isActive: false, userInput: "", incorrect: false };
+        });
+        return { ...state, userWords: liveWords, inputValue: action.value };
+      }
+
+      // input 模式：正常分词同步
+      const words = syncWords(action.value, state.targetWords);
+      // 激活最后一个有输入的位置
+      const activeIdx = state.targetWords.findIndex((_, i) => !words[i]?.userInput);
+      const finalWords = words.map((w, i) => ({
+        ...w,
+        isActive: i === (activeIdx === -1 ? state.targetWords.length - 1 : activeIdx),
+      }));
+      return { ...state, userWords: finalWords, inputValue: action.value };
     }
 
-    case "ADD_WRONG": {
-      const next = [...state.letterStates];
-      next[action.position] = "wrong";
-      return {
-        ...state,
-        inputWord: state.inputWord + action.char,
-        letterStates: next,
-        hasWrong: true,
-        wrongCount: state.wrongCount + 1,
-      };
+    case "SUBMIT": {
+      const words = state.userWords.map((w) => {
+        const formatted = normalizeWord(w.userInput);
+        const target = normalizeWord(w.text);
+        return { ...w, incorrect: formatted !== target };
+      });
+      const allCorrect = words.every((w) => !w.incorrect);
+      if (allCorrect) {
+        return { ...state, userWords: words, mode: "input", submitted: true };
+      }
+      return { ...state, userWords: words, mode: "fix", submitted: true };
     }
 
-    case "ADVANCE_WORD": {
-      const nextIdx = state.currentWordIndex + 1;
-      const isLast = nextIdx >= state.words.length;
-      const nextWord = state.words[nextIdx] ?? "";
-      const wordHadError = state.hasWrong || state.wrongCount > 0;
-      return {
-        ...state,
-        currentWordIndex: isLast ? state.currentWordIndex : nextIdx,
-        letterStates: new Array(nextWord.length).fill("normal"),
-        inputWord: "",
-        isWordFinished: false,
-        hasWrong: false,
-        wrongCount: 0,
-        isSentenceFinished: isLast,
-        wrongWordIndices: wordHadError
-          ? [...state.wrongWordIndices, state.currentWordIndex]
-          : state.wrongWordIndices,
-      };
+    case "START_FIX": {
+      const firstWrong = findFirstWrongIndex(state.userWords);
+      if (firstWrong === -1) return { ...state, mode: "input", fixWordIndex: -1 };
+      const words = state.userWords.map((w, i) =>
+        i === firstWrong ? { ...w, userInput: "", incorrect: false, isActive: true } : { ...w, isActive: false },
+      );
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: "" };
     }
 
-    case "RESET_CURRENT_WORD": {
-      const word = state.words[state.currentWordIndex] ?? "";
-      return {
-        ...state,
-        letterStates: new Array(word.length).fill("normal"),
-        inputWord: "",
-        hasWrong: false,
-      };
+    case "FIX_NEXT": {
+      const nextWrong = state.userWords.findIndex(
+        (w, i) => i > state.fixWordIndex && w.incorrect,
+      );
+      if (nextWrong === -1) return { ...state, mode: "input", fixWordIndex: -1, submitted: false };
+      const words = state.userWords.map((w, i) =>
+        i === nextWrong ? { ...w, userInput: "", incorrect: false, isActive: true } : { ...w, isActive: false },
+      );
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: nextWrong, inputValue: "" };
     }
 
-    case "FINISH_SENTENCE":
-      return { ...state, isSentenceFinished: true };
+    case "FIX_DONE": {
+      // 重新检查所有词
+      const words = state.userWords.map((w) => {
+        const formatted = normalizeWord(w.userInput);
+        const target = normalizeWord(w.text);
+        return { ...w, incorrect: formatted !== target };
+      });
+      const allCorrect = words.every((w) => !w.incorrect);
+      if (allCorrect) {
+        return { ...state, userWords: words, mode: "input", fixWordIndex: -1, submitted: false };
+      }
+      // 还有错误，继续 fix
+      return { ...state, userWords: words, mode: "fix", fixWordIndex: -1 };
+    }
 
     default:
       return state;
@@ -121,74 +167,99 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
 // ── Hook ──
 
 export function useSentenceTyping(sentenceEnglish: string) {
-  const words = sentenceEnglish.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
+  const rawWords = sentenceEnglish.split(/\s+/).filter(Boolean);
+  const targetWords = rawWords.map((w) =>
+    w.replace(/^[.,!?;:'"()]+|[.,!?;:'"()]+$/g, ""),
+  ).filter(Boolean);
 
   const [state, dispatch] = useReducer(reducer, {
-    words,
-    currentWordIndex: 0,
-    letterStates: new Array(words[0]?.length ?? 0).fill("normal"),
-    inputWord: "",
-    isWordFinished: false,
-    isSentenceFinished: false,
-    hasWrong: false,
-    wrongCount: 0,
-    wrongWordIndices: [],
+    targetWords,
+    userWords: targetWords.map((text) => ({ text, isActive: false, userInput: "", incorrect: false })),
+    inputValue: "",
+    mode: "input",
+    fixWordIndex: -1,
+    submitted: false,
   });
 
   const stateRef = useRef(state);
   useEffect(() => { stateRef.current = state; }, [state]);
 
-  // 句子文本变了 → 重新初始化（去除标点）
+  // 句子文本变了 → 重新初始化
   useEffect(() => {
-    const rawWords = sentenceEnglish.split(/\s+/).filter(Boolean).map(cleanWord).filter(Boolean);
-    dispatch({ type: "INIT_SENTENCE", words: rawWords });
+    dispatch({ type: "INIT", targetWords });
   }, [sentenceEnglish]);
 
-  // 错字后定时重置
-  useEffect(() => {
-    if (!state.hasWrong) return;
-    const timer = setTimeout(() => dispatch({ type: "RESET_CURRENT_WORD" }), WRONG_RESET_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [state.hasWrong]);
+  /** 设置输入值 */
+  const setInput = useCallback((value: string) => {
+    dispatch({ type: "SET_INPUT", value });
+  }, []);
 
-  // 当前词完成后短暂延迟 → 自动推进到下一词
-  const wordFinishedRef = useRef(false);
-  useEffect(() => {
-    if (!state.isWordFinished || wordFinishedRef.current) return;
-    wordFinishedRef.current = true;
-    const timer = setTimeout(() => {
-      dispatch({ type: "ADVANCE_WORD" });
-      wordFinishedRef.current = false;
-    }, 200);
-    return () => { clearTimeout(timer); wordFinishedRef.current = false; };
-  }, [state.isWordFinished]);
+  /** 提交答案 → 返回是否正确 */
+  const submit = useCallback((): boolean => {
+    dispatch({ type: "SUBMIT" });
+    // 需要等下一帧读取 state
+    return true;
+  }, []);
 
-  /** 处理单个字符输入 */
-  const handleChar = useCallback(
-    (char: string): { accepted: boolean; correct: boolean } => {
-      const s = stateRef.current;
-      if (s.isSentenceFinished || s.isWordFinished || s.hasWrong)
-        return { accepted: false, correct: false };
+  /** 进入 fix 模式（修正第一个错误词） */
+  const startFix = useCallback(() => {
+    dispatch({ type: "START_FIX" });
+  }, []);
 
-      const word = s.words[s.currentWordIndex];
-      if (!word) return { accepted: false, correct: false };
+  /** 修正下一个错误词 */
+  const fixNext = useCallback(() => {
+    dispatch({ type: "FIX_NEXT" });
+  }, []);
 
-      const pos = s.inputWord.length;
-      if (pos >= word.length) return { accepted: false, correct: false };
+  /** 完成 fix 后重新判定 */
+  const fixDone = useCallback(() => {
+    dispatch({ type: "FIX_DONE" });
+  }, []);
 
-      const expected = word[pos];
-      const equal = char.toLowerCase() === expected.toLowerCase();
+  /** 检查是否全部正确（在 submit 后使用） */
+  const checkAllCorrect = useCallback((): boolean => {
+    const s = stateRef.current;
+    return s.userWords.every((w) => {
+      const formatted = normalizeWord(w.userInput);
+      const target = normalizeWord(w.text);
+      return formatted === target;
+    });
+  }, []);
 
-      if (equal) {
-        dispatch({ type: "ADD_CORRECT", position: pos, char });
-        return { accepted: true, correct: true };
-      }
+  /** 获取错误词索引列表 */
+  const getWrongIndices = useCallback((): number[] => {
+    return stateRef.current.userWords
+      .map((w, i) => ({ w, i }))
+      .filter(({ w }) => {
+        const formatted = normalizeWord(w.userInput);
+        const target = normalizeWord(w.text);
+        return formatted !== target;
+      })
+      .map(({ i }) => i);
+  }, []);
 
-      dispatch({ type: "ADD_WRONG", position: pos, char });
-      return { accepted: true, correct: false };
-    },
-    [],
-  );
+  /** 检查是否处于 fix 等待状态（需要任意键触发） */
+  const isFixPending = useCallback((): boolean => {
+    return stateRef.current.mode === "fix";
+  }, []);
 
-  return { state, handleChar };
+  /** 检查是否处于 fix-input 状态 */
+  const isFixInput = useCallback((): boolean => {
+    return stateRef.current.mode === "fix-input";
+  }, []);
+
+  return {
+    state,
+    dispatch,
+    setInput,
+    submit,
+    startFix,
+    fixNext,
+    fixDone,
+    checkAllCorrect,
+    getWrongIndices,
+    isFixPending,
+    isFixInput,
+    targetWords,
+  };
 }

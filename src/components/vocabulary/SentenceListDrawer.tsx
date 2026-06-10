@@ -8,10 +8,13 @@ interface SentenceListDrawerProps {
 
 export function SentenceListDrawer({ open, onClose }: SentenceListDrawerProps) {
   const sentences = useSentenceSessionStore((s) => s.sentences);
-  const completions = useSentenceSessionStore((s) => s.completions);
+  const sentenceResults = useSentenceSessionStore((s) => s.sentenceResults);
   const currentSentenceIndex = useSentenceSessionStore((s) => s.currentSentenceIndex);
 
   if (!open) return null;
+
+  // 构建结果查找表
+  const resultMap = new Map(sentenceResults.map((r) => [r.sentenceId, r]));
 
   return (
     <>
@@ -42,10 +45,9 @@ export function SentenceListDrawer({ open, onClose }: SentenceListDrawerProps) {
         {/* 句子列表 */}
         <div className="px-3 pb-6">
           {sentences.map((s, idx) => {
-            const comp = completions[s.id];
+            const result = resultMap.get(s.id);
             const isCurrent = idx === currentSentenceIndex;
             const isPast = idx < currentSentenceIndex;
-            const completedModes = comp?.modeResults.length ?? 0;
 
             return (
               <div
@@ -74,23 +76,17 @@ export function SentenceListDrawer({ open, onClose }: SentenceListDrawerProps) {
                   >
                     {s.english.length > 30 ? s.english.slice(0, 30) + "..." : s.english}
                   </span>
-                  {/* 进度圆点 */}
-                  <span className="flex shrink-0 gap-0.5">
-                    {[0, 1, 2].map((mode) => (
-                      <span
-                        key={mode}
-                        className="inline-block h-1.5 w-1.5 rounded-full"
-                        style={{
-                          background:
-                            completedModes > mode
-                              ? comp?.modeResults[mode]?.isCorrect
-                                ? "oklch(0.56 0.19 148)"
-                                : "oklch(0.55 0.22 20)"
-                              : "oklch(0.60 0.01 260 / 0.2)",
-                        }}
-                      />
-                    ))}
-                  </span>
+                  {/* 完成状态圆点 */}
+                  <span
+                    className="inline-block h-2 w-2 shrink-0 rounded-full"
+                    style={{
+                      background: result
+                        ? result.isCorrect
+                          ? "oklch(0.56 0.19 148)"
+                          : "oklch(0.55 0.22 20)"
+                        : "oklch(0.60 0.01 260 / 0.2)",
+                    }}
+                  />
                 </div>
                 {/* 翻译 */}
                 <p className="mt-0.5 truncate pl-7 text-[10px] text-foreground/30">

@@ -23,18 +23,18 @@ export function ImmersiveSentencePage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [showSentenceList, setShowSentenceList] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const phase = useSentenceSessionStore((s) => s.phase);
   const isInSession = phase === "learning";
   const startTime = useSentenceSessionStore((s) => s.startTime);
   const sentences = useSentenceSessionStore((s) => s.sentences);
   const currentSentenceIndex = useSentenceSessionStore((s) => s.currentSentenceIndex);
-  const currentMode = useSentenceSessionStore((s) => s.currentMode);
   const isTyping = useSentenceSessionStore((s) => s.isTyping);
   const sentenceResults = useSentenceSessionStore((s) => s.sentenceResults);
 
   const startSession = useSentenceSessionStore((s) => s.startSession);
-  const completeMode = useSentenceSessionStore((s) => s.completeMode);
+  const completeSentence = useSentenceSessionStore((s) => s.completeSentence);
   const advanceSentence = useSentenceSessionStore((s) => s.advanceSentence);
   const finishSession = useSentenceSessionStore((s) => s.finishSession);
   const resetSession = useSentenceSessionStore((s) => s.resetSession);
@@ -92,45 +92,47 @@ export function ImmersiveSentencePage() {
     prevShowSettings.current = showSettings;
   }, [showSettings, setIsTyping]);
 
-  // 键盘监听：按任意键开始 / 恢复打字
+  // Ctrl+H 切换答案显示
   useEffect(() => {
-    if (!isInSession || isTyping) return;
+    if (!isInSession) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (showSentenceList || showSettings) return;
-      e.preventDefault();
-      setIsTyping(true);
+      if (e.ctrlKey && e.key.toLowerCase() === "h") {
+        e.preventDefault();
+        setShowAnswer((v) => !v);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isInSession, isTyping, setIsTyping, showSentenceList, showSettings]);
+  }, [isInSession]);
+
+  // 句子切换时重置答案隐藏
+  useEffect(() => {
+    setShowAnswer(false);
+  }, [currentSentenceIndex]);
 
   const handleClose = useCallback(() => { resetSession(); window.close(); }, [resetSession]);
   const handleRepeat = useCallback(async () => {
-    if (!bookId) return;
-    try { const sents = await loadSentenceBook(bookId); startSession(sents, bookId); } catch { /* */ }
-  }, [bookId, startSession]);
+    if (!courseId || !bookId) return;
+    try { const sents = await loadSingleCourse(courseId, bookId); startSession(sents, bookId); } catch { /* */ }
+  }, [courseId, bookId, startSession]);
 
   const currentSentence = useSentenceSessionStore(getCurrentSentence);
 
-  // 当前句是否 3 种模式全部完成（作为 effect 触发源）
-  const isCurrentFullyCompleted = useSentenceSessionStore((s) => {
-    const idx = s.currentSentenceIndex;
-    const sen = s.sentences[idx];
-    if (!sen) return false;
-    return s.completions[sen.id]?.isFullyCompleted ?? false;
-  });
+  const totalSentences = sentences.length;
+  const progress = currentSentenceIndex;
 
-  const totalModes = sentences.length * 3;
-  const completedModes = currentSentenceIndex * 3 +
-    (currentSentence ? (useSentenceSessionStore.getState().completions[currentSentence.id]?.modeResults.length ?? 0) : 0);
-
-  // 当前句全部完成 → 自动推进到下一句
-  useEffect(() => {
-    if (!isInSession || !isCurrentFullyCompleted) return;
-    const isLast = advanceSentence();
-    if (isLast) finishSession();
-  }, [isCurrentFullyCompleted, isInSession, advanceSentence, finishSession]);
+  // 句子完成后自动推进到下一句
+  const handleComplete = useCallback(
+    (wrongWordIndices: number[]) => {
+      completeSentence(wrongWordIndices);
+      // 短暂延迟后自动推进
+      setTimeout(() => {
+        const isLast = advanceSentence();
+        if (isLast) finishSession();
+      }, wrongWordIndices.length === 0 ? 600 : 1200);
+    },
+    [completeSentence, advanceSentence, finishSession],
+  );
 
   // ═══ 条件渲染 ═══
 
@@ -164,7 +166,7 @@ export function ImmersiveSentencePage() {
 
   return (
     <div className="learn-page relative flex h-screen flex-col bg-background">
-      {isInSession && <ProgressBar completedModes={completedModes} totalModes={totalModes} isReview={false} />}
+      {isInSession && <ProgressBar completedModes={progress} totalModes={totalSentences} isReview={false} />}
 
       {/* ── 浮动按钮 ── */}
       {isInSession && (
@@ -204,28 +206,67 @@ export function ImmersiveSentencePage() {
       )}
 
       {isInSession && currentSentence && (
-        <div className="flex flex-1 flex-col items-center justify-center px-4">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pb-20">
           <SentenceCard
-            key={`${currentSentence.id}-${currentMode}`}
+            key={currentSentence.id}
             sentence={currentSentence}
-            learnMode={currentMode}
             isTyping={isTyping}
-            onComplete={(wrongWordIndices) => {
-              completeMode(wrongWordIndices);
-            }}
+            onComplete={handleComplete}
           />
         </div>
       )}
 
-      {/* ── 暂停蒙层 ── */}
-      {isInSession && (showSentenceList || showSettings || !isTyping) && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center" style={{ background: "oklch(0 0 0 / 0.12)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}>
-          {!isTyping && !showSentenceList && !showSettings && (
-            <p className="select-none text-2xl font-medium text-foreground/80 animate-spring-scale">
-              {currentSentenceIndex > 0 || completedModes > 0 ? "按任意键继续学习" : "按任意键开始学习"}
+      {/* ── 底部键盘提示栏 ── */}
+      {isInSession && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-2xl border px-5 py-3"
+          style={{
+            background: "var(--glass-sheet-bg)",
+            backdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            WebkitBackdropFilter: "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+            borderColor: "var(--glass-sheet-border)",
+            boxShadow: "var(--shadow-md)",
+          }}
+        >
+          {/* 答案显示 */}
+          {showAnswer && currentSentence && (
+            <p className="mb-3 text-center text-sm text-foreground/55 animate-spring-up select-all">
+              {currentSentence.english}
             </p>
           )}
+
+          <div className="flex items-center gap-6">
+            {/* 快捷键提示 */}
+            <div className="flex items-center gap-3">
+              <kbd className="flex flex-col items-center rounded-lg border border-b-[3px] px-3 py-1"
+                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+              >
+                <span className="text-xs font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Enter</span>
+                <span className="text-[10px] text-foreground/40">提交</span>
+              </kbd>
+              <kbd className="flex flex-col items-center rounded-lg border border-b-[3px] px-3 py-1"
+                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+              >
+                <span className="text-xs font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Space</span>
+                <span className="text-[10px] text-foreground/40">修正</span>
+              </kbd>
+              {/* 分隔 */}
+              <span className="h-7 w-px rounded-full bg-foreground/8" />
+              <kbd
+                className="flex cursor-pointer flex-col items-center rounded-lg border border-b-[3px] px-3 py-1 transition-all duration-200 hover:scale-105 active:scale-95"
+                style={{ background: "oklch(0.985 0.002 275)", borderColor: "oklch(0.55 0.01 260 / 0.3)", boxShadow: "0 2px 0 oklch(0.55 0.01 260 / 0.15)" }}
+                onClick={() => setShowAnswer((v) => !v)}
+              >
+                <span className="text-[10px] font-mono font-medium" style={{ color: "oklch(0.35 0.01 260)" }}>Ctrl H</span>
+                <span className="text-[10px] text-foreground/40">{showAnswer ? "隐藏" : "显示"}</span>
+              </kbd>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* ── 暂停蒙层（仅在抽屉/设置打开时） ── */}
+      {(showSentenceList || showSettings) && (
+        <div className="absolute inset-0 z-20" style={{ background: "oklch(0 0 0 / 0.12)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }} />
       )}
 
       {/* ── 覆盖面板 ── */}

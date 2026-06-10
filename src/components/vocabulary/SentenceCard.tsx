@@ -1,13 +1,9 @@
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { Sentence } from "@/types/domain";
-import type { SentenceLearnMode } from "@/types/sentence";
 import { useSentenceTyping } from "@/hooks/useSentenceTyping";
-import { useKeyboardCapture } from "@/hooks/useKeyboardCapture";
-import LetterBox from "./LetterBox";
-import type { LetterState } from "@/types/vocabulary";
 import { cn } from "@/lib/utils";
 
-// ── 音效（与 WordCard 保持一致） ──
+// ── 音效 ──
 let _audioCtx: AudioContext | null = null;
 function getAudioCtx(): AudioContext {
   if (!_audioCtx) _audioCtx = new AudioContext();
@@ -16,15 +12,17 @@ function getAudioCtx(): AudioContext {
 function playCorrectSound() {
   try {
     const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain); gain.connect(ctx.destination);
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(1760, ctx.currentTime + 0.06);
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.12);
+    const t = ctx.currentTime;
+    [523, 659, 784].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, t + i * 0.08);
+      gain.gain.setValueAtTime(0.07, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.start(t + i * 0.08); osc.stop(t + i * 0.08 + 0.2);
+    });
   } catch { /* 静默 */ }
 }
 function playWrongSound() {
@@ -41,89 +39,171 @@ function playWrongSound() {
     osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
   } catch { /* 静默 */ }
 }
-function playCompleteSound() {
-  try {
-    const ctx = getAudioCtx();
-    const t = ctx.currentTime;
-    [523, 659, 784].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = "sine";
-      const start = t + i * 0.08;
-      osc.frequency.setValueAtTime(freq, start);
-      gain.gain.setValueAtTime(0.07, start);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
-      osc.start(start); osc.stop(start + 0.18);
-    });
-  } catch { /* 静默 */ }
-}
 
 interface SentenceCardProps {
   sentence: Sentence;
-  learnMode: SentenceLearnMode;
   isTyping: boolean;
   onComplete: (wrongWordIndices: number[]) => void;
 }
 
 export function SentenceCard({
   sentence,
-  learnMode,
   isTyping,
   onComplete,
 }: SentenceCardProps) {
-  const { state, handleChar } = useSentenceTyping(sentence.english);
+  const {
+    state,
+    dispatch,
+    setInput,
+    submit,
+    startFix,
+    fixNext,
+    fixDone,
+    checkAllCorrect,
+    getWrongIndices,
+    isFixPending,
+    isFixInput,
+  } = useSentenceTyping(sentence.english);
+
+  const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
 
+  // 重置
   useEffect(() => {
     completedRef.current = false;
-  }, [sentence.id, learnMode]);
+  }, [sentence.id]);
 
-  const onChar = useCallback(
-    (char: string) => {
-      if (state.isSentenceFinished) return;
-      const result = handleChar(char);
-      if (result.accepted) {
-        if (result.correct) playCorrectSound();
-        else playWrongSound();
+  // 聚焦输入框
+  useEffect(() => {
+    if (isTyping && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isTyping]);
+
+  // 暂停/恢复：失焦时自动重新聚焦
+  useEffect(() => {
+    if (!isTyping) return;
+    const onBlur = () => {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    };
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, [isTyping]);
+
+  // 提交后检查结果
+  useEffect(() => {
+    if (!state.submitted) return;
+    const allCorrect = checkAllCorrect();
+    if (allCorrect) {
+      playCorrectSound();
+      completedRef.current = true;
+      onComplete([]);
+    } else {
+      playWrongSound();
+    }
+  }, [state.submitted, checkAllCorrect, onComplete]);
+
+  // fix 模式下监听任意键 → startFix, space → fixNext
+  useEffect(() => {
+    if (state.mode !== "fix") return;
+
+    const onFixKey = (e: KeyboardEvent) => {
+      if (["Alt", "Control", "Meta", "Shift"].some((k) => e.key === k)) return;
+
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        fixNext();
+        return;
       }
+
+      // 任意其他字符 → 进入 fix-input
+      e.preventDefault();
+      startFix();
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.value = "";
+          inputRef.current.focus();
+        }
+      }, 10);
+    };
+
+    window.addEventListener("keydown", onFixKey);
+    return () => window.removeEventListener("keydown", onFixKey);
+  }, [state.mode, startFix, fixNext]);
+
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (state.mode === "fix") return;
+      setInput(e.target.value);
     },
-    [handleChar, state.isSentenceFinished],
+    [state.mode, setInput],
   );
 
-  useKeyboardCapture(onChar, isTyping && !state.isSentenceFinished);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // 禁止方向键
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+        return;
+      }
 
+      // Ctrl+H 留给父组件处理（显示/隐藏答案），其余 Ctrl 组合忽略
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() !== "h") {
+        e.preventDefault();
+        return;
+      }
+
+      // Enter 提交
+      if (e.key === "Enter" && state.mode === "input") {
+        e.preventDefault();
+        submit();
+        return;
+      }
+
+      // fix-input 模式下 Enter 提交当前 fix
+      if (e.key === "Enter" && state.mode === "fix-input") {
+        e.preventDefault();
+        fixDone();
+        return;
+      }
+
+      // fix-input 模式下空格 → 修正下一个错误词
+      if ((e.key === " " || e.code === "Space") && state.mode === "fix-input") {
+        e.preventDefault();
+        fixNext();
+        return;
+      }
+
+      // fix-input 模式下退格 清空当前词 → 回到上一个错误词
+      if (e.key === "Backspace" && state.mode === "fix-input" && state.inputValue === "") {
+        e.preventDefault();
+        // 简单处理：重新进入 fix 模式
+        dispatch({ type: "FIX_DONE" });
+        return;
+      }
+    },
+    [state.mode, submit, fixDone, fixNext, dispatch],
+  );
+
+  // fix-input 模式下 空格 在 input 处理之外也监听
   useEffect(() => {
-    if (state.isSentenceFinished && !completedRef.current) {
-      completedRef.current = true;
-      if (state.wrongWordIndices.length === 0) playCompleteSound();
-      onComplete([...state.wrongWordIndices]);
-    }
-  }, [state.isSentenceFinished, onComplete, state.wrongWordIndices]);
+    if (state.mode !== "fix-input") return;
+    const onSpace = (e: KeyboardEvent) => {
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        fixNext();
+      }
+    };
+    window.addEventListener("keydown", onSpace);
+    return () => window.removeEventListener("keydown", onSpace);
+  }, [state.mode, fixNext]);
 
-  const vis = {
-    showText: learnMode === "sentenceWithText",
-    showTranslation: learnMode !== "sentenceFullBlind",
-  };
+  // 点击容器聚焦
+  const handleContainerClick = useCallback(() => {
+    inputRef.current?.focus();
+  }, []);
 
-  // 将句子 token 化：词 + 标点交替
-  const tokens = useMemo(() => {
-    const result: { text: string; wordIdx: number | null }[] = [];
-    const src = sentence.english;
-    let pos = 0;
-    for (let wi = 0; wi < state.words.length; wi++) {
-      const w = state.words[wi];
-      const idx = src.indexOf(w, pos);
-      if (idx > pos) result.push({ text: src.slice(pos, idx), wordIdx: null });
-      result.push({ text: w, wordIdx: wi });
-      pos = idx + w.length;
-    }
-    if (pos < src.length) result.push({ text: src.slice(pos), wordIdx: null });
-    return result;
-  }, [sentence.english, state.words]);
-
-  // 防御：words 为空时渲染占位
-  if (!state.words.length) {
+  if (!state.targetWords.length) {
     return (
       <div className="flex w-full max-w-3xl flex-col items-center gap-5 px-4">
         <p className="text-sm text-foreground/40">加载中...</p>
@@ -132,78 +212,75 @@ export function SentenceCard({
   }
 
   return (
-    <div className="flex w-full max-w-3xl flex-col items-center gap-5 px-4">
-      {/* 逐词逐字母显示区 */}
-      <div className="flex flex-wrap items-end justify-center gap-x-2 gap-y-4 leading-loose animate-spring-up">
-        {tokens.map((token, ti) => {
-          // 标点
-          if (token.wordIdx === null) {
-            return (
-              <span
-                key={`p-${ti}`}
-                className="inline-flex items-end font-mono text-5xl md:text-6xl font-medium text-foreground/35 select-none tracking-tight"
-              >
-                {token.text}
-              </span>
-            );
-          }
+    <div
+      className="flex w-full max-w-3xl flex-col items-center gap-6 px-4"
+      onClick={handleContainerClick}
+    >
+      {/* 中文提示 */}
+      <p className="text-lg font-medium text-foreground/80 animate-spring-up select-none">
+        {sentence.chinese}
+      </p>
 
-          // 词
-          const wordIdx = token.wordIdx;
-          const word = state.words[wordIdx];
-          const isPast = wordIdx < state.currentWordIndex;
-          const isWrongWord = state.wrongWordIndices.includes(wordIdx);
+      {/* 词盒区 — 与 LetterBox 风格一致 */}
+      <div className="relative flex flex-wrap justify-center gap-x-3 gap-y-2 animate-spring-up">
+        {state.userWords.map((word, i) => {
+          const isActive =
+            state.mode === "input" &&
+            i === state.userWords.findIndex((w) => !w.userInput);
+
+          const isFixTarget =
+            (state.mode === "fix" || state.mode === "fix-input") &&
+            i === state.fixWordIndex;
+
+          const isWrong = word.incorrect && state.submitted && !isActive;
+          const isCorrect = word.userInput && !word.incorrect && state.submitted && !isActive;
+
+          let color = "var(--color-letter-normal)";
+          let borderColor = "oklch(0.60 0.01 260 / 0.2)";
+          let bg = "transparent";
+          if (isFixTarget) { color = "oklch(0.58 0.2 22)"; borderColor = "oklch(0.58 0.2 22 / 0.4)"; }
+          else if (isWrong) { color = "var(--color-letter-wrong)"; borderColor = "oklch(0.58 0.2 22 / 0.4)"; }
+          else if (isCorrect) { color = "var(--color-letter-correct)"; borderColor = "oklch(0.68 0.19 155 / 0.4)"; }
+          else if (isActive) { color = "oklch(0.55 0.195 252)"; borderColor = "oklch(0.55 0.195 252)"; bg = "oklch(0.55 0.195 252 / 0.06)"; }
 
           return (
             <span
-              key={wordIdx}
+              key={i}
               className={cn(
-                "inline-flex items-center rounded-lg px-1 py-0.5 transition-all duration-200",
-                wordIdx === state.currentWordIndex && state.hasWrong && "animate-shake",
+                "inline-block shrink-0 rounded-lg border-b-[3px] text-center font-mono text-5xl md:text-6xl font-medium tracking-tight leading-normal transition-all duration-200",
+                isWrong && "animate-shake",
               )}
+              style={{
+                width: `${word.text.length + 0.8}ch`,
+                color,
+                borderColor,
+                background: bg,
+                textShadow: "0 1px 0 oklch(0 0 0 / 0.04)",
+              }}
             >
-              {word.split("").map((letter, letterIdx) => {
-                const letterState: LetterState =
-                  wordIdx < state.currentWordIndex
-                    ? isWrongWord
-                      ? "wrong"
-                      : "correct"
-                    : wordIdx === state.currentWordIndex &&
-                        letterIdx < state.inputWord.length
-                      ? state.letterStates[letterIdx] ?? "normal"
-                      : "normal";
-
-                return (
-                  <LetterBox
-                    key={`${wordIdx}-${letterIdx}`}
-                    letter={letter}
-                    state={letterState}
-                    visible={
-                      vis.showText ||
-                      wordIdx < state.currentWordIndex ||
-                      (wordIdx === state.currentWordIndex &&
-                        letterIdx < state.inputWord.length)
-                    }
-                    userChar={
-                      wordIdx === state.currentWordIndex &&
-                      letterIdx < state.inputWord.length
-                        ? state.inputWord[letterIdx] ?? null
-                        : null
-                    }
-                  />
-                );
-              })}
+              {isFixTarget ? "" : word.userInput || " "}
             </span>
           );
         })}
       </div>
 
-      {/* 翻译 — 在句子下方 */}
-      {vis.showTranslation && (
-        <p className="text-base text-foreground/50 animate-spring-up">
-          {sentence.chinese}
-        </p>
-      )}
+      {/* 隐藏输入框 */}
+      <input
+        ref={inputRef}
+        className="absolute h-0 w-0 opacity-0"
+        type="text"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        lang="en"
+        value={state.mode === "fix" ? "" : state.inputValue}
+        onChange={handleInput}
+        onKeyDown={handleKeyDown}
+        onBlur={() => {
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
+      />
     </div>
   );
 }

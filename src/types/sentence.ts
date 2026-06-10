@@ -3,26 +3,6 @@
 /** 句子本标识 — 每新增一个本子加一项 */
 export type SentenceBookId = "xingrong";
 
-// ===== 句子学习模式 =====
-
-/** 句子学习模式 — 逐词输入，非逐字母 */
-export type SentenceLearnMode =
-  | "sentenceWithText"
-  | "sentenceWithoutText"
-  | "sentenceFullBlind";
-
-export const SENTENCE_LEARN_MODE_SEQUENCE: SentenceLearnMode[] = [
-  "sentenceWithText",
-  "sentenceWithoutText",
-  "sentenceFullBlind",
-];
-
-export const SENTENCE_LEARN_MODE_LABELS: Record<SentenceLearnMode, string> = {
-  sentenceWithText: "显示句子",
-  sentenceWithoutText: "隐藏句子",
-  sentenceFullBlind: "全隐藏（听写）",
-};
-
 // ===== JSON 源数据类型（Earthworm 风格） =====
 
 /**
