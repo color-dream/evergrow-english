@@ -59,6 +59,7 @@ export function SentenceCard({
     submit,
     startFix,
     fixNext,
+    fixPrev,
     fixDone,
     checkAllCorrect,
     getWrongIndices,
@@ -218,10 +219,10 @@ export function SentenceCard({
         return;
       }
 
-      // fix-input 模式下退格且输入为空 → 回到上一个错误词
+      // fix-input 模式下退格且输入为空 → 回到上一个错误词（不重新评估正确性）
       if (e.key === "Backspace" && state.mode === "fix-input" && stateRef.current.inputValue === "") {
         e.preventDefault();
-        dispatch({ type: "FIX_DONE" });
+        fixPrev();
         return;
       }
 
@@ -235,7 +236,7 @@ export function SentenceCard({
         return;
       }
     },
-    [state.mode, submit, fixDone, fixNext, dispatch],
+    [state.mode, submit, fixDone, fixNext, fixPrev, dispatch],
   );
 
   // 点击容器聚焦

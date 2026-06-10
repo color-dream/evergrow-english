@@ -32,6 +32,7 @@ export type SentenceTypingAction =
   | { type: "SUBMIT" }
   | { type: "START_FIX"; firstChar?: string }
   | { type: "FIX_NEXT" }
+  | { type: "FIX_PREV" }
   | { type: "FIX_DONE" };
 
 // ── 工具函数 ──
@@ -91,7 +92,7 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       // 在 fix-input 模式下，inputValue 由外部特殊处理
       if (state.mode === "fix-input") {
         const words = state.userWords.map((w, i) =>
-          i === state.fixWordIndex ? { ...w, userInput: action.value, incorrect: false } : w,
+          i === state.fixWordIndex ? { ...w, userInput: action.value } : w,
         );
         const liveWords = state.targetWords.map((text, i) => {
           const w = words[i];
@@ -129,10 +130,10 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       const firstWrong = findFirstWrongIndex(state.userWords);
       if (firstWrong === -1) return { ...state, mode: "input", fixWordIndex: -1 };
       const firstChar = action.firstChar ?? "";
-      // 清空所有错误词，保留正确词；第一个错误词变为输入状态；其他错误词保留 incorrect 标记便于 fixNext 跳转
+      // 清空所有错误词，保留 correct 词；第一个错误词激活；保留 incorrect 标记用于 fixNext/fixPrev 导航
       const words = state.userWords.map((w, i) =>
         w.incorrect
-          ? { ...w, userInput: i === firstWrong ? firstChar : "", incorrect: i !== firstWrong, isActive: i === firstWrong }
+          ? { ...w, userInput: i === firstWrong ? firstChar : "", isActive: i === firstWrong }
           : { ...w, isActive: false },
       );
       return { ...state, userWords: words, mode: "fix-input", fixWordIndex: firstWrong, inputValue: firstChar, submitted: false };
@@ -143,10 +144,30 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
         (w, i) => i > state.fixWordIndex && w.incorrect,
       );
       if (nextWrong === -1) return { ...state, mode: "input", fixWordIndex: -1, submitted: false };
+      // 保留 incorrect 标记，便于 FIX_PREV 回退查找
       const words = state.userWords.map((w, i) =>
-        i === nextWrong ? { ...w, userInput: "", incorrect: false, isActive: true } : { ...w, isActive: false },
+        i === nextWrong ? { ...w, userInput: "", isActive: true } : { ...w, isActive: false },
       );
       return { ...state, userWords: words, mode: "fix-input", fixWordIndex: nextWrong, inputValue: "" };
+    }
+
+    case "FIX_PREV": {
+      let prevWrong = -1;
+      for (let i = state.fixWordIndex - 1; i >= 0; i--) {
+        if (state.userWords[i].incorrect) {
+          prevWrong = i;
+          break;
+        }
+      }
+      if (prevWrong === -1) {
+        prevWrong = state.userWords.findIndex((w) => w.incorrect);
+      }
+      if (prevWrong === -1) return { ...state, mode: "input", fixWordIndex: -1, submitted: false };
+      // 保留 incorrect 标记
+      const words = state.userWords.map((w, i) =>
+        i === prevWrong ? { ...w, userInput: "", isActive: true } : { ...w, isActive: false },
+      );
+      return { ...state, userWords: words, mode: "fix-input", fixWordIndex: prevWrong, inputValue: "" };
     }
 
     case "FIX_DONE": {
@@ -216,6 +237,11 @@ export function useSentenceTyping(sentenceEnglish: string) {
     dispatch({ type: "FIX_NEXT" });
   }, []);
 
+  /** 回到上一个错误词 */
+  const fixPrev = useCallback(() => {
+    dispatch({ type: "FIX_PREV" });
+  }, []);
+
   /** 完成 fix 后重新判定 */
   const fixDone = useCallback(() => {
     dispatch({ type: "FIX_DONE" });
@@ -260,6 +286,7 @@ export function useSentenceTyping(sentenceEnglish: string) {
     submit,
     startFix,
     fixNext,
+    fixPrev,
     fixDone,
     checkAllCorrect,
     getWrongIndices,
