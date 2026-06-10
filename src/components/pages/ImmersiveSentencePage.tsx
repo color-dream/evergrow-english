@@ -12,7 +12,8 @@ import { SentenceCard } from "@/components/vocabulary/SentenceCard";
 import { SentenceListDrawer } from "@/components/vocabulary/SentenceListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
-import { List, X } from "lucide-react";
+import { useAudio } from "@/app/providers/AudioProvider";
+import { List, X, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ImmersiveSentencePage() {
@@ -129,7 +130,14 @@ export function ImmersiveSentencePage() {
     try { const sents = await loadSingleCourse(courseId, bookId); startSession(sents, bookId); } catch { /* */ }
   }, [courseId, bookId, startSession]);
 
+  const audio = useAudio();
   const currentSentence = useSentenceSessionStore(getCurrentSentence);
+
+  const handlePlaySound = useCallback(() => {
+    if (currentSentence) {
+      audio.speak(currentSentence.english, { rate: 0.8 }).catch(() => {});
+    }
+  }, [currentSentence, audio]);
 
   const totalSentences = sentences.length;
   const progress = currentSentenceIndex;
@@ -248,6 +256,15 @@ export function ImmersiveSentencePage() {
           )}
 
           <div className="flex items-center gap-6">
+            {/* 播放按钮 */}
+            <button
+              onClick={handlePlaySound}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all duration-200 hover:bg-foreground/5"
+            >
+              <Volume2 className="h-4 w-4 text-foreground/45" />
+              <span className="text-[11px] text-foreground/45">朗读</span>
+            </button>
+            <span className="h-7 w-px rounded-full bg-foreground/8" />
             {/* 快捷键提示 */}
             <div className="flex items-center gap-3">
               <kbd className="flex flex-col items-center rounded-lg border border-b-[3px] px-3 py-1"

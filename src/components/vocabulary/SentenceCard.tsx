@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { Sentence } from "@/types/domain";
 import { useSentenceTyping } from "@/hooks/useSentenceTyping";
+import { useAudio } from "@/app/providers/AudioProvider";
 import { cn } from "@/lib/utils";
 
 // ── 音效 ──
@@ -65,8 +66,14 @@ export function SentenceCard({
     isFixInput,
   } = useSentenceTyping(sentence.english);
 
+  const audio = useAudio();
   const inputRef = useRef<HTMLInputElement>(null);
   const completedRef = useRef(false);
+
+  // 新句子自动播放发音（首次渲染时）
+  useEffect(() => {
+    audio.speak(sentence.english, { rate: 0.8 }).catch(() => {});
+  }, [sentence.id]); // sentence.id 变化触发，audio 稳定引用
 
   // 重置
   useEffect(() => {
