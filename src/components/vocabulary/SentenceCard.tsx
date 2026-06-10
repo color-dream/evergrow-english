@@ -254,7 +254,7 @@ export function SentenceCard({
                 className="w-full rounded-lg text-center"
                 style={{ background: bg, color, textShadow: "0 1px 0 oklch(0 0 0 / 0.04)" }}
               >
-                {isFixTarget ? "" : word.userInput || " "}
+                {word.userInput || " "}
               </span>
               <span className="block w-full border-b-[3px]" style={{ borderColor }} />
             </span>
