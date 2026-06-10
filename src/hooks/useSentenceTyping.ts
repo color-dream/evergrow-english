@@ -181,8 +181,8 @@ function reducer(state: SentenceTypingState, action: SentenceTypingAction): Sent
       if (allCorrect) {
         return { ...state, userWords: words, mode: "input", fixWordIndex: -1, submitted: true };
       }
-      // 还有错误，继续 fix
-      return { ...state, userWords: words, mode: "fix", fixWordIndex: -1 };
+      // 还有错误：显示红绿判定，随后自动进入 fix
+      return { ...state, userWords: words, mode: "fix", fixWordIndex: -1, submitted: true };
     }
 
     default:
