@@ -4,12 +4,11 @@ import { ThemeProvider } from "./providers/ThemeProvider";
 import { AudioProvider } from "./providers/AudioProvider";
 import { AppShell } from "@/components/layout/AppShell";
 import { CenterLayout } from "@/components/layout/CenterLayout";
-import { VocabularyPage } from "@/components/vocabulary/VocabularyPage";
-import { SentencePage } from "@/components/vocabulary/SentencePage";
 import { SentenceCourseListPage } from "@/components/vocabulary/SentenceCourseListPage";
 import { LandingPage } from "@/components/pages/LandingPage";
 import { WelcomePage } from "@/components/pages/WelcomePage";
 import { LearningCenterHub } from "@/components/pages/LearningCenterHub";
+import { LearningPage } from "@/components/pages/LearningPage";
 import { PagePlaceholder } from "@/components/shared/PagePlaceholder";
 import { WelcomeGuard } from "@/components/shared/WelcomeGuard";
 import { ImmersiveLearnPage } from "@/components/pages/ImmersiveLearnPage";
@@ -37,9 +36,11 @@ export function App() {
                 <Route element={<WelcomeGuard />}>
                   <Route path={ROUTES.CENTER} element={<CenterLayout />}>
                     <Route index element={<LearningCenterHub />} />
-                    <Route path={ROUTES.VOCABULARY} element={<VocabularyPage />} />
-                    <Route path={ROUTES.SENTENCE} element={<SentencePage />} />
+                    <Route path={ROUTES.LEARNING} element={<LearningPage />} />
                     <Route path={ROUTES.SENTENCE_COURSES} element={<SentenceCourseListPage />} />
+                    {/* 旧路由重定向 */}
+                    <Route path={ROUTES.VOCABULARY} element={<Navigate to={ROUTES.LEARNING} replace />} />
+                    <Route path={ROUTES.SENTENCE} element={<Navigate to={ROUTES.LEARNING} replace />} />
                   </Route>
                 </Route>
 

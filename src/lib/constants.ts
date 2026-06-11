@@ -60,8 +60,9 @@ export const WORD_TRANSITION_DELAY_MS = 400;
 export const ROUTES = {
   HOME: "/",
   CENTER: "/center",
-  VOCABULARY: "/center/vocabulary",
-  SENTENCE: "/center/sentence",
+  LEARNING: "/center/learning",
+  VOCABULARY: "/center/vocabulary", // 保留重定向兼容
+  SENTENCE: "/center/sentence",     // 保留重定向兼容
   SENTENCE_COURSES: "/center/sentence/:bookId",
   SETTINGS: "/settings",
   LEARN: "/learn",
@@ -71,25 +72,16 @@ export const ROUTES = {
 
 // ── 快捷入口（首页 + 学习中心共享） ──
 
-import { BookMarked, MessageSquareText } from "lucide-react";
+import { BookMarked } from "lucide-react";
 
 export const QUICK_ACTIONS = [
   {
-    to: ROUTES.VOCABULARY,
-    label: "词汇打字",
-    desc: "逐字母输入，强化拼写记忆",
+    to: ROUTES.LEARNING,
+    label: "开始学习",
+    desc: "词汇拼写 · 句子打字，双模式自由切换",
     icon: BookMarked,
     color: "oklch(0.55 0.195 252 / 0.1)",
     iconColor: "text-primary",
     shadow: "0 4px 16px oklch(0.55 0.195 252 / 0.15)",
-  },
-  {
-    to: ROUTES.SENTENCE,
-    label: "句子打字",
-    desc: "逐词输入整句，理解语法结构",
-    icon: MessageSquareText,
-    color: "oklch(0.62 0.18 158 / 0.1)",
-    iconColor: "oklch(0.62 0.18 158)",
-    shadow: "0 4px 16px oklch(0.62 0.18 158 / 0.15)",
   },
 ];

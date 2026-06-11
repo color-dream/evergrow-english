@@ -126,7 +126,7 @@ export function ReviewPage() {
           </p>
         </div>
         <button
-          onClick={() => navigate(ROUTES.VOCABULARY)}
+          onClick={() => navigate(ROUTES.LEARNING)}
           className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-300 hover:scale-105 active:scale-95"
           style={{
             boxShadow: "0 4px 16px oklch(0.55 0.195 252 / 0.35)",

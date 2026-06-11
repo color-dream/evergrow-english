@@ -30,7 +30,7 @@ export function SentenceCourseListPage() {
       <div className="mx-auto max-w-5xl px-6 py-12 text-center">
         <p className="text-lg text-foreground">未找到该分册</p>
         <button
-          onClick={() => navigate(ROUTES.SENTENCE)}
+          onClick={() => navigate(ROUTES.LEARNING)}
           className="mt-4 rounded-full bg-primary px-4 py-2 text-sm text-white transition-all duration-300 hover:scale-105 active:scale-95"
         >
           返回课程包列表
@@ -58,7 +58,7 @@ export function SentenceCourseListPage() {
     <div className="mx-auto max-w-5xl px-6 py-8 animate-fade-in">
       {/* 返回 */}
       <button
-        onClick={() => navigate(ROUTES.SENTENCE)}
+        onClick={() => navigate(ROUTES.LEARNING)}
         className="mb-6 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-foreground/50 transition-all duration-300 hover:text-foreground hover:bg-foreground/5"
       >
         <ArrowLeft className="h-4 w-4" />
