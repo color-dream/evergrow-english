@@ -48,26 +48,21 @@ export function WordBookCard({ meta, stats, onSelect }: WordBookCardProps) {
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      {/* 图标 + 难度标签 */}
-      <div className="mb-3 flex items-center justify-between">
+      {/* 图标 + 标签名 */}
+      <div className="mb-3 flex items-center gap-2.5">
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
           style={{ background: theme.bg }}
         >
           <BookMarked className="h-5 w-5" style={{ color: theme.accent }} />
         </div>
         <span
-          className="shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap"
-          style={{ background: theme.bg, color: theme.accent }}
+          className="text-sm font-bold truncate"
+          style={{ color: theme.accent }}
         >
-          {meta.difficulty}
+          {meta.label}
         </span>
       </div>
-
-      {/* 标题 */}
-      <h3 className="truncate text-[15px] font-bold text-foreground leading-snug">
-        {meta.label}
-      </h3>
 
       {/* 描述 */}
       <p className="mt-0.5 truncate text-xs text-foreground/45">
