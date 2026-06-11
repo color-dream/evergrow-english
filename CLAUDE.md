@@ -1,19 +1,158 @@
-# Evergrow English
+# CLAUDE.md
 
-## 项目概述
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-前端 React 应用，基于 Vite + TypeScript + TailwindCSS v4 构建。
+## 常用命令
 
-## 技术栈
+```bash
+# 开发
+bun run dev              # 启动开发服务器 (端口 10011)
+bun run build            # 类型检查 + 生产构建
 
-- **框架**: React 19 + TypeScript 6
-- **构建**: Vite 8
-- **样式**: TailwindCSS v4
-- **路由**: React Router v7
-- **状态**: Zustand + TanStack React Query
-- **表单**: React Hook Form + Zod
-- **本地存储**: Dexie (IndexedDB)
-- **测试**: Vitest + Testing Library
+# 代码质量
+bun run lint             # ESLint 检查
+bun run lint:fix         # ESLint 自动修复
+bun run format           # Prettier 格式化 src/**/*.{ts,tsx,css}
+bun run format:check     # Prettier 仅检查不写入
+
+# 测试
+bun run test             # vitest run（单次运行）
+bun run test:watch       # vitest watch 模式
+
+# 预览
+bun run preview          # 预览生产构建
+```
+
+## 路径别名
+
+`@/` → `src/`，配置在 `vite.config.ts` 的 `resolve.alias` 和 `tsconfig.json` 中。
+
+```tsx
+import { useSettingsStore } from "@/stores/settings-store";
+import { ROUTES } from "@/lib/constants";
+import type { Word } from "@/types/domain";
+```
+
+## 架构概览
+
+### 应用入口层级
+
+```
+main.tsx
+ └─ StrictMode
+     └─ App
+         ├─ QueryProvider (TanStack React Query)
+         │   └─ ThemeProvider (暗色模式 .dark 类切换)
+         │       └─ AudioProvider (TTS 语音合成上下文)
+         │           └─ BrowserRouter
+         │               ├─ "/"       → LandingPage（官网首页，无 AppShell）
+         │               ├─ "/welcome" → WelcomePage（欢迎页，无 AppShell）
+         │               ├─ AppShell（侧边栏 + 顶栏布局）
+         │               │   ├─ WelcomeGuard（昵称守卫，未设置昵称重定向 /welcome）
+         │               │   │   └─ CenterLayout
+         │               │   │       ├─ index  → LearningCenterHub
+         │               │   │       ├─ "/center/learning" → LearningPage（词汇打写）
+         │               │   │       └─ "/center/sentence/:bookId" → SentenceCourseListPage
+         │               │   └─ "/settings" → PagePlaceholder（占位）
+         │               ├─ "/learn"          → ImmersiveLearnPage（沉浸词汇，无 AppShell）
+         │               └─ "/learn-sentence"  → ImmersiveSentencePage（沉浸句子，无 AppShell）
+```
+
+路由常量定义在 [src/lib/constants.ts](src/lib/constants.ts) 的 `ROUTES` 对象中。
+
+### 状态管理 (Zustand)
+
+| Store | 文件 | 持久化 | 职责 |
+|-------|------|--------|------|
+| `useSettingsStore` | [src/stores/settings-store.ts](src/stores/settings-store.ts) | localStorage (`eg-settings`) | 用户偏好、每日目标、昵称、每词库单词数 |
+| `useUIStore` | [src/stores/ui-store.ts](src/stores/ui-store.ts) | 否 | 主题解析（system→light/dark） |
+| `useVocabularySessionStore` | [src/stores/vocabulary-session-store.ts](src/stores/vocabulary-session-store.ts) | 否 | 词汇学习会话：任务队列、4模式推进、计时、击键统计 |
+| `useSentenceSessionStore` | [src/stores/sentence-session-store.ts](src/stores/sentence-session-store.ts) | 否 | 句子学习会话：当前句子索引、结果记录 |
+
+### 数据库 (Dexie/IndexedDB)
+
+`EvergrowDB` 单例定义在 [src/lib/db/database.ts](src/lib/db/database.ts)，通过 `getDB()` 获取。
+
+目前 3 个版本：
+
+- **v1**: `learningCards`（FSRS 记忆卡片）+ `studySessions`（学习会话记录）
+- **v2**: `learningSessions`（按词库维度的学习进度，key 为 `bookId`）
+- **v3**: `sentenceProgress` + `sentenceLessonProgress`（句子学习进度追踪）
+
+核心类型：
+- `LearningCard`（[src/lib/fsrs/types.ts](src/lib/fsrs/types.ts)）：统一卡片模型，`cardType: "word" | "sentence"`，包装 FSRS 状态
+- `FSRSState`（[src/types/domain.ts](src/types/domain.ts)）：stability, difficulty, elapsedDays, scheduledDays, reps, lapses, lastReview, state
+
+### FSRS 间隔重复系统
+
+位于 [src/lib/fsrs/](src/lib/fsrs/)：
+
+| 文件 | 职责 |
+|------|------|
+| `algorithm.ts` | 核心算法：`createNewFSRSState()` 初始状态、`applyFSRS()` 评分更新（纯函数）、`getRetrievability()` 可提取性 |
+| `parameters.ts` | FSRS 参数常量（初始稳定性、难度增量、最大间隔等） |
+| `rating.ts` | 从击键正确率推导 FSRS 评分 (1=重来, 2=困难, 3=良好, 4=简单) |
+| `scheduler.ts` | 复习调度：`getDueCards()` 筛选到期卡片、`getTodayReviewedCount()`、`getMasteredCount()` |
+| `learning-scheduler.ts` | 会话内任务队列：`createNewWordTaskQueue()`（随机打乱）、`createReviewTaskQueue()`（按 retrievability 排序）、`sortQueueByPriority()` |
+| `types.ts` | Dexie 持久化的 `LearningCard` 和 `StudySessionRecord` 类型 |
+
+FSRS 评分决策流程：用户输入 → 击键正确率 → `deriveFSRSRating()` → `applyFSRS()` → 写入 Dexie → 下次复习间隔由 `stabilityToInterval()` 计算。
+
+### 学习模式
+
+#### 词汇学习（4 模式渐进隐藏）
+
+定义在 [src/types/vocabulary.ts](src/types/vocabulary.ts)，固定顺序：
+
+1. `typeWithWord` — 照单词输入（可见单词、翻译、音标）
+2. `typeWithoutWord` — 隐藏单词
+3. `typeWithoutWordAndTranslation` — 隐藏单词和翻译
+4. `typeWithoutWordAndTranslationAndPhonetic` — 全部隐藏
+
+每个单词的 4 种模式由 `VocabularySessionStore` 的任务队列驱动。任一模式错误超过 `SKIP_WRONG_THRESHOLD`（4 次）则重置回模式 0。4 种模式全部通过后聚合为 `WordResult`。新词阶段结束后自动进入复习阶段（FSRS 到期卡片）。
+
+核心 hooks：
+- `useWordTyping` — 单词语音播放 + 逐字母状态机
+- `useWordCompletion` — 监听完成事件写入 Dexie
+- `useFSRSSync` — 将 `WordResult[]` 转为 FSRS 评分并更新卡片
+- `useLearningSessionPersistence` — 页面刷新时从 Dexie 恢复进度
+
+#### 句子学习（Earthworm 风格）
+
+用户在中文提示下逐词输入英文句子，对标 [Earthworm](https://earthworm.xyz) 的打字体验。
+
+JSON 数据位于 `public/sentences/{bookId}/` 目录，每条记录为 `{ chinese, english, soundmark }`。
+
+核心 hooks：
+- `useSentenceTyping` — 逐词匹配、错误高亮、自动前进
+- `useSentenceFSRSSync` — 句子完成后的 FSRS 更新
+
+### 词库注册
+
+- **词汇词库**: [src/lib/word-book-registry.ts](src/lib/word-book-registry.ts) — 定义 `WordBookId`（当前 `"cet4" | "cet6"`）及 JSON 路径映射
+- **句子词库**: [src/lib/sentence-book-registry.ts](src/lib/sentence-book-registry.ts) — 定义 `SentenceBookId`（当前 `"xingrong"`）及课程元数据
+
+### 语音服务
+
+[src/services/audio/](src/services/audio/) 提供 TTS 抽象：
+
+- `web-speech.ts` — 基于 `SpeechSynthesis` API 的浏览器原生 TTS
+- `youdao.ts` — 有道词典 TTS API（单词发音更准确）
+- `types.ts` — `AudioService` 接口定义
+
+`AudioProvider`（[src/app/providers/AudioProvider.tsx](src/app/providers/AudioProvider.tsx)）在应用顶层提供统一的 `playWord()` / `playSentence()` 方法。
+
+### 键盘捕获
+
+全局键盘事件通过 `useKeyboardCapture`（[src/hooks/useKeyboardCapture.ts](src/hooks/useKeyboardCapture.ts)）实现，过滤修饰键、防重复、处理 Enter 提交。辅助函数在 [src/lib/keyboard-utils.ts](src/lib/keyboard-utils.ts)：`isLegal()` 过滤合法字符、`isChineseSymbol()` 过滤中文符号。
+
+### 持久化约定
+
+- **用户设置** → `localStorage`（Zustand `persist` 中间件，key: `eg-settings`）
+- **学习数据** → `IndexedDB`（Dexie，数据库名: `evergrow-english`）
+- **会话状态** → 内存（Zustand 无 persist），刷新后通过 `useLearningSessionPersistence` 从 Dexie 恢复
+
+---
 
 ## 设计哲学
 
@@ -122,5 +261,5 @@
 ## 约定
 
 - **包管理器**: 始终使用 `bun` — `bun install`、`bun run dev`、`bun run build` 等。不要使用 npm/yarn/pnpm。
-- **开发端口**: 固定 `10011`，配置在 `vite.config.ts` 中 `server.port: 10011` + `strictPort: true`。端口被占用时不会降级到其他端口，需手动杀掉旧进程后重试。启动时自动检测：`Get-NetTCPConnection -LocalPort 10011` 有结果则 `Stop-Process`。
+- **开发端口**: 固定 `10011`，配置在 `vite.config.ts` 中 `server.port: 10011` + `strictPort: true`。端口被占用时不会降级到其他端口，需手动杀掉旧进程后重试。
 - 代码注释和文档使用中文。
