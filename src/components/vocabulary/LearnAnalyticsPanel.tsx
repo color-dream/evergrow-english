@@ -15,11 +15,11 @@ const remainingColor = "oklch(0.6 0.01 260 / 0.15)"; // gray
 
 // ── 热力图等级色（primary 饱和度递增） ──
 const heatColors = [
-  "oklch(0.55 0.195 252 / 0.06)",  // 0: 空
-  "oklch(0.55 0.195 252 / 0.18)",  // 1: 低
-  "oklch(0.55 0.195 252 / 0.42)",  // 2: 中
-  "oklch(0.55 0.195 252 / 0.72)",  // 3: 高
-  "oklch(0.55 0.195 252)",         // 4: 最高
+  "oklch(0.56 0.19 148 / 0.06)",  // 0: 空
+  "oklch(0.56 0.19 148 / 0.18)",  // 1: 低
+  "oklch(0.56 0.19 148 / 0.42)",  // 2: 中
+  "oklch(0.56 0.19 148 / 0.72)",  // 3: 高
+  "oklch(0.56 0.19 148)",         // 4: 最高
 ];
 
 function heatLevel(total: number): number {
@@ -268,7 +268,7 @@ export function LearnAnalyticsPanel({ open, onClose }: LearnAnalyticsPanelProps)
                                   <div
                                     key={di}
                                     className="h-3 w-3 rounded-sm opacity-20"
-                                    style={{ background: "oklch(0.55 0.195 252 / 0.06)" }}
+                                    style={{ background: "oklch(0.56 0.19 148 / 0.04)" }}
                                   />
                                 );
                               }
@@ -333,7 +333,7 @@ export function LearnAnalyticsPanel({ open, onClose }: LearnAnalyticsPanelProps)
                           </span>
                           <span
                             className="mt-1 font-mono text-xl font-bold"
-                            style={{ color: "oklch(0.55 0.195 252)" }}
+                            style={{ color: "oklch(0.56 0.19 148)" }}
                           >
                             {f.count}
                           </span>
