@@ -18,7 +18,6 @@ import type { FSRSState } from "@/types/domain";
 import type { WordBookId } from "@/types/vocabulary";
 import { WordCard } from "@/components/vocabulary/WordCard";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
-import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
 import { List, X, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
 import { LearnAnalyticsPanel } from "@/components/vocabulary/LearnAnalyticsPanel";
+import { useAudio } from "@/app/providers/AudioProvider";
 
 /** 从 FSRS 状态推导上次评分 */
 function deriveRatingFromFSRS(fsrs: FSRSState): number {
@@ -69,6 +69,8 @@ export function ImmersiveLearnPage() {
   const progressBarPosition = useSettingsStore(
     (s) => s.preferences.progressBarPosition ?? "top"
   );
+  const pronunciation = useSettingsStore((s) => s.preferences.pronunciation ?? "us");
+  const audio = useAudio();
 
   const { recordModeComplete } = useWordCompletion();
   const { flushPendingSaves } = useFSRSSync();
@@ -242,7 +244,7 @@ export function ImmersiveLearnPage() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isInSession, isTyping, setIsTyping, showWordList, showSettings]);
+  }, [isInSession, isTyping, setIsTyping, showWordList, showSettings, showAnalytics]);
 
   const onKeystroke = useCallback(
     (correct: boolean) => addKeystrokes(correct),
@@ -271,6 +273,49 @@ export function ImmersiveLearnPage() {
     resetSession();
     window.close();
   }, [resetSession, flushPendingSaves]);
+
+  // ── 快捷键 ──
+  useEffect(() => {
+    if (!isInSession) return;
+    const handler = (e: KeyboardEvent) => {
+      if (showWordList || showSettings || showAnalytics) return;
+      if (!e.ctrlKey && !e.metaKey) return;
+
+      switch (e.key.toLowerCase()) {
+        case "l":
+          e.preventDefault();
+          setShowWordList((v) => !v);
+          break;
+        case ",":
+          e.preventDefault();
+          setShowSettings((v) => !v);
+          break;
+        case "s":
+          e.preventDefault();
+          setShowAnalytics(true);
+          setIsTyping(false);
+          break;
+        case "j": {
+          e.preventDefault();
+          const w = getCurrentWord(useVocabularySessionStore.getState())?.word;
+          if (w?.text && audio.supported) {
+            audio.speak(w.text, { rate: 0.8, accent: pronunciation }).catch(() => {});
+          }
+          break;
+        }
+        case "r":
+          e.preventDefault();
+          handleRepeat();
+          break;
+        case "w":
+          e.preventDefault();
+          handleClose();
+          break;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isInSession, showWordList, showSettings, showAnalytics, setIsTyping, handleRepeat, handleClose, pronunciation, audio]);
 
   // 获取当前单词
   const state = useVocabularySessionStore.getState();
@@ -391,7 +436,14 @@ export function ImmersiveLearnPage() {
             }
             disabled={showWordList || showSettings || showAnalytics}
           />
-          <SpeedBar />
+          {/* ── 统计 + 快捷键合并横条 ── */}
+          <CombinedStatusBar
+            setShowWordList={setShowWordList}
+            setShowSettings={setShowSettings}
+            setShowAnalytics={setShowAnalytics}
+            setIsTyping={setIsTyping}
+            handleRepeat={handleRepeat}
+          />
         </div>
       )}
 
@@ -445,6 +497,97 @@ export function ImmersiveLearnPage() {
           onDictationRepeat={handleRepeat}
         />
       )}
+    </div>
+  );
+}
+
+// ── 统计 + 快捷键合并横条 ──
+function CombinedStatusBar({
+  setShowWordList,
+  setShowSettings,
+  setShowAnalytics,
+  setIsTyping,
+  handleRepeat,
+}: {
+  setShowWordList: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setShowSettings: (v: boolean | ((prev: boolean) => boolean)) => void;
+  setShowAnalytics: (v: boolean) => void;
+  setIsTyping: (v: boolean) => void;
+  handleRepeat: () => void;
+}) {
+  const elapsed = useVocabularySessionStore((s) => s.elapsedSeconds);
+  const totalK = useVocabularySessionStore((s) => s.totalKeystrokes);
+  const newWordCompletions = useVocabularySessionStore((s) => s.newWordCompletions);
+  const reviewWordCompletions = useVocabularySessionStore((s) => s.reviewWordCompletions);
+  const pronunciation = useSettingsStore((s) => s.preferences.pronunciation ?? "us");
+  const audio = useAudio();
+
+  const correctModes = Object.values({ ...newWordCompletions, ...reviewWordCompletions }).reduce(
+    (sum, comp) => sum + comp.modeResults.filter((mr) => mr.wrongCount === 0).length,
+    0,
+  );
+  const wrongModes = Object.values({ ...newWordCompletions, ...reviewWordCompletions }).reduce(
+    (sum, comp) => sum + comp.modeResults.filter((mr) => mr.wrongCount > 0).length,
+    0,
+  );
+  const totalModes = correctModes + wrongModes;
+  const accuracy = totalModes > 0 ? Math.round((correctModes / totalModes) * 100) : 0;
+  const cpm = elapsed > 0 ? Math.round((totalK / elapsed) * 60) : 0;
+  const minutes = Math.floor(elapsed / 60);
+  const seconds = elapsed % 60;
+
+  return (
+    <div
+      className="mx-auto mb-4 flex items-center gap-1 rounded-full px-4 py-2 animate-spring-up"
+      style={{
+        background: "var(--glass-card-bg)",
+        backdropFilter: "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+        WebkitBackdropFilter: "blur(var(--glass-card-blur)) saturate(var(--glass-sheet-saturate))",
+        border: "1px solid var(--glass-card-border)",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      {/* 统计 */}
+      <StatChip value={`${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`} label="时间" />
+      <StatChip value={`${cpm}`} label="字母/分" />
+      <StatChip value={`${correctModes}`} label="正确" />
+      <StatChip value={`${wrongModes}`} label="错误" />
+      <StatChip value={`${accuracy}%`} label="正确率" />
+
+      {/* 分隔 */}
+      <div className="mx-1.5 h-6 w-px shrink-0 rounded-full bg-foreground/8" />
+
+      {/* 快捷键 */}
+      {([
+        { keys: "Ctrl L", label: "列表", action: () => setShowWordList((v) => !v) },
+        { keys: "Ctrl ,", label: "设置", action: () => setShowSettings((v) => !v) },
+        { keys: "Ctrl S", label: "统计", action: () => { setShowAnalytics(true); setIsTyping(false); } },
+        { keys: "Ctrl J", label: "朗读", action: () => {
+          const w = getCurrentWord(useVocabularySessionStore.getState())?.word;
+          if (w?.text && audio.supported) {
+            audio.speak(w.text, { rate: 0.8, accent: pronunciation }).catch(() => {});
+          }
+        }},
+        { keys: "Ctrl R", label: "重置", action: () => handleRepeat() },
+      ] as const).map(({ keys, label, action }) => (
+        <button
+          key={keys}
+          onClick={action}
+          className="flex flex-col items-center rounded-lg border border-foreground/10 px-2 py-0.5 transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/5 active:scale-[0.97]"
+        >
+          <span className="font-mono text-[10px] font-semibold text-foreground/60 leading-none">{keys}</span>
+          <span className="mt-0.5 text-[8px] text-foreground/35 leading-none">{label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StatChip({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center px-2 py-0.5">
+      <span className="font-mono text-xs font-semibold tabular-nums text-foreground">{value}</span>
+      <span className="text-[9px] font-medium text-foreground/40">{label}</span>
     </div>
   );
 }
