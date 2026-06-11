@@ -6,13 +6,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useVocabularySessionStore } from "@/stores/vocabulary-session-store";
-import { useSettingsStore } from "@/stores/settings-store";
 import { useWordBookStats } from "@/hooks/useWordBookStats";
 import { WORD_BOOK_OPTIONS } from "@/lib/word-book-registry";
 import { WordBookCard } from "@/components/vocabulary/WordBookCard";
-import { PreSettingsDialog } from "@/components/vocabulary/PreSettingsDialog";
 import { SENTENCE_BOOK_OPTIONS } from "@/lib/sentence-book-registry";
-import { DIFFICULTY_LABELS, ROUTES, BASE_PATH } from "@/lib/constants";
+import { DIFFICULTY_LABELS, ROUTES, BASE_PATH, DEFAULT_WORDS_PER_ROUND } from "@/lib/constants";
 import type { WordBookId } from "@/types/vocabulary";
 import type { SentenceBookId } from "@/types/sentence";
 
@@ -38,14 +36,9 @@ type LearningTab = "vocab" | "sentence";
 
 export function LearningPage() {
   const navigate = useNavigate();
-  const wordsPerRound = useVocabularySessionStore((s) => s.wordsPerRound);
 
   // ── Tab 切换 ──
   const [activeTab, setActiveTab] = useState<LearningTab>("vocab");
-
-  // ── 词汇书 pre-settings 弹窗 ──
-  const [preSettingsBookId, setPreSettingsBookId] =
-    useState<WordBookId | null>(null);
 
   // ── 词汇书统计数据 ──
   const { stats, isLoading } = useWordBookStats();
@@ -63,40 +56,14 @@ export function LearningPage() {
     return { inProgress: ip, notStarted: ns };
   }, [stats]);
 
-  // ── 词汇书：选择已开始的书 → 直接打开新窗口 ──
-  const handleOpenInProgressBook = useCallback((id: WordBookId) => {
+  // ── 词汇书：点击 → 直接打开学习窗口（默认每轮词数） ──
+  const handleSelectBook = useCallback((id: WordBookId) => {
+    const store = useVocabularySessionStore.getState();
+    store.setWordsPerRound(DEFAULT_WORDS_PER_ROUND);
     const win = window.open(`${BASE_PATH}learn?bookId=${id}`, "_blank");
     if (!win) {
       alert("页面被浏览器拦截，请允许弹窗后重试。");
     }
-  }, []);
-
-  // ── 词汇书：选择未开始的书 → 弹出设置对话框 ──
-  const handleSelectBook = useCallback((id: WordBookId) => {
-    setPreSettingsBookId(id);
-  }, []);
-
-  // ── 词汇书：设置确认 → 打开学习窗口 ──
-  const handlePreSettingsConfirm = useCallback(
-    (wordsPerRoundValue: number) => {
-      const store = useVocabularySessionStore.getState();
-      store.setWordsPerRound(wordsPerRoundValue);
-      const bookId = preSettingsBookId;
-      setPreSettingsBookId(null);
-      if (!bookId) return;
-
-      useSettingsStore.getState().setBookWordsPerRound(bookId, wordsPerRoundValue);
-
-      const win = window.open(`${BASE_PATH}learn?bookId=${bookId}`, "_blank");
-      if (!win) {
-        alert("页面被浏览器拦截，请允许弹窗后重试。");
-      }
-    },
-    [preSettingsBookId],
-  );
-
-  const handlePreSettingsCancel = useCallback(() => {
-    setPreSettingsBookId(null);
   }, []);
 
   // ── 句子书：点击 → 跳转课程列表 ──
@@ -174,7 +141,7 @@ export function LearningPage() {
                         key={book.id}
                         meta={book}
                         stats={stats.get(book.id)}
-                        onSelect={() => handleOpenInProgressBook(book.id)}
+                        onSelect={() => handleSelectBook(book.id)}
                       />
                     ))}
                   </div>
@@ -291,17 +258,6 @@ export function LearningPage() {
         </section>
       )}
 
-      {/* PreSettingsDialog */}
-      {preSettingsBookId && (
-        <PreSettingsDialog
-          open={true}
-          bookName={WORD_BOOK_OPTIONS.find((b) => b.id === preSettingsBookId)
-            ?.label ?? ""}
-          initialWordsPerRound={wordsPerRound}
-          onConfirm={handlePreSettingsConfirm}
-          onCancel={handlePreSettingsCancel}
-        />
-      )}
     </div>
   );
 }
