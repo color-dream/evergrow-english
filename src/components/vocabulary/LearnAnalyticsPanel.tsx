@@ -2,10 +2,12 @@ import { useEffect } from "react";
 import { X, TrendingUp } from "lucide-react";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import type { DailyActivity } from "@/hooks/useAnalyticsData";
+import type { WordBookId } from "@/types/vocabulary";
 
 interface LearnAnalyticsPanelProps {
   open: boolean;
   onClose: () => void;
+  bookId?: WordBookId | null;
 }
 
 // ── 色彩定义 ──
@@ -37,9 +39,9 @@ const MONTH_NAMES = [
   "7月", "8月", "9月", "10月", "11月", "12月",
 ];
 
-export function LearnAnalyticsPanel({ open, onClose }: LearnAnalyticsPanelProps) {
+export function LearnAnalyticsPanel({ open, onClose, bookId }: LearnAnalyticsPanelProps) {
   const { mastered, learning, remaining, totalWords, dailyActivity, forecast, isLoading } =
-    useAnalyticsData();
+    useAnalyticsData(bookId ?? undefined);
 
   // ── Escape 关闭 ──
   useEffect(() => {

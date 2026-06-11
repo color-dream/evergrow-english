@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { getAllCards, getRecentSessions } from "@/lib/db";
+import { getAllCards, getCardsByBookId, getRecentSessions } from "@/lib/db";
 import { getMasteredCount } from "@/lib/fsrs";
-import { WORD_BOOK_OPTIONS } from "@/lib/word-book-registry";
+import { WORD_BOOK_META } from "@/lib/word-book-registry";
+import type { WordBookId } from "@/types/vocabulary";
 
 export interface DailyActivity {
   date: string;
@@ -49,7 +50,7 @@ function endOfDay(ts: number): number {
   return d.getTime();
 }
 
-export function useAnalyticsData(): AnalyticsData {
+export function useAnalyticsData(bookId?: WordBookId): AnalyticsData {
   const [data, setData] = useState<AnalyticsData>({
     mastered: 0,
     learning: 0,
@@ -62,22 +63,22 @@ export function useAnalyticsData(): AnalyticsData {
 
   useEffect(() => {
     let cancelled = false;
+    setData((prev) => ({ ...prev, isLoading: true }));
 
     const compute = async () => {
       try {
         // ── 并行获取卡片和会话 ──
         const [cards, sessions] = await Promise.all([
-          getAllCards(),
-          getRecentSessions(1000), // 获取足够多的会话记录
+          bookId ? getCardsByBookId(bookId) : getAllCards(),
+          getRecentSessions(1000),
         ]);
 
         if (cancelled) return;
 
         const now = Date.now();
-        const totalWords = WORD_BOOK_OPTIONS.reduce(
-          (sum, b) => sum + b.wordCount,
-          0
-        );
+        const totalWords = bookId
+          ? (WORD_BOOK_META[bookId]?.wordCount ?? 0)
+          : Object.values(WORD_BOOK_META).reduce((sum, b) => sum + b.wordCount, 0);
 
         // ── 进度计算 ──
         const mastered = getMasteredCount(cards);
@@ -171,7 +172,7 @@ export function useAnalyticsData(): AnalyticsData {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [bookId]);
 
   return data;
 }

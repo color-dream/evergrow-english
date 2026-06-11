@@ -430,6 +430,7 @@ export function ImmersiveLearnPage() {
       <LearnAnalyticsPanel
         open={showAnalytics}
         onClose={() => setShowAnalytics(false)}
+        bookId={bookId}
       />
       <ImmersiveSettingsPanel
         open={showSettings}
