@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Moon, Sun, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/app/providers/ThemeProvider";
+import { useSettingsStore } from "@/stores/settings-store";
 
 const themes = [
   { key: "light" as const, label: "亮色", icon: Sun },
@@ -11,6 +12,7 @@ const themes = [
 
 export function ThemeToggle() {
   const { setting, setTheme } = useTheme();
+  const setPreferences = useSettingsStore((s) => s.setPreferences);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -53,6 +55,7 @@ export function ThemeToggle() {
               key={key}
               onClick={() => {
                 setTheme(key);
+                setPreferences({ theme: key });
                 setOpen(false);
               }}
               className={cn(
