@@ -20,11 +20,12 @@ import { WordCard } from "@/components/vocabulary/WordCard";
 import { ProgressBar } from "@/components/vocabulary/ProgressBar";
 import { SpeedBar } from "@/components/vocabulary/SpeedBar";
 import { ResultScreen } from "@/components/vocabulary/ResultScreen";
-import { List, X } from "lucide-react";
+import { List, X, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore } from "@/stores/settings-store";
 import { WordListDrawer } from "@/components/vocabulary/WordListDrawer";
 import { ImmersiveSettingsPanel } from "@/components/vocabulary/ImmersiveSettingsPanel";
+import { LearnAnalyticsPanel } from "@/components/vocabulary/LearnAnalyticsPanel";
 
 /** 从 FSRS 状态推导上次评分 */
 function deriveRatingFromFSRS(fsrs: FSRSState): number {
@@ -42,6 +43,7 @@ export function ImmersiveLearnPage() {
   const [initError, setInitError] = useState<string | null>(null);
   const [showWordList, setShowWordList] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const phase = useVocabularySessionStore((s) => s.phase);
   const isInSession = phase === "new-words" || phase === "review";
@@ -233,7 +235,7 @@ export function ImmersiveLearnPage() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
       // 面板打开时不恢复，关闭面板后会自动进入暂停
-      if (showWordList || showSettings) return;
+      if (showWordList || showSettings || showAnalytics) return;
       e.preventDefault();
       setIsTyping(true);
     };
@@ -320,35 +322,57 @@ export function ImmersiveLearnPage() {
 
       {/* ── 浮动按钮 ── */}
       {isInSession && (
-        <button
-          onClick={() => setShowWordList((v) => !v)}
-          className="absolute top-4 left-4 z-40 rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground/60 hover:text-foreground"
-          style={{
-            background: "var(--glass-sheet-bg)",
-            backdropFilter:
-              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-            WebkitBackdropFilter:
-              "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
-            border: "1px solid var(--glass-sheet-border)",
-            boxShadow: "var(--shadow-sm)",
-          }}
-          title={showWordList ? "关闭列表" : "单词列表"}
-        >
-          <span className="relative flex h-4 w-4">
-            <X
-              className={cn(
-                "absolute inset-0 h-4 w-4 transition-all duration-300",
-                showWordList ? "opacity-100 rotate-0" : "opacity-0 rotate-90"
-              )}
-            />
-            <List
-              className={cn(
-                "absolute inset-0 h-4 w-4 transition-all duration-300",
-                showWordList ? "opacity-0 -rotate-90" : "opacity-100 rotate-0"
-              )}
-            />
-          </span>
-        </button>
+        <>
+          <button
+            onClick={() => setShowWordList((v) => !v)}
+            className="absolute top-4 left-4 z-40 rounded-full p-2 transition-all duration-300 hover:scale-105 active:scale-95 text-foreground/60 hover:text-foreground"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+            title={showWordList ? "关闭列表" : "单词列表"}
+          >
+            <span className="relative flex h-4 w-4">
+              <X
+                className={cn(
+                  "absolute inset-0 h-4 w-4 transition-all duration-300",
+                  showWordList ? "opacity-100 rotate-0" : "opacity-0 rotate-90"
+                )}
+              />
+              <List
+                className={cn(
+                  "absolute inset-0 h-4 w-4 transition-all duration-300",
+                  showWordList ? "opacity-0 -rotate-90" : "opacity-100 rotate-0"
+                )}
+              />
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setShowAnalytics(true);
+              setIsTyping(false);
+            }}
+            className="absolute bottom-4 right-4 z-40 rounded-full p-2.5 transition-all duration-300 hover:scale-110 active:scale-95 text-foreground/60 hover:text-foreground"
+            style={{
+              background: "var(--glass-sheet-bg)",
+              backdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              WebkitBackdropFilter:
+                "blur(var(--glass-sheet-blur)) saturate(var(--glass-sheet-saturate))",
+              border: "1px solid var(--glass-sheet-border)",
+              boxShadow: "var(--shadow-sm)",
+            }}
+            title="学习统计"
+          >
+            <BarChart3 className="h-5 w-5" />
+          </button>
+        </>
       )}
 
       {/* ── 学习区域 ── */}
@@ -365,14 +389,14 @@ export function ImmersiveLearnPage() {
             reviewMeta={
               isReviewPhase ? reviewMeta[currentWord.id] : undefined
             }
-            disabled={showWordList || showSettings}
+            disabled={showWordList || showSettings || showAnalytics}
           />
           <SpeedBar />
         </div>
       )}
 
       {/* ── 暂停蒙层 ── */}
-      {isInSession && (showWordList || showSettings || !isTyping) && (
+      {isInSession && (showWordList || showSettings || showAnalytics || !isTyping) && (
         <div
           className="absolute inset-0 z-20 flex items-center justify-center"
           style={{
@@ -402,6 +426,10 @@ export function ImmersiveLearnPage() {
       <WordListDrawer
         open={showWordList}
         onClose={() => setShowWordList(false)}
+      />
+      <LearnAnalyticsPanel
+        open={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
       />
       <ImmersiveSettingsPanel
         open={showSettings}
